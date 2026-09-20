@@ -85,7 +85,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, decompose)
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &a);
 	ZEPHIR_INIT_VAR(&result);
-	ZEPHIR_CALL_METHOD(&_0, a, "asArray", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_0, a, "asarray", NULL, 0);
 	zephir_check_call_status();
 	tensor_svd(&result, &_0);
 	if (Z_TYPE_P(&result) == IS_NULL) {

@@ -71,12 +71,12 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &a);
-	ZEPHIR_CALL_METHOD(&_0, a, "isSquare", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_0, a, "issquare", NULL, 0);
 	zephir_check_call_status();
 	if (!(zephir_is_true(&_0))) {
 		ZEPHIR_INIT_VAR(&_1$$3);
 		object_init_ex(&_1$$3, tensor_exceptions_invalidargumentexception_ce);
-		ZEPHIR_CALL_METHOD(&_2$$3, a, "shapeString", NULL, 0);
+		ZEPHIR_CALL_METHOD(&_2$$3, a, "shapestring", NULL, 0);
 		zephir_check_call_status();
 		ZEPHIR_INIT_VAR(&_3$$3);
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "Matrix must be", " square, ", &_2$$3, " given.");
@@ -87,7 +87,7 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 		return;
 	}
 	ZEPHIR_INIT_VAR(&l);
-	ZEPHIR_CALL_METHOD(&_4, a, "asArray", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_4, a, "asarray", NULL, 0);
 	zephir_check_call_status();
 	tensor_cholesky(&l, &_4);
 	if (Z_TYPE_P(&l) == IS_NULL) {

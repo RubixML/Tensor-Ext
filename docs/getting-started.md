@@ -1,25 +1,15 @@
 # Getting Started
 
-Tensor provides objects for scientific computing in PHP. It ships two ways — a pure-PHP Composer library and a PECL extension backed by OpenBLAS / LAPACKE for native speed. Both expose the same object-oriented API.
-
-> **Note:** If both the library and the extension are installed, the extension takes precedence.
+Tensor is a PHP extension that provides objects for scientific computing, backed by OpenBLAS / LAPACKE for native speed.
 
 ## Installation
 
 ### Requirements
 
 - PHP 8.0 or above
-- [Composer](https://getcomposer.org/) (to install the library)
+- A C compiler, GFortran, and the PHP development tooling if you compile from source.
 
-### Tensor PHP (Library)
-
-Install the library into your project with Composer:
-
-```sh
-$ composer require rubix/tensor
-```
-
-### Tensor Extension
+### Install via PECL
 
 Install the compiled extension via [PECL](https://pecl.php.net/package/Tensor):
 
@@ -39,16 +29,14 @@ Confirm the extension is loaded:
 $ php -m | grep tensor
 ```
 
-See the [README](https://github.com/RubixML/Tensor#manually-compiling-the-extension) for instructions on compiling the extension from source (requires a C compiler, GFortran, OpenBLAS, LAPACKE, and PHP development tooling).
+See the [README](https://github.com/RubixML/Tensor-Ext#manually-compiling-the-extension) for instructions on compiling the extension from source (requires a C compiler, GFortran, OpenBLAS, LAPACKE, and PHP development tooling).
 
 ## Your First Script
 
-Create a simple example that constructs a matrix, performs a matrix multiplication, computes some statistics, and reduces it to row echelon form.
+Make sure the extension is loaded (see [Installation](#installation)). Then create a simple example that constructs a matrix, performs a matrix multiplication, computes some statistics, and reduces it to row echelon form.
 
 ```php
 <?php
-
-require __DIR__ . '/vendor/autoload.php';
 
 use Tensor\Matrix;
 use Tensor\Vector;
@@ -106,4 +94,4 @@ var_export($v->l2Norm());
 
 ## Next Steps
 
-- Browse the [API reference](README.md) to learn about every class and interface.
+- Browse the [API reference](index.md) to learn about every class and interface.

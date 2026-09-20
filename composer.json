@@ -1,8 +1,12 @@
 {
-    "name": "rubix/tensor",
-    "type": "library",
-    "description": "A library and extension that provides objects for scientific computing in PHP.",
-    "homepage": "https://github.com/RubixML/Tensor",
+    "name": "rubix/tensor_ext",
+    "type": "php-ext",
+    "php-ext": {
+        "extension-name": "tensor_ext",
+        "build-path": "ext"
+    },
+    "description": "A PHP extension that provides objects for scientific computing in PHP.",
+    "homepage": "https://github.com/RubixML/Tensor-Ext",
     "license": "MIT",
     "keywords": [
         "1d convolution", "2d convolution", "arithmetic", "blas", "computation", "computing",
@@ -19,11 +23,11 @@
         },
         {
             "name": "Contributors",
-            "homepage": "https://github.com/RubixML/Tensor/graphs/contributors"
+            "homepage": "https://github.com/RubixML/Tensor-Ext/graphs/contributors"
         }
     ],
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.1"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.0",
@@ -36,12 +40,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Tensor\\": "src/",
             "Zephir\\Optimizers\\FunctionCall\\": "optimizers/"
-        },
-        "files": [
-            "src/constants.php"
-        ]
+        }
     },
     "autoload-dev": {
         "psr-4": {
@@ -57,7 +57,7 @@
             "@test",
             "@check"
         ],
-        "analyze": "phpstan analyse -c phpstan.neon",
+        "analyze": "phpstan analyse -c phpstan.neon --memory-limit=1G",
         "benchmark": "phpbench run --report=env --report=aggregate",
         "check": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",
@@ -82,8 +82,8 @@
         }
     },
     "support": {
-        "issues": "https://github.com/RubixML/Tensor/issues",
-        "source": "https://github.com/RubixML/Tensor",
+        "issues": "https://github.com/RubixML/Tensor-Ext/issues",
+        "source": "https://github.com/RubixML/Tensor-Ext",
         "chat": "https://t.me/RubixML"
     }
 }

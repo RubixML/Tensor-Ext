@@ -6,7 +6,7 @@ Interface implemented by all tensor objects.
 
 ## Overview
 
-`Tensor` is the top-level marker interface for every tensor type in the library. It has no methods of its own; it composes the entire tensor API by extending the capable sub-interfaces below. See `docs/README.md` for the full surface.
+`Tensor` is the top-level marker interface for every tensor type in the extension. It has no methods of its own; it composes the entire tensor API by extending the capable sub-interfaces below. See [the API reference](../index.md) for the full surface.
 
 ```php
 interface Tensor extends ArrayLike, Arithmetic, Comparable,

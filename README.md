@@ -1,37 +1,20 @@
-# Tensor: Scientific Computing for PHP
+# Tensor: A PHP Extension for Scientific Computing
 
-[![PHP from Packagist](https://img.shields.io/packagist/php-v/rubix/tensor.svg?style=flat&colorB=8892BF)](https://www.php.net/) [![Latest Stable Version](https://img.shields.io/packagist/v/rubix/tensor.svg?style=flat&colorB=orange)](https://packagist.org/packages/rubix/tensor) [![Code Checks](https://github.com/RubixML/Tensor/actions/workflows/ci.yml/badge.svg)](https://github.com/RubixML/Tensor/actions/workflows/ci.yml) [![Extension Build](https://github.com/RubixML/Tensor/actions/workflows/ci-ext.yml/badge.svg)](https://github.com/RubixML/Tensor/actions/workflows/ci-ext.yml) [![Downloads from Packagist](https://img.shields.io/packagist/dt/rubix/tensor.svg?style=flat&colorB=red)](https://packagist.org/packages/rubix/tensor) [![GitHub](https://img.shields.io/github/license/RubixML/Tensor)](https://github.com/RubixML/Tensor/blob/master/LICENSE.md)
+[![PHP from Packagist](https://img.shields.io/packagist/php-v/rubix/tensor_ext.svg?style=flat&colorB=8892BF)](https://www.php.net/) [![Latest Stable Version](https://img.shields.io/packagist/v/rubix/tensor_ext.svg?style=flat&colorB=orange)](https://packagist.org/packages/rubix/tensor_ext) [![Code Checks](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml/badge.svg)](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml) [![Downloads from Packagist](https://img.shields.io/packagist/dt/rubix/tensor_ext.svg?style=flat&colorB=red)](https://packagist.org/packages/rubix/tensor_ext) [![GitHub](https://img.shields.io/github/license/RubixML/Tensor-Ext)](https://github.com/RubixML/Tensor-Ext/blob/master/LICENSE.md)
 
-A library and extension that provides objects for scientific computing in [PHP](https://php.net).
-
-> **Note:** If both the library and extension are installed, the extension will take precedence.
+Scientific Computing for the [PHP](https://php.net) language.
 
 ## Installation
 
-Follow the instructions below to install either Tensor PHP or the Tensor extension.
-
-### Tensor PHP
-
-Install Tensor PHP into your project with [Composer](https://getcomposer.org/):
+Install the Tensor extension via [PIE](https://github.com/php/pie):
 
 ```sh
-$ composer require rubix/tensor
-```
-
-### Tensor Extension
-
-Install the Tensor extension via [PECL](https://pecl.php.net/package/Tensor):
-
-```sh
-$ pecl install tensor
+$ pie install rubix/tensor_ext
 ```
 
 ## Requirements
 
-- [PHP](https://php.net) 8.0 or above
-
-### Optional To Compile Extension
-
+- [PHP](https://php.net) 8.1 or above
 - A C compiler such as [GCC](https://gcc.gnu.org/), [Clang](https://clang.llvm.org/), or [Visual C++](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
 - A Fortran compiler such as [GFortran](https://gcc.gnu.org/wiki/GFortran)
 - The PHP development package (source code and tooling)
@@ -43,12 +26,16 @@ $ pecl install tensor
 - [automake](https://www.gnu.org/software/automake/) 1.14 or later
 - Ubuntu build-essentials
 
+## Documentation
+
+API documentation can be found in the `docs` folder in the project root.
+
 ## Manually Compiling the Extension
 
 Clone the repository locally using [Git](https://git-scm.com/):
 
 ```sh
-$ git clone https://github.com/RubixML/Tensor
+$ git clone https://github.com/RubixML/Tensor-Ext
 ```
 
 Make sure you have all the necessary build tools installed such as a C compiler and make tools. For example, on an Ubuntu linux system you can enter the following on the command line to install the necessary dependencies.
@@ -70,13 +57,13 @@ $ sudo make install
 Finally, add the following line to your `php.ini` configuration to install the extension.
 
 ```
-extension=tensor.so
+extension=tensor_ext.so
 ```
 
 To confirm that the extension is loaded in PHP, you can run the following command.
 
 ```sh
-php -m | grep tensor
+php -m | grep tensor_ext
 ```
 
 ### Tip for Compiling on MacOS
@@ -90,12 +77,6 @@ export PKG_CONFIG_PATH="$(brew --prefix openblas)/lib/pkgconfig:$(brew --prefix 
 export PATH="$(brew --prefix gcc)/bin:$PATH"
 export FC=$(brew --prefix gcc)/bin/gfortran
 ```
-
-## Performance Comparison
-
-![Tensor Performance MNIST](https://raw.githubusercontent.com/RubixML/Tensor/master/docs/images/tensor-performance-mnist.png)
-
-![Tensor Performance Benchmarks](https://raw.githubusercontent.com/RubixML/Tensor/master/docs/images/tensor-performance-benchmarks.png)
 
 ## Contributing
 

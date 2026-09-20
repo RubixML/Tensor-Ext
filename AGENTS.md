@@ -1,29 +1,23 @@
 # AGENTS.md
 
-Guidance for AI coding agents contributing to **Tensor** — scientific computing for PHP. The project ships two things with a single, identical object-oriented API:
-
-- **A Composer library** (`rubix/tensor`) — pure PHP classes in `src/`.
-- **A PECL extension** — the same API re-implemented in Zephir + C, backed by OpenBLAS / LAPACKE, built from `ext/` and `package.xml`.
-
-> If both the library and the extension are installed and loaded, the **extension takes precedence**. The public surface of the two is meant to stay in lockstep.
+Guidance for AI coding agents contributing to **Tensor** — a scientific-computing extension for PHP. The repository houses a single PHP extension: an object-oriented API written in Zephir and backed by hand-written C (OpenBLAS / LAPACKE), built from `tensor/` (Zephir source), `ext/`, and `config.json`.
 
 ## Repository layout
 
 | Path | Purpose |
 | --- | --- |
-| `src/` | Library classes. `Tensor` interface plus `Vector`, `Matrix`, `ColumnVector`; `Decompositions/` (Cholesky, Eigen, LU, SVD), `Reductions/` (REF, RREF), `Exceptions/`, and `constants.php` (always auto-loaded). |
+| `tensor/` | Zephir source. `Tensor` interface plus `Vector`, `Matrix`, `ColumnVector`; `Decompositions/` (Cholesky, Eigen, LU, SVD), `Reductions/` (REF, RREF), `Exceptions/`, and `settings.zep`. Compiled into C by `composer compile`. |
 | `docs/` | Project documentation. |
 | `tests/` | PHPUnit test suite. One `*Test.php` per class. |
 | `benchmarks/` | phpbench suites, organized per functional area. |
 | `optimizers/` | Zephir function-call optimizers, one `Tensor*Optimizer.php` per operation. |
 | `ext/` | Generated Zephir C code + hand-written C under `ext/include/*.c`. Do not hand-edit generated files. |
 | `config.json` | Zephir build config (namespace, version, `extra-libs`, optimization & warning flags). |
-| `package.xml` | PECL package descriptor (name, version, source list). |
 | `build-ext` | PHP script that patches `ext/config.m4` before compile (Alpine/musl + backtrace_symbols `execinfo` handling). |
 
 ## Environment
 
-- PHP **8.0+** (CI matrix is 8.0 → 8.3). `composer.json` still declares `>=7.4`.
+- PHP **8.1+** (CI matrix is 8.1 → 8.5). `composer.json` declares `>=1.0`.
 - Dev tooling is installed as Composer dev dependencies (PHPStan, php-cs-fixer, phpunit, phpbench, Zephir).
 - Compiling the extension additionally needs a C compiler, GFortran, `phpize`, OpenBLAS dev headers, LAPACKE, and re2c (see README for per-OS install commands).
 
@@ -35,12 +29,12 @@ All are Composer scripts (see `composer.json`):
 | --- | --- |
 | Install deps | `composer install` |
 | Validate manifest | `composer validate` |
-| Static analysis | `composer analyze` (PHPStan level 8 over `src`, `tests`, `benchmarks`) |
-| Run tests | `composer test` (PHPUnit, test suite `Base`) |
+| Static analysis | `composer analyze` (PHPStan level 8 over `tests`, `benchmarks`) |
+| Run tests | `composer test` (PHPUnit, test suite `Base`; requires the extension to be loaded) |
 | Check style | `composer check` (php-cs-fixer, dry-run; sets `PHP_CS_FIXER_IGNORE_ENV=1`) |
 | Fix style | `composer fix` |
 | Full build | `composer build` = validate → install → analyze → test → check |
-| Benchmarks | `composer benchmark` |
+| Benchmarks | `composer benchmark` (requires the extension to be loaded) |
 | Compile extension | `composer compile` = zephir generate → `php build-ext` → zephir compile |
 | Clean generated extension | `composer clean` (zephir fullclean) |
 
@@ -57,7 +51,6 @@ composer fix
 
 ## Conventions to follow
 
-- **No anonymous classes or anonymous functions (closures).** The library relies on `serialize()`/`unserialize()` for persistence, and PHP cannot un-nameable anonymous code. Always introduce a named class or named function instead.
 - **Coding style** is governed by `.php-cs-fixer.dist.php` (extends `@PSR2`). Highlights: single quotes, short array syntax, compact nullable type hints, pre-increment, ordered class elements, trimmed/multi-line phpdoc, `echo` over `print`. Rather than memorize the rule set, run `composer fix`.
 - **Static analysis is required.** New code must pass PHPStan level 8 (`composer analyze`). Keep types accurate; the codebase uses docblock generics like `list<float>` and `int<0,max>`.
 - **Testing guidance** (from `CONTRIBUTING.md`):
@@ -70,11 +63,11 @@ composer fix
 - **Math is float-only.** Values stored/computed as `float`; don't introduce integer-only branches. When adding a new operation, mirror it across the `Tensor` sub-interfaces (`Arithmetic`, `Comparable`, `Algebraic`, `Trigonometric`, `Statistical`, `Special`).
 - Optimizations should be accompanied by a before and after benchmark to measure and prove the performance gain.
 
-## Keeping library and extension in sync
+## Adding or changing an operation
 
-Every public method a new `src/` class adds typically has a counterpart in the Zephir extension. When you add or change an operation at the API level:
+Every public method a new `tensor/` class adds typically routes into the C backing it. When you add or change an operation at the API level:
 
-1. Update the PHP class in `src/`.
+1. Update the Zephir class in `tensor/`.
 2. Add/adjust the matching `optimizers/Tensor<Op>Optimizer.php` if it is a callable that the extension should route into C.
 3. Ensure the underlying C implementation exists under `ext/include/*.c` and is linked (already wired in `config.json` `extra-sources`).
 4. Bump the version in both `config.json` and `package.xml` if this is a released change, and record it in `CHANGELOG.md`.
@@ -83,10 +76,13 @@ Do **not** hand-edit the generated C in `ext/` (files like `*.dep`, `*.lo`, `*.o
 
 ## Working verification paths
 
-In some environments, you may need to override the configured extensions to test different paths.
+To run the tests against the locally compiled extension, load the built shared object. For example:
 
-- Library path, ext-free: php -n -d extension=dom -d extension=mbstring -d extension=tokenizer -d extension=xml -d extension=xmlwriter -d extension=xmlreader vendor/bin/phpunit ...
-- Extension path, local build: php -n -d extension=$PWD/ext/modules/tensor.so vendor/bin/phpunit ...
+```sh
+php -n -d extension=$PWD/ext/modules/tensor.so vendor/bin/phpunit ...
+```
+
+If a system-installed `tensor` extension is already enabled, you can rely on it instead of building locally.
 
 ## Notes for agents
 

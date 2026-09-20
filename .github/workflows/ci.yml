@@ -1,27 +1,77 @@
-name: "Code Checks"
+name: Code Checks
 
-on: [push, pull_request]
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ci.*"
+      - "ext/**"
+      - "tests/**"
+  push:
+    branches:
+      - "**"
+    paths:
+      - ".github/workflows/ci.*"
+      - "ext/**"
+      - "tests/**"
+    tags-ignore:
+      - "**"
 
 jobs:
-  build:
-    name: PHP ${{ matrix.php-versions }} on ${{ matrix.operating-system }}
-    runs-on: ${{ matrix.operating-system }}
+  compile:
     strategy:
       matrix:
-        operating-system: [ubuntu-latest, macos-latest]
-        php-versions: ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5']
-
+        image:
+          - php:8.1-cli
+          - php:8.2-cli
+          - php:8.3-cli
+          - php:8.4-cli
+          - php:8.5-cli
+          
+    name: Image ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-versions }}
-          tools: pecl
-          extensions: fileinfo
-          ini-values: memory_limit=-1    
+      - name: Install system dependencies
+        run: |
+          apt-get update -q
+          apt-get install -qy gfortran liblapack-dev libopenblas-dev liblapacke-dev unzip
+
+      - name: Install PIE
+        run: |
+          curl -fL --output /tmp/pie.phar https://github.com/php/pie/releases/latest/download/pie.phar
+          mv /tmp/pie.phar /usr/local/bin/pie
+          chmod +x /usr/local/bin/pie
+
+      - name: Add extension as path repository
+        run: pie repository:add path .
+
+      - name: Build extension
+        run: pie install rubix/tensor_ext:*@dev
+
+      - name: Enable PHP extension
+        run: docker-php-ext-enable tensor_ext
+
+      - name: Check for PHP startup warnings
+        run: |
+          php -d display_errors=stderr -d display_startup_errors=1 -d error_reporting=-1 -r ';' 2>/tmp/php-startup-warnings
+          if [ -s /tmp/php-startup-warnings ]; then
+            echo 'The PHP extension was successfully installed, but PHP raised these warnings:' >&2
+            cat /tmp/php-startup-warnings >&2
+            exit 1
+          fi
+          echo "PHP didn't raise any warnings at startup."
+
+      - name: Inspect PHP extension
+        run: php --ri tensor_ext
+
+      - name: Install Composer
+        run: |
+          curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php
+          php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          rm /tmp/composer-setup.php
 
       - name: Validate composer.json
         run: composer validate
@@ -32,7 +82,7 @@ jobs:
       - name: Static Analysis
         run: composer analyze
 
-      - name: Run Unit Tests
+      - name: Unit Tests
         run: composer test
 
       - name: Check Coding Style

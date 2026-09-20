@@ -1,9 +1,12 @@
 # Change Log
 
+- 3.1.1
+    - Just triggering the first Packagist release
+
 - 3.1.0
-    - Implemented the singular value decomposition (SVD) in the pure-PHP library
-    - Implemented the Moore-Penrose pseudoinverse in the pure-PHP library via SVD
-    - Implemented the eigendecomposition in the pure-PHP library
+    - Implemented the singular value decomposition (SVD) in the extension
+    - Implemented the Moore-Penrose pseudoinverse in the extension via SVD
+    - Implemented the eigendecomposition in the extension
 
 - 3.0.11
     - Update to Zephir 1.5.0

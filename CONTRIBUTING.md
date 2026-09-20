@@ -62,13 +62,9 @@ To run the automatic style fixer:
 $ composer fix
 ```
 
-### Anonymous Classes and Functions
-
-Due to a limitation in PHP that requires objects and functions to be named in order to be unserialized and since the library relies on serialization for persistence, we do not use anonymous classes or functions in our codebase. Instead, create a named class or function.
-
 ## Benchmarks
 
-Performance can be critical for some machine learning projects. To ensure that our users have the best experience, we benchmark every learner and use the information as a baseline to make optimizations. When contributing a new learner or transformer please include a benchmark.
+Performance can be critical for scientific computing. To ensure that our users have the best experience, we benchmark every operation and use the information as a baseline to make optimizations. When contributing a new operation please include a benchmark.
 
 To run the benchmarking suite:
 
@@ -78,7 +74,7 @@ $ composer benchmark
 
 ## Extension Development
 
-Every part of Tensor's object oriented API is duplicated in the accompanying PHP extension. This allows users to easily adopt the library and then add the extension later when they need the extra performance. The extension API code is written in [Zephir](https://zephir-lang.com) and the underlying optimizations are written in C. This allows us to take advantage of high-level language features while at the same time delivering high performance. We set up two Composer commands for your development environment that handle compiling both the Zephir and C code for you. For a more detailed setup you can consult the Zephir [documentation](https://docs.zephir-lang.com/0.12/en/installation).
+Tensor's object oriented API is implemented in a PHP extension. The API code is written in [Zephir](https://zephir-lang.com) and the underlying optimizations are written in C. This lets us take advantage of high-level language features while delivering high performance. Composer commands in the development environment handle compiling both the Zephir and C code for you. For a more detailed setup you can consult the Zephir [documentation](https://docs.zephir-lang.com/0.12/en/installation).
 
 To compile the extension:
 
