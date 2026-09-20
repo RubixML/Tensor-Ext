@@ -596,6 +596,42 @@ class VectorTest extends TestCase
     }
 
     /**
+     * Regression test for the out-of-bounds read in the final output slot
+     * reached when an output index equals the size of A (na), i.e. when the
+     * size of A is a multiple of the stride and nb >= 2.
+     *
+     * @test
+     */
+    public function convolveFullReadsNoOutOfBounds() : void
+    {
+        $a = Vector::quick([5.0, 2.0, 7.0, 1.0, 9.0, 3.0]);
+
+        $b = Vector::quick([1.0, 2.0, 3.0]);
+
+        $c = $a->convolve($b, 1);
+
+        $expected = Vector::quick([5.0, 12.0, 26.0, 21.0, 32.0, 24.0, 33.0, 9.0]);
+
+        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function convolveStrideTwo() : void
+    {
+        $a = Vector::quick([5.0, 2.0, 7.0, 1.0, 9.0, 3.0]);
+
+        $b = Vector::quick([1.0, 2.0, 3.0]);
+
+        $c = $a->convolve($b, 2);
+
+        $expected = Vector::quick([5.0, 26.0, 32.0, 33.0]);
+
+        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+    }
+
+    /**
      * @test
      * @dataProvider multiplyProvider
      *

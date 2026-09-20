@@ -1072,8 +1072,8 @@ class Matrix implements Tensor
                 return this->subtractScalar(b);
         }
 
-        throw new InvalidArgumentException("Cannot multiply"
-            . " matrix by the given input.");
+        throw new InvalidArgumentException("Cannot subtract"
+            . " matrix with the given input.");
     }
 
     /**

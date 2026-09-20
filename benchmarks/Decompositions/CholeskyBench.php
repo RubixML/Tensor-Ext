@@ -21,7 +21,6 @@ class CholeskyBench
     }
 
     /**
-     * @Skip
      * @Subject
      * @Iterations(5)
      * @OutputTimeUnit("seconds", precision=3)

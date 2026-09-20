@@ -3067,7 +3067,7 @@ PHP_METHOD(Tensor_Matrix, subtract)
 	ZEPHIR_INIT_VAR(&_2);
 	object_init_ex(&_2, tensor_exceptions_invalidargumentexception_ce);
 	ZEPHIR_INIT_VAR(&_3);
-	ZEPHIR_CONCAT_SS(&_3, "Cannot multiply", " matrix by the given input.");
+	ZEPHIR_CONCAT_SS(&_3, "Cannot subtract", " matrix with the given input.");
 	ZEPHIR_CALL_METHOD(NULL, &_2, "__construct", NULL, 3, &_3);
 	zephir_check_call_status();
 	zephir_throw_exception_debug(&_2, "tensor/matrix.zep", 1076);

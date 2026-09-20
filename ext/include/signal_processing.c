@@ -40,11 +40,11 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
         vb[i] = zephir_get_doubleval(zend_hash_index_find(ab, i));
     }
 
-    array_init_size(&c, nc / s);
+    array_init_size(&c, (nc + s - 1) / s);
 
     for (i = 0; i < nc; i += s) {
         jmin = i >= nb - 1 ? i - (nb - 1) : 0;
-        jmax = i <= na ? i : na - 1;
+        jmax = i < na ? i : na - 1;
 
         sigma = 0.0;
 
@@ -109,10 +109,10 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride)
     unsigned int p = mb / 2;
     unsigned int q = nb / 2;
 
-    array_init_size(&c, ma / s);
+    array_init_size(&c, (ma + s - 1) / s);
 
     for (i = 0; i < ma; i += s) {
-        array_init_size(&rowC, na / s);
+        array_init_size(&rowC, (na + s - 1) / s);
 
         for (j = 0; j < na; j += s) {   
             sigma = 0.0;

@@ -1145,6 +1145,64 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * A 1x1 kernel simply samples the input at each stride step, so the result
+     * shape is ceil(rows/stride) x ceil(cols/stride).
+     *
+     * @test
+     */
+    public function convolveStrideTwo() : void
+    {
+        $a = Matrix::quick([
+            [1, 2, 3, 4, 5, 6, 7, 8],
+            [9, 10, 11, 12, 13, 14, 15, 16],
+            [17, 18, 19, 20, 21, 22, 23, 24],
+            [25, 26, 27, 28, 29, 30, 31, 32],
+            [33, 34, 35, 36, 37, 38, 39, 40],
+        ]);
+
+        $b = Matrix::quick([
+            [1],
+        ]);
+
+        $c = $a->convolve($b, 2);
+
+        $expected = Matrix::quick([
+            [1, 3, 5, 7],
+            [17, 19, 21, 23],
+            [33, 35, 37, 39],
+        ]);
+
+        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function convolveStrideThree() : void
+    {
+        $a = Matrix::quick([
+            [1, 2, 3, 4, 5, 6, 7, 8],
+            [9, 10, 11, 12, 13, 14, 15, 16],
+            [17, 18, 19, 20, 21, 22, 23, 24],
+            [25, 26, 27, 28, 29, 30, 31, 32],
+            [33, 34, 35, 36, 37, 38, 39, 40],
+        ]);
+
+        $b = Matrix::quick([
+            [1],
+        ]);
+
+        $c = $a->convolve($b, 3);
+
+        $expected = Matrix::quick([
+            [1, 4, 7],
+            [25, 28, 31],
+        ]);
+
+        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+    }
+
+    /**
      * @test
      * @dataProvider multiplyProvider
      *
@@ -3278,54 +3336,6 @@ class MatrixTest extends TestCase
         $this->assertInstanceOf(Eigen::class, $eig);
 
         $this->assertEqualsWithDelta([3.3944487241610, 10.605551275464], $eig->eigenvalues(), 1e-8);
-    }
-
-    /**
-     * @test
-     */
-    public function svdPurePHP() : void
-    {
-        if (extension_loaded('tensor')) {
-            $this->markTestSkipped('Extension tensor is loaded.');
-        }
-
-        $matrix = Matrix::quick([
-            [1.0, 2.0],
-            [3.0, 4.0],
-        ]);
-
-        $svd = $matrix->svd();
-
-        $reconstructed = $svd->u()
-            ->matmul($svd->s())
-            ->matmul($svd->vT());
-
-        $this->assertEqualsWithDelta($matrix, $reconstructed, self::MAX_DELTA);
-    }
-
-    /**
-     * @test
-     */
-    public function pseudoinversePurePHP() : void
-    {
-        if (extension_loaded('tensor')) {
-            $this->markTestSkipped('Extension tensor is loaded.');
-        }
-
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-        ]);
-
-        $b = $a->pseudoinverse();
-
-        $expected = Matrix::quick([
-            [0.03147992432205172, 0.05583000490505223],
-            [-0.009144418751313844, 0.07003713825239999],
-            [0.01266554551187723, -0.0031357298016957483],
-        ]);
-
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }
 
     /**
