@@ -111,7 +111,7 @@ PHP_METHOD(Tensor_Reductions_Rref, reduce)
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_3, &_2, "a", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&_4, &_3, "asarray", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_4, &_3, "asArray", NULL, 0);
 	zephir_check_call_status();
 	zephir_get_arrval(&_5, &_4);
 	ZEPHIR_CPY_WRT(&b, &_5);

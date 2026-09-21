@@ -33,10 +33,7 @@
         "constant-folding": true,
         "static-constant-class-folding": true,
         "call-gatherer-pass": true,
-        "check-invalid-reads": false,
-        "private-internal-methods": false,
-        "public-internal-methods": false,
-        "public-internal-functions": true
+        "check-invalid-reads": false
     },
     "warnings": {
         "unused-variable": true,
