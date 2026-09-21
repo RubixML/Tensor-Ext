@@ -370,13 +370,28 @@ class Matrix implements Tensor
     }
 
     /**
-     * @param array[] a
+     * @param array[]|TensorBuffer[] a
      * @param bool validate
      * @throws \Tensor\Exceptions\InvalidArgumentException
      */
-    public function __construct(array a, const bool validate = true)
+    public function __construct(var a, const bool validate = true)
     {
         var i, rowA, valueA;
+
+        /* Transitional: rows may be given as TensorBuffer objects (internal
+         * callers build them from buffer operations). Materialise them so the
+         * array-backed storage below can consume them. Removed in the buffer
+         * storage phase which slices the backing buffer directly. */
+        if typeof a == "array" {
+            for i, rowA in a {
+                if typeof rowA == "object" && rowA instanceof TensorBuffer {
+                    let a[i] = rowA->toArray();
+                }
+            }
+        } else {
+            throw new InvalidArgumentException("Matrix requires an"
+                . " array of arrays.");
+        }
 
         int m = count(a);
         int n = count(current(a) ?: []);
@@ -526,6 +541,26 @@ class Matrix implements Tensor
     public function asArray() -> array
     {
         return this->a;
+    }
+
+    /**
+     * Return each row of the matrix as a TensorBuffer.
+     *
+     * @return \Tensor\TensorBuffer[]
+     */
+    public function asRowBuffers() -> array
+    {
+        var row, buffer;
+
+        array b = [];
+
+        for row in this->a {
+            let buffer = tensor_buffer_from_array(row);
+
+            let b[] = new TensorBuffer(<Buffer> buffer);
+        }
+
+        return b;
     }
 
     /**

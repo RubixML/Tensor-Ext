@@ -4,9 +4,12 @@
 
 #include <php.h>
 #include <math.h>
+#include <ext/spl/spl_exceptions.h>
 #include <cblas.h>
 #include <lapacke.h>
 #include "kernel/operators.h"
+#include "kernel/buffer.h"
+#include "include/buffer.h"
 
 /**
  * Matrix-matrix multiplication i.e. linear transformation of matrices A and B.
@@ -78,20 +81,30 @@ void tensor_matmul(zval * return_value, zval * a, zval * b)
  */
 void tensor_dot(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
+	zend_long i;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
 
-    unsigned int n = zend_array_count(aa);
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
 
-    double sigma = 0.0;
+	if (UNEXPECTED(na != nb)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Input buffers must be the same length."));
+		return;
+	}
 
-    for (i = 0; i < n; ++i) {
-        sigma += zephir_get_doubleval(zend_hash_index_find(aa, i)) * zephir_get_doubleval(zend_hash_index_find(ab, i));
-    }
+	double sigma = 0.0;
 
-    RETVAL_DOUBLE(sigma);
+	for (i = 0; i < na; ++i) {
+		sigma += va[i] * vb[i];
+	}
+
+	RETVAL_DOUBLE(sigma);
 }
 
 /**

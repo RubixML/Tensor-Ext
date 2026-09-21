@@ -37,6 +37,17 @@ class ColumnVector extends Vector
     }
 
     /**
+     * Build a column vector from a TensorBuffer object.
+     *
+     * @param \Tensor\TensorBuffer a
+     * @return self
+     */
+    public static function fromTensorBuffer(<TensorBuffer> a)
+    {
+        return new self(a, false);
+    }
+
+    /**
      * Return the number of rows in the vector.
      *
      * @return int
@@ -63,7 +74,7 @@ class ColumnVector extends Vector
      */
     public function transpose()
     {
-        return Vector::quick(this->a);
+        return Vector::fromTensorBuffer(this->a);
     }
 
     /**
@@ -98,7 +109,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -133,7 +144,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -168,7 +179,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -203,7 +214,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -238,7 +249,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -273,7 +284,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -308,7 +319,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -343,7 +354,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -378,7 +389,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -413,7 +424,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -448,7 +459,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 
@@ -483,7 +494,7 @@ class ColumnVector extends Vector
         array rowC = [];
 
         for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+            let valueA = this->a->get(i);
 
             let rowC = [];
 

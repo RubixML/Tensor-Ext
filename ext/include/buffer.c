@@ -9,10 +9,113 @@
 #include "kernel/buffer.h"
 #include "kernel/exception.h"
 #include "kernel/operators.h"
+#include "include/buffer.h"
 
 #ifdef ZEPHIR_BUFFER_ENABLED
 
 zend_class_entry * tensor_buffer_ce;
+
+/**
+ * Allocate a new `Tensor\TensorBuffer` wrapping a fresh zero-filled double
+ * buffer of `len` elements (see include/buffer.h).
+ */
+int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
+{
+	if (UNEXPECTED(zephir_buffer_create(buffer, len, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
+		ZVAL_UNDEF(buffer);
+		return FAILURE;
+	}
+
+	object_init_ex(ret, tensor_tensorbuffer_ce);
+
+	/* zend_update_property() sets the engine's fake scope to the owner class
+	 * so protected property writes from C pass the PHP 8.4 access check. */
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "buffer", sizeof("buffer") - 1, buffer);
+
+	if (UNEXPECTED(EG(exception))) {
+		zval_ptr_dtor(ret);
+		ZVAL_UNDEF(ret);
+		zval_ptr_dtor(buffer);
+		ZVAL_UNDEF(buffer);
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+/**
+ * Build a `Tensor\Buffer` object from a PHP array of values, casting every
+ * element to a double (see include/buffer.h).
+ */
+void tensor_buffer_from_array(zval * ret, zval * arr)
+{
+	if (UNEXPECTED(zephir_buffer_create_from_array(ret, arr, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
+		ZVAL_NULL(ret);
+	}
+}
+
+/**
+ * Unwrap the double buffer hidden inside a `Tensor\TensorBuffer` object
+ * (see include/buffer.h).
+ */
+double * tensor_tensorbuffer_doubles(zval * obj, zend_long * len, int * success)
+{
+	zval rv;
+
+	ZVAL_UNDEF(&rv);
+
+	if (success != NULL) {
+		*success = 0;
+	}
+
+	if (len != NULL) {
+		*len = 0;
+	}
+
+	if (UNEXPECTED(Z_TYPE_P(obj) != IS_OBJECT || Z_OBJCE_P(obj) != tensor_tensorbuffer_ce)) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Argument must be a Tensor\\TensorBuffer object."));
+		return NULL;
+	}
+
+	zval *prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "buffer", sizeof("buffer") - 1, 1, &rv);
+
+	if (prop != NULL && prop != &rv) {
+		ZVAL_COPY(&rv, prop);
+	}
+
+	if (UNEXPECTED(!zephir_is_buffer(&rv))) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Argument is not wrapping a Buffer object."));
+		goto cleanup;
+	}
+
+	if (UNEXPECTED(zephir_buffer_kind(&rv) != ZEPHIR_BUFFER_DOUBLE)) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Argument must wrap a buffer of type double."));
+		goto cleanup;
+	}
+
+	zend_long n = zephir_buffer_len(&rv);
+	double * ptr = zephir_buffer_doubles(&rv);
+
+	zval_ptr_dtor(&rv);
+
+	if (len != NULL) {
+		*len = n;
+	}
+
+	if (success != NULL) {
+		*success = 1;
+	}
+
+	return ptr;
+
+cleanup:
+	zval_ptr_dtor(&rv);
+
+	return NULL;
+}
 
 static int tensor_double_cmp(const void * a, const void * b)
 {

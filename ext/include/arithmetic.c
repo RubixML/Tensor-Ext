@@ -3,272 +3,386 @@
 #endif
 
 #include <php.h>
+#include <math.h>
+#include <ext/spl/spl_exceptions.h>
 #include "kernel/operators.h"
+#include "kernel/buffer.h"
+#include "include/buffer.h"
 
 void tensor_multiply(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double product;
+	zend_long i;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
+
+	if (UNEXPECTED(na != nb)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Input buffers must be the same length."));
+		return;
+	}
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    unsigned int n = zend_array_count(aa);
+	double * vc = zephir_buffer_doubles(&c);
 
-	array_init_size(&c, n);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] * vb[i];
+	}
 
-    for (i = 0; i < n; ++i) {
-        product = zephir_get_doubleval(zend_hash_index_find(aa, i)) * zephir_get_doubleval(zend_hash_index_find(ab, i));
-
-	    add_next_index_double(&c, product);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_divide(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double quotient;
+	zend_long i;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
+
+	if (UNEXPECTED(na != nb)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Input buffers must be the same length."));
+		return;
+	}
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    unsigned int n = zend_array_count(aa);
+	double * vc = zephir_buffer_doubles(&c);
 
-	array_init_size(&c, n);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] / vb[i];
+	}
 
-    for (i = 0; i < n; ++i) {
-        quotient = zephir_get_doubleval(zend_hash_index_find(aa, i)) / zephir_get_doubleval(zend_hash_index_find(ab, i));
-
-	    add_next_index_double(&c, quotient);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_add(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double sum;
+	zend_long i;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
+
+	if (UNEXPECTED(na != nb)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Input buffers must be the same length."));
+		return;
+	}
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    unsigned int n = zend_array_count(aa);
+	double * vc = zephir_buffer_doubles(&c);
 
-	array_init_size(&c, n);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] + vb[i];
+	}
 
-    for (i = 0; i < n; ++i) {
-        sum = zephir_get_doubleval(zend_hash_index_find(aa, i)) + zephir_get_doubleval(zend_hash_index_find(ab, i));
-
-	    add_next_index_double(&c, sum);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_subtract(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double difference;
+	zend_long i;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
+
+	if (UNEXPECTED(na != nb)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Input buffers must be the same length."));
+		return;
+	}
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    unsigned int n = zend_array_count(aa);
+	double * vc = zephir_buffer_doubles(&c);
 
-	array_init_size(&c, n);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] - vb[i];
+	}
 
-    for (i = 0; i < n; ++i) {
-        difference = zephir_get_doubleval(zend_hash_index_find(aa, i)) - zephir_get_doubleval(zend_hash_index_find(ab, i));
-
-	    add_next_index_double(&c, difference);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_pow(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double power;
+	zend_long i;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
+
+	if (UNEXPECTED(na != nb)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Input buffers must be the same length."));
+		return;
+	}
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    unsigned int n = zend_array_count(aa);
+	double * vc = zephir_buffer_doubles(&c);
 
-	array_init_size(&c, n);
+	for (i = 0; i < na; ++i) {
+		vc[i] = pow(va[i], vb[i]);
+	}
 
-    for (i = 0; i < n; ++i) {
-        power = pow(zephir_get_doubleval(zend_hash_index_find(aa, i)), zephir_get_doubleval(zend_hash_index_find(ab, i)));
-
-	    add_next_index_double(&c, power);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_mod(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    zval modulus;
+	zend_long i;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
+
+	if (UNEXPECTED(na != nb)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Input buffers must be the same length."));
+		return;
+	}
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    unsigned int n = zend_array_count(aa);
+	double * vc = zephir_buffer_doubles(&c);
 
-	array_init_size(&c, n);
+	for (i = 0; i < na; ++i) {
+		vc[i] = fmod(va[i], vb[i]);
+	}
 
-    for (i = 0; i < n; ++i) {
-        mod_function(&modulus, zend_hash_index_find(aa, i), zend_hash_index_find(ab, i));
-
-	    add_next_index_zval(&c, &modulus);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_multiply_scalar(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double product;
+	zend_long i;
+	zend_long na = 0;
+	int ok_a = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+
+	if (UNEXPECTED(!ok_a)) {
+		return;
+	}
+
+	double ab = zephir_get_doubleval(b);
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    double ab = zephir_get_doubleval(b);
+	double * vc = zephir_buffer_doubles(&c);
 
-    unsigned int n = zend_array_count(aa);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] * ab;
+	}
 
-	array_init_size(&c, n);
-
-    for (i = 0; i < n; ++i) {
-        product = zephir_get_doubleval(zend_hash_index_find(aa, i)) * ab;
-
-	    add_next_index_double(&c, product);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_divide_scalar(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double quotient;
+	zend_long i;
+	zend_long na = 0;
+	int ok_a = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+
+	if (UNEXPECTED(!ok_a)) {
+		return;
+	}
+
+	double ab = zephir_get_doubleval(b);
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    double ab = zephir_get_doubleval(b);
+	double * vc = zephir_buffer_doubles(&c);
 
-    unsigned int n = zend_array_count(aa);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] / ab;
+	}
 
-	array_init_size(&c, n);
-
-    for (i = 0; i < n; ++i) {
-        quotient = zephir_get_doubleval(zend_hash_index_find(aa, i)) / ab;
-
-	    add_next_index_double(&c, quotient);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_add_scalar(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double sum;
+	zend_long i;
+	zend_long na = 0;
+	int ok_a = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+
+	if (UNEXPECTED(!ok_a)) {
+		return;
+	}
+
+	double ab = zephir_get_doubleval(b);
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    double ab = zephir_get_doubleval(b);
+	double * vc = zephir_buffer_doubles(&c);
 
-    unsigned int n = zend_array_count(aa);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] + ab;
+	}
 
-	array_init_size(&c, n);
-
-    for (i = 0; i < n; ++i) {
-        sum = zephir_get_doubleval(zend_hash_index_find(aa, i)) + ab;
-
-	    add_next_index_double(&c, sum);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_subtract_scalar(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double difference;
+	zend_long i;
+	zend_long na = 0;
+	int ok_a = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+
+	if (UNEXPECTED(!ok_a)) {
+		return;
+	}
+
+	double ab = zephir_get_doubleval(b);
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    double ab = zephir_get_doubleval(b);
+	double * vc = zephir_buffer_doubles(&c);
 
-    unsigned int n = zend_array_count(aa);
+	for (i = 0; i < na; ++i) {
+		vc[i] = va[i] - ab;
+	}
 
-	array_init_size(&c, n);
-
-    for (i = 0; i < n; ++i) {
-        difference = zephir_get_doubleval(zend_hash_index_find(aa, i)) - ab;
-
-	    add_next_index_double(&c, difference);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_pow_scalar(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    double power;
+	zend_long i;
+	zend_long na = 0;
+	int ok_a = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+
+	if (UNEXPECTED(!ok_a)) {
+		return;
+	}
+
+	double ab = zephir_get_doubleval(b);
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    double ab = zephir_get_doubleval(b);
+	double * vc = zephir_buffer_doubles(&c);
 
-    unsigned int n = zend_array_count(aa);
+	for (i = 0; i < na; ++i) {
+		vc[i] = pow(va[i], ab);
+	}
 
-	array_init_size(&c, n);
-
-    for (i = 0; i < n; ++i) {
-        power = pow(zephir_get_doubleval(zend_hash_index_find(aa, i)), ab);
-
-	    add_next_index_double(&c, power);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }
 
 void tensor_mod_scalar(zval * return_value, zval * a, zval * b)
 {
-    unsigned int i;
-    zval modulus;
+	zend_long i;
+	zend_long na = 0;
+	int ok_a = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+
+	if (UNEXPECTED(!ok_a)) {
+		return;
+	}
+
+	double ab = zephir_get_doubleval(b);
+
 	zval c;
 
-    zend_array * aa = Z_ARR_P(a);
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+		return;
+	}
 
-    unsigned int n = zend_array_count(aa);
+	double * vc = zephir_buffer_doubles(&c);
 
-	array_init_size(&c, n);
+	for (i = 0; i < na; ++i) {
+		vc[i] = fmod(va[i], ab);
+	}
 
-    for (i = 0; i < n; ++i) {
-        mod_function(&modulus, zend_hash_index_find(aa, i), b);
-
-	    add_next_index_zval(&c, &modulus);
-    }
-
-    RETVAL_ARR(Z_ARR(c));
+	zval_ptr_dtor(&c);
 }

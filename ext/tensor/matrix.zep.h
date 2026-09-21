@@ -25,6 +25,7 @@ PHP_METHOD(Tensor_Matrix, rowAsVector);
 PHP_METHOD(Tensor_Matrix, columnAsVector);
 PHP_METHOD(Tensor_Matrix, diagonalAsVector);
 PHP_METHOD(Tensor_Matrix, asArray);
+PHP_METHOD(Tensor_Matrix, asRowBuffers);
 PHP_METHOD(Tensor_Matrix, asVectors);
 PHP_METHOD(Tensor_Matrix, asColumnVectors);
 PHP_METHOD(Tensor_Matrix, flatten);
@@ -210,7 +211,7 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_uniform, 0, 2, Tens
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_matrix___construct, 0, 0, 1)
-	ZEND_ARG_ARRAY_INFO(0, a, 0)
+	ZEND_ARG_INFO(0, a)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, validate, _IS_BOOL, 0, "true")
 ZEND_END_ARG_INFO()
 
@@ -244,6 +245,9 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_diagonalasvector, 0
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_matrix_asarray, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_matrix_asrowbuffers, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_matrix_asvectors, 0, 0, IS_ARRAY, 0)
@@ -749,6 +753,7 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, columnAsVector, arginfo_tensor_matrix_columnasvector, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, diagonalAsVector, arginfo_tensor_matrix_diagonalasvector, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, asArray, arginfo_tensor_matrix_asarray, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, asRowBuffers, arginfo_tensor_matrix_asrowbuffers, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, asVectors, arginfo_tensor_matrix_asvectors, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, asColumnVectors, arginfo_tensor_matrix_ascolumnvectors, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, flatten, arginfo_tensor_matrix_flatten, ZEND_ACC_PUBLIC)
