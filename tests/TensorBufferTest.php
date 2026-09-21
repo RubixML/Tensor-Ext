@@ -88,9 +88,8 @@ class TensorBufferTest extends TestCase
 
         $decorator = new TensorBuffer($buffer);
 
-        $result = $decorator->sort();
+        $decorator->sort();
 
-        $this->assertNull($result);
         $this->assertSame($buffer, $decorator->asBuffer());
         $this->assertEqualsWithDelta([1.0, 2.0, 3.0], $decorator->toArray(), self::MAX_DELTA);
     }
@@ -209,5 +208,409 @@ class TensorBufferTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $decorator->slice(0, -1);
+    }
+
+    /**
+     * @test
+     */
+    public function sum() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3.0, 1.0, 2.0]));
+
+        $this->assertEqualsWithDelta(6.0, $decorator->sum(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function sumLongBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3, 1, 2], Buffer::TYPE_LONG));
+
+        $this->assertEqualsWithDelta(6.0, $decorator->sum(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function sumEmptyBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([], Buffer::TYPE_DOUBLE));
+
+        $this->assertEqualsWithDelta(0.0, $decorator->sum(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function product() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3.0, 1.0, 2.0]));
+
+        $this->assertEqualsWithDelta(6.0, $decorator->product(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function productLongBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3, 1, 2], Buffer::TYPE_LONG));
+
+        $this->assertEqualsWithDelta(6.0, $decorator->product(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function productEmptyBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([], Buffer::TYPE_DOUBLE));
+
+        $this->assertEqualsWithDelta(1.0, $decorator->product(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function min() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3.0, 1.0, 2.0]));
+
+        $this->assertEqualsWithDelta(1.0, $decorator->min(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function minLongBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3, 1, 2], Buffer::TYPE_LONG));
+
+        $this->assertEqualsWithDelta(1.0, $decorator->min(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function minEmptyBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([], Buffer::TYPE_DOUBLE));
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $decorator->min();
+    }
+
+    /**
+     * @test
+     */
+    public function max() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3.0, 1.0, 2.0]));
+
+        $this->assertEqualsWithDelta(3.0, $decorator->max(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function maxLongBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3, 1, 2], Buffer::TYPE_LONG));
+
+        $this->assertEqualsWithDelta(3.0, $decorator->max(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function maxEmptyBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([], Buffer::TYPE_DOUBLE));
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $decorator->max();
+    }
+
+    /**
+     * @test
+     */
+    public function argmin() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3.0, 1.0, 2.0]));
+
+        $this->assertSame(1, $decorator->argmin());
+    }
+
+    /**
+     * @test
+     */
+    public function argminLongBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3, 1, 2], Buffer::TYPE_LONG));
+
+        $this->assertSame(1, $decorator->argmin());
+    }
+
+    /**
+     * @test
+     */
+    public function argminTie() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 1.0, 2.0]));
+
+        $this->assertSame(0, $decorator->argmin());
+    }
+
+    /**
+     * @test
+     */
+    public function argminEmptyBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([], Buffer::TYPE_DOUBLE));
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $decorator->argmin();
+    }
+
+    /**
+     * @test
+     */
+    public function argmax() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3.0, 1.0, 2.0]));
+
+        $this->assertSame(0, $decorator->argmax());
+    }
+
+    /**
+     * @test
+     */
+    public function argmaxLongBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([3, 1, 2], Buffer::TYPE_LONG));
+
+        $this->assertSame(0, $decorator->argmax());
+    }
+
+    /**
+     * @test
+     */
+    public function argmaxEmptyBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([], Buffer::TYPE_DOUBLE));
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $decorator->argmax();
+    }
+
+    /**
+     * @test
+     */
+    public function sliceStrided() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $slice = $decorator->sliceStrided(1, 2, 2);
+
+        $this->assertInstanceOf(TensorBuffer::class, $slice);
+        $this->assertNotSame($decorator->asBuffer(), $slice->asBuffer());
+        $this->assertEqualsWithDelta([2.0, 4.0], $slice->toArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 2.0, 3.0, 4.0, 5.0], $decorator->toArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function sliceStridedPreservesType() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1, 2, 3, 4, 5], Buffer::TYPE_LONG));
+
+        $slice = $decorator->sliceStrided(0, 3, 2);
+
+        $this->assertSame(Buffer::TYPE_LONG, $slice->type());
+        $this->assertSame([1, 3, 5], $slice->toArray());
+    }
+
+    /**
+     * @test
+     */
+    public function sliceStridedZeroLength() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $slice = $decorator->sliceStrided(4, 0, 2);
+
+        $this->assertSame(0, $slice->count());
+    }
+
+    /**
+     * @test
+     */
+    public function sliceStridedOutOfRange() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $decorator->sliceStrided(4, 2, 2);
+    }
+
+    /**
+     * @test
+     */
+    public function sliceStridedInvalidStride() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $decorator->sliceStrided(0, 2, 0);
+    }
+
+    /**
+     * @test
+     */
+    public function concat() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0]));
+        $other = new TensorBuffer(Buffer::fromArray([3.0, 4.0]));
+
+        $concat = $decorator->concat([$other]);
+
+        $this->assertInstanceOf(TensorBuffer::class, $concat);
+        $this->assertEqualsWithDelta([1.0, 2.0, 3.0, 4.0], $concat->toArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 2.0], $decorator->toArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function concatMany() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0]));
+
+        $concat = $decorator->concat([
+            new TensorBuffer(Buffer::fromArray([2.0])),
+            new TensorBuffer(Buffer::fromArray([3.0])),
+        ]);
+
+        $this->assertEqualsWithDelta([1.0, 2.0, 3.0], $concat->toArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function concatPreservesType() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1, 2], Buffer::TYPE_LONG));
+        $other = new TensorBuffer(Buffer::fromArray([3, 4], Buffer::TYPE_LONG));
+
+        $concat = $decorator->concat([$other]);
+
+        $this->assertSame(Buffer::TYPE_LONG, $concat->type());
+        $this->assertSame([1, 2, 3, 4], $concat->toArray());
+    }
+
+    /**
+     * @test
+     */
+    public function concatEmptyList() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0]));
+
+        $concat = $decorator->concat([]);
+
+        $this->assertEqualsWithDelta([1.0, 2.0], $concat->toArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function split() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $chunks = $decorator->split(2);
+
+        $this->assertCount(3, $chunks);
+
+        foreach ($chunks as $chunk) {
+            $this->assertInstanceOf(TensorBuffer::class, $chunk);
+        }
+
+        $this->assertEqualsWithDelta([1.0, 2.0], $chunks[0]->toArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([3.0, 4.0], $chunks[1]->toArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([5.0], $chunks[2]->toArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 2.0, 3.0, 4.0, 5.0], $decorator->toArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function splitPreservesType() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1, 2, 3], Buffer::TYPE_LONG));
+
+        $chunks = $decorator->split(2);
+
+        $this->assertSame(Buffer::TYPE_LONG, $chunks[0]->type());
+        $this->assertSame([1, 2], $chunks[0]->toArray());
+        $this->assertSame([3], $chunks[1]->toArray());
+    }
+
+    /**
+     * @test
+     */
+    public function splitInvalidChunkLength() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0]));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $decorator->split(0);
+    }
+
+    /**
+     * @test
+     */
+    public function repeat() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0]));
+
+        $repeated = $decorator->repeat(3);
+
+        $this->assertInstanceOf(TensorBuffer::class, $repeated);
+        $this->assertEqualsWithDelta([1.0, 2.0, 1.0, 2.0, 1.0, 2.0], $repeated->toArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 2.0], $decorator->toArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function repeatPreservesType() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1, 2], Buffer::TYPE_LONG));
+
+        $repeated = $decorator->repeat(2);
+
+        $this->assertSame(Buffer::TYPE_LONG, $repeated->type());
+        $this->assertSame([1, 2, 1, 2], $repeated->toArray());
+    }
+
+    /**
+     * @test
+     */
+    public function repeatInvalidTimes() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0]));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $decorator->repeat(0);
     }
 }

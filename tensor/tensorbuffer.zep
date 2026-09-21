@@ -122,4 +122,156 @@ class TensorBuffer
 
         return new TensorBuffer(<Buffer> b);
     }
+
+    /**
+     * Return the sum of the elements in the buffer.
+     *
+     * @return float
+     */
+    public function sum() -> float
+    {
+        return tensor_buffer_sum(this->buffer);
+    }
+
+    /**
+     * Return the product of the elements in the buffer.
+     *
+     * @return float
+     */
+    public function product() -> float
+    {
+        return tensor_buffer_product(this->buffer);
+    }
+
+    /**
+     * Return the minimum element in the buffer.
+     *
+     * @return float
+     */
+    public function min() -> float
+    {
+        return tensor_buffer_min(this->buffer);
+    }
+
+    /**
+     * Return the maximum element in the buffer.
+     *
+     * @return float
+     */
+    public function max() -> float
+    {
+        return tensor_buffer_max(this->buffer);
+    }
+
+    /**
+     * Return the index of the minimum element in the buffer.
+     *
+     * @return int
+     */
+    public function argmin() -> int
+    {
+        return tensor_buffer_argmin(this->buffer);
+    }
+
+    /**
+     * Return the index of the maximum element in the buffer.
+     *
+     * @return int
+     */
+    public function argmax() -> int
+    {
+        return tensor_buffer_argmax(this->buffer);
+    }
+
+    /**
+     * Return a slice of the buffer with a given stride as a new decorator.
+     *
+     * @param int offset
+     * @param int length
+     * @param int stride
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
+     */
+    public function sliceStrided(const int offset, const int length, const int stride) -> <TensorBuffer>
+    {
+        if unlikely offset < 0 || length < 0 || stride < 1
+            || (length > 0 && offset > this->buffer->count() - (length - 1) * stride - 1) {
+            throw new InvalidArgumentException("Offset, length, and"
+                . " stride must be within the bounds of the buffer.");
+        }
+
+        var b = tensor_buffer_slice_strided(this->buffer, offset, length, stride);
+
+        return new TensorBuffer(<Buffer> b);
+    }
+
+    /**
+     * Return a new decorator wrapping a new buffer containing the elements of
+     * this buffer concatenated with the given buffers.
+     *
+     * @param \Tensor\TensorBuffer[] buffers
+     * @return self
+     */
+    public function concat(const array buffers) -> <TensorBuffer>
+    {
+        var buffer;
+
+        array unwrapped = [];
+
+        for buffer in buffers {
+            let unwrapped[] = buffer->asBuffer();
+        }
+
+        var b = tensor_buffer_concat(this->buffer, unwrapped);
+
+        return new TensorBuffer(<Buffer> b);
+    }
+
+    /**
+     * Return an array of new decorators each wrapping a chunk of this buffer
+     * of the given length.
+     *
+     * @param int chunkLength
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return \Tensor\TensorBuffer[]
+     */
+    public function split(const int chunkLength) -> array
+    {
+        if unlikely chunkLength < 1 {
+            throw new InvalidArgumentException("Chunk length must be"
+                . " greater than 0, " . strval(chunkLength) . " given.");
+        }
+
+        var buffer;
+
+        var buffers = tensor_buffer_split(this->buffer, chunkLength);
+
+        array tensorBuffers = [];
+
+        for buffer in buffers {
+            let tensorBuffers[] = new TensorBuffer(<Buffer> buffer);
+        }
+
+        return tensorBuffers;
+    }
+
+    /**
+     * Return a new decorator wrapping a new buffer with the elements of this
+     * buffer repeated the given number of times.
+     *
+     * @param int times
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
+     */
+    public function repeat(const int times) -> <TensorBuffer>
+    {
+        if unlikely times < 1 {
+            throw new InvalidArgumentException("Times must be"
+                . " greater than 0, " . strval(times) . " given.");
+        }
+
+        var b = tensor_buffer_repeat(this->buffer, times);
+
+        return new TensorBuffer(<Buffer> b);
+    }
 }

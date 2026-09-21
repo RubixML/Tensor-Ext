@@ -62,7 +62,64 @@ Return a new decorator wrapping a new buffer of `$length` elements copied from `
 
 - **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$offset` or `$length` is negative, or the requested range exceeds the buffer size
 
+### `sum() : float`
+
+Return the sum of all elements in the buffer. An empty buffer sums to `0.0`.
+
+### `product() : float`
+
+Return the product of all elements in the buffer. An empty buffer products to `1.0`.
+
+### `min() : float`
+
+Return the minimum element in the buffer.
+
+- **Throws:** `InvalidArgumentException` if the buffer is empty
+
+### `max() : float`
+
+Return the maximum element in the buffer.
+
+- **Throws:** `InvalidArgumentException` if the buffer is empty
+
+### `argmin() : int`
+
+Return the index of the minimum element in the buffer. Ties resolve to the first occurrence.
+
+- **Throws:** `InvalidArgumentException` if the buffer is empty
+
+### `argmax() : int`
+
+Return the index of the maximum element in the buffer. Ties resolve to the first occurrence.
+
+- **Throws:** `InvalidArgumentException` if the buffer is empty
+
+### `sliceStrided(int $offset, int $length, int $stride) : TensorBuffer`
+
+Return a new decorator wrapping a new buffer of `$length` elements gathered at `$stride` intervals from `buffer[$offset]` — i.e. `buffer[$offset + i * $stride]` for `i` in `0..length - 1`. The source buffer is left unchanged. Supports gathering rows, columns, and diagonals from a flat matrix layout.
+
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$offset` or `$length` is negative, `$stride` is less than 1, or the requested range exceeds the buffer size
+
+### `concat(TensorBuffer[] $buffers) : TensorBuffer`
+
+Return a new decorator wrapping a new buffer containing a copy of this buffer followed by the contents of each buffer in `$buffers`, in order. The source buffers are left unchanged. Passing an empty list returns a copy of this buffer.
+
+- **Throws:** `InvalidArgumentException` if an element of `$buffers` is not a `TensorBuffer` of the same element type
+
+### `split(int $chunkLength) : TensorBuffer[]`
+
+Return an array of new decorators splitting this buffer into consecutive chunks of up to `$chunkLength` elements each. The final chunk may be shorter. The source buffer is left unchanged.
+
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$chunkLength` is less than 1
+
+### `repeat(int $times) : TensorBuffer`
+
+Return a new decorator wrapping a new buffer containing the elements of this buffer repeated `$times` times. The source buffer is left unchanged.
+
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$times` is less than 1
+
 ## Notes
 
-- `sort()` and `slice()` are implemented in C (`ext/include/buffer.c`) and route through this class's optimizer calls, operating directly on the buffer's raw pointer.
-- Both element kinds (`TYPE_DOUBLE` and `TYPE_LONG`) are supported; `slice()` preserves the source kind.
+- `sort()`, `slice()`, the reductions (`sum()`, `product()`, `min()`, `max()`, `argmin()`, `argmax()`), `sliceStrided()`, `concat()`, `split()`, and `repeat()` are implemented in C (`ext/include/buffer.c`) and route through this class's optimizer calls, operating directly on the buffer's raw pointer.
+- Both element kinds (`TYPE_DOUBLE` and `TYPE_LONG`) are supported; `slice()`, `sliceStrided()`, `concat()`, `split()`, and `repeat()` preserve the source kind.
+- Reductions and order statistics are float-only: even for a `TYPE_LONG` buffer, `sum()`, `product()`, `min()`, and `max()` return `float`.

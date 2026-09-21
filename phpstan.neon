@@ -3,5 +3,7 @@ parameters:
     paths:
         - 'tests'
         - 'benchmarks'
-    stubFiles:
-        - 'stubs/TensorBuffer.stub'
+    scanFiles:
+        - 'stubs/TensorBuffer.php'
+    bootstrapFiles:
+        - vendor/autoload.php

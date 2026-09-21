@@ -38,7 +38,7 @@ Tensor \
 | [Vector](Vector.md) | A one dimensional (rank 1) tensor with integer and/or floating point elements. |
 | [ColumnVector](ColumnVector.md) | A vertical one dimensional tensor; extends `Vector` with matrix-facing operations. |
 | [Matrix](Matrix.md) | A two dimensional (rank 2) tensor with integer and/or floating point elements. |
-| [TensorBuffer](TensorBuffer.md) | A decorator that wraps the kernel `Buffer` class and adds sorting and slicing. |
+| [TensorBuffer](TensorBuffer.md) | A decorator that wraps the kernel `Buffer` class and adds sorting, slicing, reductions, and structural operations. |
 
 ## Interfaces
 
