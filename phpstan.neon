@@ -3,3 +3,5 @@ parameters:
     paths:
         - 'tests'
         - 'benchmarks'
+    stubFiles:
+        - 'stubs/TensorBuffer.stub'

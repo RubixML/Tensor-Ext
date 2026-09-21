@@ -4,12 +4,13 @@
     "extension-name": "tensor_ext",
     "description": "Scientific computing for the PHP language.",
     "author": "The Rubix ML Community",
-    "version": "3.1.1",
+    "version": "3.2.0",
     "verbose": true,
     "extra-cflags": "-O3",
     "extra-libs": "-lopenblas -llapacke -lgfortran",
     "extra-sources": [
         "include/arithmetic.c",
+        "include/buffer.c",
         "include/comparison.c",
         "include/linear_algebra.c",
         "include/signal_processing.c",
@@ -20,6 +21,9 @@
             {
                 "include": "cblas.h",
                 "code": "openblas_set_num_threads(1)"
+            },
+            {
+                "code": "extern zend_class_entry *tensor_buffer_ce; extern zend_class_entry *zephir_buffer_ce; tensor_buffer_ce = zephir_buffer_ce;"
             }
         ]
     },

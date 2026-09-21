@@ -1,7 +1,9 @@
 # Change Log
 
-- 3.1.1
-    - Just triggering the first Packagist release
+- 3.2.0
+    - Added the `TensorBuffer` decorator class wrapping the kernel `Buffer`
+    - Added in-place `sort()` (ascending or descending) operating on the buffer's raw pointer
+    - Added `slice()` returning a new buffer without materialising a PHP array
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension

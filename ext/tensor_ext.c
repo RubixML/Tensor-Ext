@@ -47,6 +47,7 @@ zend_class_entry *tensor_matrix_ce;
 zend_class_entry *tensor_reductions_ref_ce;
 zend_class_entry *tensor_reductions_rref_ce;
 zend_class_entry *tensor_settings_ce;
+zend_class_entry *tensor_tensorbuffer_ce;
 
 ZEND_DECLARE_MODULE_GLOBALS(tensor_ext)
 
@@ -93,7 +94,9 @@ static PHP_MINIT_FUNCTION(tensor_ext)
 	ZEPHIR_INIT(Tensor_Reductions_Ref);
 	ZEPHIR_INIT(Tensor_Reductions_Rref);
 	ZEPHIR_INIT(Tensor_Settings);
+	ZEPHIR_INIT(Tensor_TensorBuffer);
 	openblas_set_num_threads(1);
+	extern zend_class_entry *tensor_buffer_ce; extern zend_class_entry *zephir_buffer_ce; tensor_buffer_ce = zephir_buffer_ce;;
 	return SUCCESS;
 }
 
