@@ -3,7 +3,6 @@ extern zend_class_entry *tensor_matrix_ce;
 
 ZEPHIR_INIT_CLASS(Tensor_Matrix);
 
-PHP_METHOD(Tensor_Matrix, fromTensorBuffers);
 PHP_METHOD(Tensor_Matrix, fromArray);
 PHP_METHOD(Tensor_Matrix, identity);
 PHP_METHOD(Tensor_Matrix, zeros);
@@ -160,10 +159,6 @@ PHP_METHOD(Tensor_Matrix, offsetExists);
 PHP_METHOD(Tensor_Matrix, offsetUnset);
 PHP_METHOD(Tensor_Matrix, offsetGet);
 PHP_METHOD(Tensor_Matrix, getIterator);
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_fromtensorbuffers, 0, 1, Tensor\\Matrix, 0)
-	ZEND_ARG_ARRAY_INFO(0, buffers, 0)
-ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_fromarray, 0, 1, Tensor\\Matrix, 0)
 	ZEND_ARG_ARRAY_INFO(0, a, 0)
@@ -749,7 +744,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_getiterator, 0, 0, 
 ZEND_END_ARG_INFO()
 
 ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
-	PHP_ME(Tensor_Matrix, fromTensorBuffers, arginfo_tensor_matrix_fromtensorbuffers, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, fromArray, arginfo_tensor_matrix_fromarray, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, identity, arginfo_tensor_matrix_identity, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, zeros, arginfo_tensor_matrix_zeros, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)

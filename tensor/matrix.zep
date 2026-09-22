@@ -44,38 +44,6 @@ class Matrix implements Tensor
     protected n;
 
     /**
-     * Build a matrix by concatenating an array of TensorBuffers (each buffer
-     * representing one row) into a single contiguous buffer.
-     *
-     * @param \Tensor\TensorBuffer[] buffers
-     * @return self
-     */
-    public static function fromTensorBuffers(const array buffers) -> <Matrix>
-    {
-        int rows = count(buffers);
-
-        if unlikely rows < 1 {
-            var zero = tensor_buffer_from_array([]);
-            return new self(new TensorBuffer(<Buffer> zero), 0, 0);
-        }
-
-        var nHat;
-
-        let nHat = buffers[0]->count();
-
-        var b;
-
-        if unlikely rows == 1 {
-            let b = buffers[0]->asBuffer();
-        } else {
-            let b = buffers[0]->concat(array_slice(buffers, 1));
-            let b = b->asBuffer();
-        }
-
-        return new self(new TensorBuffer(<Buffer> b), rows, nHat);
-    }
-
-    /**
      * Build a new matrix from a PHP array of rows, each row being a PHP array
      * of numeric elements.
      *
@@ -1852,7 +1820,7 @@ class Matrix implements Tensor
             let b[] = rowA;
         }
 
-        return self::fromTensorBuffers(b);
+        return new self(TensorBuffer::fromBuffers(b), this->m, this->n);
     }
 
     /**
@@ -2011,7 +1979,7 @@ class Matrix implements Tensor
             let c[] = bufferB->concat([bufferA]);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n + b->n());
     }
 
     /**
@@ -2043,7 +2011,7 @@ class Matrix implements Tensor
             let c[] = bufferA->concat([bufferB]);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n + b->n());
     }
 
     /**
@@ -2337,7 +2305,7 @@ class Matrix implements Tensor
             let c[] = tensor_multiply(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2365,7 +2333,7 @@ class Matrix implements Tensor
             let c[] = tensor_divide(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2393,7 +2361,7 @@ class Matrix implements Tensor
             let c[] = tensor_add(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2421,7 +2389,7 @@ class Matrix implements Tensor
             let c[] = tensor_subtract(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2449,7 +2417,7 @@ class Matrix implements Tensor
             let c[] = tensor_pow(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2477,7 +2445,7 @@ class Matrix implements Tensor
             let c[] = tensor_mod(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2506,7 +2474,7 @@ class Matrix implements Tensor
             let c[] = tensor_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2534,7 +2502,7 @@ class Matrix implements Tensor
             let c[] = tensor_not_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2562,7 +2530,7 @@ class Matrix implements Tensor
             let c[] = tensor_greater(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2590,7 +2558,7 @@ class Matrix implements Tensor
             let c[] = tensor_greater_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2618,7 +2586,7 @@ class Matrix implements Tensor
             let c[] = tensor_less(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**
@@ -2647,7 +2615,7 @@ class Matrix implements Tensor
             let c[] = tensor_less_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::fromTensorBuffers(c);
+        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
     }
 
     /**

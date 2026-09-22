@@ -4,6 +4,7 @@
     - Performance: the linear algebra operations (REF, RREF, Cholesky, LU, eigendecomposition, SVD), `rank()`, `symmetric()`, and the vector `outer()` product now read their input from, and return their output into, `TensorBuffer`s directly instead of round-tripping through PHP arrays, eliminating the intermediate array copies
     - Breaking: removed the `Vector::build()`, `Vector::quick()`, `Vector::fromTensorBuffer()`, `Matrix::build()`, `Matrix::quick()`, `Matrix::fromTensorBuffer()`, and `ColumnVector::build()`, `ColumnVector::quick()`, and `ColumnVector::fromTensorBuffer()` factory methods. Construct directly with `new Vector(...)` / `new ColumnVector(...)`, or build a `Matrix` with `Matrix::fromArray(...)` (or `new Matrix(...)` from a `TensorBuffer`)
     - Breaking: `Vector::__construct()` no longer accepts a `validate` argument; pass an array of elements (or a `TensorBuffer`) and it will be constructed directly
+    - Breaking: removed the `Matrix::fromTensorBuffers()` factory method in favor of the new `TensorBuffer::fromBuffers()` factory, which concatenates an array of `TensorBuffer`s into a single contiguous buffer
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension

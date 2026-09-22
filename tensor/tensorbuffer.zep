@@ -30,6 +30,31 @@ class TensorBuffer
     }
 
     /**
+     * Build a buffer by concatenating an array of buffers into a single
+     * contiguous buffer.
+     *
+     * @param \Tensor\TensorBuffer[] buffers
+     * @return self
+     */
+    public static function fromBuffers(const array buffers) -> <TensorBuffer>
+    {
+        int rows = count(buffers);
+
+        if unlikely rows < 1 {
+            var zero = tensor_buffer_from_array([]);
+            return new self(<Buffer> zero);
+        }
+
+        if unlikely rows == 1 {
+            return new self(buffers[0]->asBuffer());
+        }
+
+        var b = buffers[0]->concat(array_slice(buffers, 1));
+
+        return new self(b->asBuffer());
+    }
+
+    /**
      * Return the underlying buffer.
      *
      * @return \Tensor\Buffer

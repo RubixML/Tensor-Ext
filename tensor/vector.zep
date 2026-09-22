@@ -1354,7 +1354,7 @@ class Vector implements Tensor
             let c[] = tensor_multiply(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1380,7 +1380,7 @@ class Vector implements Tensor
             let c[] = tensor_divide(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1406,7 +1406,7 @@ class Vector implements Tensor
             let c[] = tensor_add(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1432,7 +1432,7 @@ class Vector implements Tensor
             let c[] = tensor_subtract(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1458,7 +1458,7 @@ class Vector implements Tensor
             let c[] = tensor_pow(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1484,7 +1484,7 @@ class Vector implements Tensor
             let c[] = tensor_mod(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1510,7 +1510,7 @@ class Vector implements Tensor
             let c[] = tensor_equal(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1536,7 +1536,7 @@ class Vector implements Tensor
             let c[] = tensor_not_equal(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1562,7 +1562,7 @@ class Vector implements Tensor
             let c[] = tensor_greater(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1588,7 +1588,7 @@ class Vector implements Tensor
             let c[] = tensor_greater_equal(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1614,7 +1614,7 @@ class Vector implements Tensor
             let c[] = tensor_less(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
@@ -1640,7 +1640,7 @@ class Vector implements Tensor
             let c[] = tensor_less_equal(this->a, rowB);
         }
  
-        return Matrix::fromTensorBuffers(c);
+        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
     }
 
     /**
