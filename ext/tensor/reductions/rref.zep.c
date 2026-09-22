@@ -80,13 +80,15 @@ PHP_METHOD(Tensor_Reductions_Rref, reduce)
 		return;
 	}
 	object_init_ex(return_value, tensor_reductions_rref_ce);
+	ZEPHIR_INIT_VAR(&_3);
+	object_init_ex(&_3, tensor_matrix_ce);
 	ZEPHIR_CALL_METHOD(&_4, a, "m", NULL, 0);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_5, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_CE_STATIC(&_3, tensor_matrix_ce, "fromTensorBuffer", NULL, 0, &result, &_4, &_5);
+	ZEPHIR_CALL_METHOD(NULL, &_3, "__construct", NULL, 15, &result, &_4, &_5);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 32, &_3);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 33, &_3);
 	zephir_check_call_status();
 	RETURN_MM();
 }

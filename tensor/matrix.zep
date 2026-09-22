@@ -44,43 +44,6 @@ class Matrix implements Tensor
     protected n;
 
     /**
-     * Build a new matrix from a PHP array of arrays, validating the input.
-     *
-     * @param array[] a
-     * @throws \Tensor\Exceptions\InvalidArgumentException
-     * @return self
-     */
-    public static function build(const array a = []) -> <Matrix>
-    {
-        return self::fromArray(a, true);
-    }
-
-    /**
-     * Build a new matrix from a PHP array of arrays, foregoing any row
-     * validation for quicker instantiation.
-     *
-     * @param array[] a
-     * @return self
-     */
-    public static function quick(const array a = []) -> <Matrix>
-    {
-        return self::fromArray(a, false);
-    }
-
-    /**
-     * Build a matrix from a TensorBuffer object.
-     *
-     * @param \Tensor\TensorBuffer a
-     * @param int m
-     * @param int n
-     * @return self
-     */
-    public static function fromTensorBuffer(<TensorBuffer> a, const int m, const int n) -> <Matrix>
-    {
-        return new self(a, m, n);
-    }
-
-    /**
      * Build a matrix by concatenating an array of TensorBuffers (each buffer
      * representing one row) into a single contiguous buffer.
      *
@@ -196,7 +159,7 @@ class Matrix implements Tensor
             let a[] = rowA;
         }
  
-        return self::quick(a);
+        return self::fromArray(a, false);
     }
  
     /**
@@ -253,7 +216,7 @@ class Matrix implements Tensor
             let a[] = rowA;
         }
  
-        return self::quick(a);
+        return self::fromArray(a, false);
     }
  
     /**
@@ -277,7 +240,7 @@ class Matrix implements Tensor
                 . " greater than 0, " . strval(n) . " given.");
         }
  
-        return self::quick(array_fill(0, m, array_fill(0, n, value)));
+        return self::fromArray(array_fill(0, m, array_fill(0, n, value)), false);
     }
  
      /**
@@ -315,7 +278,7 @@ class Matrix implements Tensor
             let a[] = rowA;
         }
  
-        return self::quick(a);
+        return self::fromArray(a, false);
     }
  
     /**
@@ -369,7 +332,7 @@ class Matrix implements Tensor
             let a[] = rowA;
         }
  
-        return self::quick(a);
+        return self::fromArray(a, false);
     }
 
     /**
@@ -430,7 +393,7 @@ class Matrix implements Tensor
             let a[] = rowA;
         }
 
-        return self::quick(a);
+        return self::fromArray(a, false);
     }
 
     /**
@@ -468,7 +431,7 @@ class Matrix implements Tensor
             let a[] = rowA;
         }
     
-        return self::quick(a);
+        return self::fromArray(a, false);
     }
 
     /**
@@ -560,7 +523,7 @@ class Matrix implements Tensor
                 . " bounds.");
         }
 
-        return Vector::fromTensorBuffer(this->a->slice(index * this->n, this->n));
+        return new Vector(this->a->slice(index * this->n, this->n));
     }
 
     /**
@@ -577,7 +540,7 @@ class Matrix implements Tensor
                 . " bounds.");
         }
 
-        return ColumnVector::fromTensorBuffer(this->a->sliceStrided(index, this->m, this->n));
+        return new ColumnVector(this->a->sliceStrided(index, this->m, this->n));
     }
 
     /**
@@ -593,7 +556,7 @@ class Matrix implements Tensor
                 . " square, " . this->shapeString() . " given.");
         }
 
-        return Vector::fromTensorBuffer(this->a->sliceStrided(0, this->m, this->n + 1));
+        return new Vector(this->a->sliceStrided(0, this->m, this->n + 1));
     }
 
     /**
@@ -603,7 +566,7 @@ class Matrix implements Tensor
      */
     public function asVector() -> <Vector>
     {
-        return Vector::fromTensorBuffer(this->a);
+        return new Vector(this->a);
     }
 
     /**
@@ -668,7 +631,7 @@ class Matrix implements Tensor
         }
 
         for rowBuffer in this->a->split(this->n) {
-            let b[] = Vector::fromTensorBuffer(rowBuffer);
+            let b[] = new Vector(rowBuffer);
         }
 
         return b;
@@ -712,7 +675,7 @@ class Matrix implements Tensor
         }
 
         for columnBuffer in this->asColumnBuffers() {
-            let b[] = ColumnVector::fromTensorBuffer(columnBuffer);
+            let b[] = new ColumnVector(columnBuffer);
         }
 
         return b;
@@ -735,7 +698,7 @@ class Matrix implements Tensor
      */
     public function flatten() -> <Vector>
     {
-        return Vector::fromTensorBuffer(this->a);
+        return new Vector(this->a);
     }
 
     /**
@@ -748,7 +711,7 @@ class Matrix implements Tensor
      */
     public function map(const var callback) -> <Matrix>
     {
-        return self::fromTensorBuffer(this->a->map(callback), this->m, this->n);
+        return new self(this->a->map(callback), this->m, this->n);
     }
 
     /**
@@ -777,14 +740,14 @@ class Matrix implements Tensor
         var cols = this->asColumnBuffers();
 
         if unlikely count(cols) < 1 {
-            return self::quick();
+            return self::fromArray([], false);
         }
 
         let col = cols[0];
 
         let col = col->concat(array_slice(cols, 1));
 
-        return self::fromTensorBuffer(col, this->n, this->m);
+        return new self(col, this->n, this->m);
     }
 
     /**
@@ -812,7 +775,7 @@ class Matrix implements Tensor
                 . " of a singular matrix.");
         }
 
-        return self::fromTensorBuffer(result, this->n, this->n);
+        return new self(result, this->n, this->n);
     }
 
     /**
@@ -829,7 +792,7 @@ class Matrix implements Tensor
                 . " of the matrix.");
         }
 
-        return self::fromTensorBuffer(result, this->n, this->m);
+        return new self(result, this->n, this->m);
     }
 
     /**
@@ -915,7 +878,7 @@ class Matrix implements Tensor
          
         var result = tensor_matmul(this->a, b->a, this->m, this->n, b->n());
 
-        return self::fromTensorBuffer(result, this->m, b->n());
+        return new self(result, this->m, b->n());
     }
 
     /**
@@ -961,7 +924,7 @@ class Matrix implements Tensor
         int outM = (int) intdiv(this->m + stride - 1, stride);
         int outN = (int) intdiv(this->n + stride - 1, stride);
 
-        return self::fromTensorBuffer(result, outM, outN);
+        return new self(result, outM, outN);
     }
 
     /**
@@ -1491,7 +1454,7 @@ class Matrix implements Tensor
      */
     public function abs() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_abs(this->a), this->m, this->n);
+        return new self(tensor_abs(this->a), this->m, this->n);
     }
 
     /**
@@ -1511,7 +1474,7 @@ class Matrix implements Tensor
      */
     public function sqrt() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_sqrt(this->a), this->m, this->n);
+        return new self(tensor_sqrt(this->a), this->m, this->n);
     }
 
     /**
@@ -1521,7 +1484,7 @@ class Matrix implements Tensor
      */
     public function exp() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_exp(this->a), this->m, this->n);
+        return new self(tensor_exp(this->a), this->m, this->n);
     }
 
     /**
@@ -1531,7 +1494,7 @@ class Matrix implements Tensor
     */
     public function expm1() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_expm1(this->a), this->m, this->n);
+        return new self(tensor_expm1(this->a), this->m, this->n);
     }
 
     /**
@@ -1543,10 +1506,10 @@ class Matrix implements Tensor
     public function log(const float base = self::M_E) -> <Matrix>
     {
         if base === self::M_E {
-            return self::fromTensorBuffer(tensor_log(this->a), this->m, this->n);
+            return new self(tensor_log(this->a), this->m, this->n);
         }
 
-        return self::fromTensorBuffer(
+        return new self(
             tensor_log_base(this->a, (double) base), this->m, this->n
         );
     }
@@ -1558,7 +1521,7 @@ class Matrix implements Tensor
     */
     public function log1p() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_log1p(this->a), this->m, this->n);
+        return new self(tensor_log1p(this->a), this->m, this->n);
     }
  
     /**
@@ -1568,7 +1531,7 @@ class Matrix implements Tensor
      */
     public function sin() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_sin(this->a), this->m, this->n);
+        return new self(tensor_sin(this->a), this->m, this->n);
     }
 
     /**
@@ -1578,7 +1541,7 @@ class Matrix implements Tensor
      */
     public function asin() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_asin(this->a), this->m, this->n);
+        return new self(tensor_asin(this->a), this->m, this->n);
     }
  
     /**
@@ -1588,7 +1551,7 @@ class Matrix implements Tensor
      */
     public function cos() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_cos(this->a), this->m, this->n);
+        return new self(tensor_cos(this->a), this->m, this->n);
     }
 
     /**
@@ -1598,7 +1561,7 @@ class Matrix implements Tensor
      */
     public function acos() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_acos(this->a), this->m, this->n);
+        return new self(tensor_acos(this->a), this->m, this->n);
     }
  
     /**
@@ -1608,7 +1571,7 @@ class Matrix implements Tensor
      */
     public function tan() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_tan(this->a), this->m, this->n);
+        return new self(tensor_tan(this->a), this->m, this->n);
     }
 
     /**
@@ -1618,7 +1581,7 @@ class Matrix implements Tensor
      */
     public function atan() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_atan(this->a), this->m, this->n);
+        return new self(tensor_atan(this->a), this->m, this->n);
     }
  
     /**
@@ -1628,7 +1591,7 @@ class Matrix implements Tensor
      */
     public function rad2deg() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_rad2deg(this->a), this->m, this->n);
+        return new self(tensor_rad2deg(this->a), this->m, this->n);
     }
  
     /**
@@ -1638,7 +1601,7 @@ class Matrix implements Tensor
      */
     public function deg2rad() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_deg2rad(this->a), this->m, this->n);
+        return new self(tensor_deg2rad(this->a), this->m, this->n);
     }
 
     /**
@@ -1656,7 +1619,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->sum();
         }
 
-        return ColumnVector::quick(b);
+        return new ColumnVector(b);
     }
 
     /**
@@ -1674,7 +1637,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->product();
         }
 
-        return ColumnVector::quick(b);
+        return new ColumnVector(b);
     }
 
     /**
@@ -1692,7 +1655,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->min();
         }
 
-        return ColumnVector::quick(b);
+        return new ColumnVector(b);
     }
 
     /**
@@ -1710,7 +1673,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->max();
         }
 
-        return ColumnVector::quick(b);
+        return new ColumnVector(b);
     }
 
     /**
@@ -1749,7 +1712,7 @@ class Matrix implements Tensor
             let b[] = median;
         }
 
-        return ColumnVector::quick(b);
+        return new ColumnVector(b);
     }
 
     /**
@@ -1791,7 +1754,7 @@ class Matrix implements Tensor
             let b[] = t + remainder * (rowBuffer->get(xHat) - t);
         }
 
-        return ColumnVector::quick(b);
+        return new ColumnVector(b);
     }
 
     /**
@@ -1859,7 +1822,7 @@ class Matrix implements Tensor
     public function round(const int precision = 0) -> <Matrix>
     {
         if precision === 0 {
-            return self::fromTensorBuffer(
+            return new self(
                 tensor_round(this->a, 0), this->m, this->n
             );
         }
@@ -1899,7 +1862,7 @@ class Matrix implements Tensor
      */
     public function floor() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_floor(this->a), this->m, this->n);
+        return new self(tensor_floor(this->a), this->m, this->n);
     }
 
     /**
@@ -1909,7 +1872,7 @@ class Matrix implements Tensor
      */
     public function ceil() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_ceil(this->a), this->m, this->n);
+        return new self(tensor_ceil(this->a), this->m, this->n);
     }
 
     /**
@@ -1928,7 +1891,7 @@ class Matrix implements Tensor
                 . " greater than maximum.");
         }
 
-        return self::fromTensorBuffer(
+        return new self(
             tensor_clip(this->a, (double) min, (double) max), this->m, this->n
         );
     }
@@ -1941,7 +1904,7 @@ class Matrix implements Tensor
      */
     public function clipLower(const float min) -> <Matrix>
     {
-        return self::fromTensorBuffer(
+        return new self(
             tensor_clip_lower(this->a, (double) min), this->m, this->n
         );
     }
@@ -1954,7 +1917,7 @@ class Matrix implements Tensor
      */
     public function clipUpper(const float max) -> <Matrix>
     {
-        return self::fromTensorBuffer(
+        return new self(
             tensor_clip_upper(this->a, (double) max), this->m, this->n
         );
     }
@@ -1966,7 +1929,7 @@ class Matrix implements Tensor
      */
     public function sign() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_sign(this->a), this->m, this->n);
+        return new self(tensor_sign(this->a), this->m, this->n);
     }
 
     /**
@@ -1976,7 +1939,7 @@ class Matrix implements Tensor
      */
     public function negate() -> <Matrix>
     {
-        return self::fromTensorBuffer(tensor_negate(this->a), this->m, this->n);
+        return new self(tensor_negate(this->a), this->m, this->n);
     }
 
     /**
@@ -1996,7 +1959,7 @@ class Matrix implements Tensor
 
         var buffer = b->a->concat([this->a]);
 
-        return self::fromTensorBuffer(buffer, b->m() + this->m, this->n);
+        return new self(buffer, b->m() + this->m, this->n);
     }
 
     /**
@@ -2016,7 +1979,7 @@ class Matrix implements Tensor
 
         var buffer = this->a->concat([b->a]);
 
-        return self::fromTensorBuffer(buffer, this->m + b->m(), this->n);
+        return new self(buffer, this->m + b->m(), this->n);
     }
 
     /**
@@ -2110,10 +2073,10 @@ class Matrix implements Tensor
 
             let flat = flat->repeat(m + 1);
 
-            return self::fromTensorBuffer(flat, this->m * (m + 1), this->n * (n + 1));
+            return new self(flat, this->m * (m + 1), this->n * (n + 1));
         }
 
-        return self::quick([]);
+        return self::fromArray([], false);
     }
 
     /**
@@ -2132,7 +2095,7 @@ class Matrix implements Tensor
 
         var result = tensor_multiply(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2151,7 +2114,7 @@ class Matrix implements Tensor
 
         var result = tensor_divide(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2170,7 +2133,7 @@ class Matrix implements Tensor
 
         var result = tensor_add(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2189,7 +2152,7 @@ class Matrix implements Tensor
 
         var result = tensor_subtract(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2209,7 +2172,7 @@ class Matrix implements Tensor
 
         var result = tensor_pow(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2229,7 +2192,7 @@ class Matrix implements Tensor
 
         var result = tensor_mod(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2249,7 +2212,7 @@ class Matrix implements Tensor
 
         var result = tensor_equal(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2268,7 +2231,7 @@ class Matrix implements Tensor
 
         var result = tensor_not_equal(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2288,7 +2251,7 @@ class Matrix implements Tensor
 
         var result = tensor_greater(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2308,7 +2271,7 @@ class Matrix implements Tensor
 
         var result = tensor_greater_equal(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2327,7 +2290,7 @@ class Matrix implements Tensor
 
         var result = tensor_less(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2346,7 +2309,7 @@ class Matrix implements Tensor
 
         var result = tensor_less_equal(this->a, b->a);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2707,7 +2670,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_multiply_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2730,7 +2693,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_divide_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2753,7 +2716,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_add_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2776,7 +2739,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_subtract_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2799,7 +2762,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_pow_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2822,7 +2785,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_mod_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2845,7 +2808,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_equal_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2868,7 +2831,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_not_equal_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2891,7 +2854,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_greater_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2914,7 +2877,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_greater_equal_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2937,7 +2900,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_less_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2960,7 +2923,7 @@ class Matrix implements Tensor
         let bHat = b->asTensorBuffer();
         let result = tensor_less_equal_col(this->a, bHat, this->n);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2973,7 +2936,7 @@ class Matrix implements Tensor
     {
         var result = tensor_multiply_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2986,7 +2949,7 @@ class Matrix implements Tensor
     {
         var result = tensor_divide_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2999,7 +2962,7 @@ class Matrix implements Tensor
     {
         var result = tensor_add_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3012,7 +2975,7 @@ class Matrix implements Tensor
     {
         var result = tensor_subtract_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3025,7 +2988,7 @@ class Matrix implements Tensor
     {
         var result = tensor_pow_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3038,7 +3001,7 @@ class Matrix implements Tensor
     {
         var result = tensor_mod_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3051,7 +3014,7 @@ class Matrix implements Tensor
     {
         var result = tensor_equal_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3064,7 +3027,7 @@ class Matrix implements Tensor
     {
         var result = tensor_not_equal_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3077,7 +3040,7 @@ class Matrix implements Tensor
     {
         var result = tensor_greater_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3091,7 +3054,7 @@ class Matrix implements Tensor
     {
         var result = tensor_greater_equal_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3104,7 +3067,7 @@ class Matrix implements Tensor
     {
         var result = tensor_less_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3118,7 +3081,7 @@ class Matrix implements Tensor
     {
         var result = tensor_less_equal_scalar(this->a, b);
 
-        return self::fromTensorBuffer(result, this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -3182,7 +3145,7 @@ class Matrix implements Tensor
                 . " bounds, " . (string) index . " given.");
         }
 
-        return Vector::fromTensorBuffer(this->a->slice(index * this->n, this->n));
+        return new Vector(this->a->slice(index * this->n, this->n));
     }
 
     /**

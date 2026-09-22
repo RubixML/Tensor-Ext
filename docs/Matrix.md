@@ -17,23 +17,23 @@ Interface methods are implemented by Matrices with **row-wise** semantics:
 
 ## Constructors & Factories
 
-### `__construct(array $a, bool $validate = true)`
+### `__construct(\Tensor\TensorBuffer $a, int $m, int $n)`
 
-Instantiate a matrix directly.
+Instantiate a matrix from a row-major `TensorBuffer` of its elements and its target dimensions.
 
 - **Parameters:**
-  - `$a` — the 2-dimensional element array `array<array<int|float>>`
-  - `$validate` — whether to validate rectangularity and cast elements to floats (default `true`)
-- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if rows have unequal column counts
-- **Note:** Prefer the factory methods below.
+  - `$a` — the row-major `TensorBuffer` of elements
+  - `$m` — number of rows, `$n` — number of columns
 
-### `Matrix::build(array $a = []) : Matrix`
+### `Matrix::fromArray(array $a, bool $validate = true) : Matrix`
 
-Factory method to build a new matrix from an array, running validation.
+Build a matrix from a PHP array of rows, casting elements to floats.
 
-### `Matrix::quick(array $a = []) : Matrix`
-
-Build a new matrix foregoing any validation for quicker instantiation.
+- **Parameters:**
+  - `$a` — `array<array<int|float>>`, i.e. rows of numeric elements
+  - `$validate` — whether to validate that every row has the same column count (default `true`)
+- **Returns:** `Matrix`
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$a` is not an array of arrays, or (when validating) if rows have unequal column counts
 
 ### `Matrix::identity(int $n) : Matrix`
 

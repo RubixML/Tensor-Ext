@@ -24,7 +24,7 @@ class REFTest extends TestCase
      */
     public function reduce2x2() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
@@ -33,7 +33,7 @@ class REFTest extends TestCase
 
         // Partial pivoting selects the largest magnitude in each column, so the
         // rows are swapped to bring 3 (col 0) to the top and 4 (col 1) to the right.
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [3.0, 4.0],
             [0.0, 2.0 / 3.0],
         ]);
@@ -47,7 +47,7 @@ class REFTest extends TestCase
      */
     public function reduce3x3() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -55,7 +55,7 @@ class REFTest extends TestCase
 
         $ref = REF::reduce($a);
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [0.0, 14.09090909090909, -4.181818181818182],
             [0.0, 0.0, -17.10322580645161],
@@ -69,7 +69,7 @@ class REFTest extends TestCase
      */
     public function reduce2x3Rectangular() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]);
@@ -77,7 +77,7 @@ class REFTest extends TestCase
         $ref = REF::reduce($a);
 
         // Partial pivoting brings 4 to the top of column 0.
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [4.0, 5.0, 6.0],
             [0.0, 0.75, 1.5],
         ]);
@@ -92,7 +92,7 @@ class REFTest extends TestCase
     public function reduceRequiresPivoting() : void
     {
         // First column is [0, 5] - a row swap is required to pivot.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [0.0, 1.0],
             [5.0, 2.0],
         ]);
@@ -103,7 +103,7 @@ class REFTest extends TestCase
         // should be used as the pivot, and the first row below it zeroed.
         $this->assertGreaterThanOrEqual(1, $ref->swaps());
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [5.0, 2.0],
             [0.0, 1.0],
         ]);
@@ -116,11 +116,11 @@ class REFTest extends TestCase
      */
     public function reduce1x1() : void
     {
-        $a = Matrix::quick([[7.0]]);
+        $a = Matrix::fromArray([[7.0]]);
 
         $ref = REF::reduce($a);
 
-        $expectedA = Matrix::quick([[7.0]]);
+        $expectedA = Matrix::fromArray([[7.0]]);
 
         $this->assertEquals(0, $ref->swaps());
         $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
@@ -131,7 +131,7 @@ class REFTest extends TestCase
      */
     public function reduceDiagonal() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, 0.0],
             [0.0, 3.0],
         ]);
@@ -139,7 +139,7 @@ class REFTest extends TestCase
         $ref = REF::reduce($a);
 
         // Diagonal is already in row echelon form.
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [2.0, 0.0],
             [0.0, 3.0],
         ]);
@@ -154,7 +154,7 @@ class REFTest extends TestCase
     public function reduceZeroRow() : void
     {
         // One zero row at the top, non-zero row at the bottom.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [0.0, 0.0],
             [1.0, 2.0],
         ]);
@@ -177,14 +177,14 @@ class REFTest extends TestCase
         // A rank-1 matrix is singular: Gaussian elimination must fail and the
         // row reduction fallback must produce the same (non-normalised) REF
         // convention as Gaussian elimination - the pivot keeps its value.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, 4.0],
             [1.0, 2.0],
         ]);
 
         $ref = REF::reduce($a);
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [2.0, 4.0],
             [0.0, 0.0],
         ]);
@@ -199,7 +199,7 @@ class REFTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new REF(Matrix::quick([[1.0]]), -1);
+        new REF(Matrix::fromArray([[1.0]]), -1);
     }
 
     /**
@@ -207,7 +207,7 @@ class REFTest extends TestCase
      */
     public function constructorWithZeroSwaps() : void
     {
-        $a = Matrix::quick([[1.0]]);
+        $a = Matrix::fromArray([[1.0]]);
 
         $ref = new REF($a, 0);
 
@@ -220,7 +220,7 @@ class REFTest extends TestCase
      */
     public function constructorWithPositiveSwaps() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 0.0],
             [0.0, 1.0],
         ]);

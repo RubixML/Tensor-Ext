@@ -110,7 +110,7 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 		zephir_check_call_status();
 		ZEPHIR_INIT_VAR(&_3$$3);
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "Matrix must be", " square, ", &_2$$3, " given.");
-		ZEPHIR_CALL_METHOD(NULL, &_1$$3, "__construct", NULL, 3, &_3$$3);
+		ZEPHIR_CALL_METHOD(NULL, &_1$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
 		zephir_throw_exception_debug(&_1$$3, "tensor/decompositions/eigen.zep", 48);
 		ZEPHIR_MM_RESTORE();
@@ -144,17 +144,19 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 	zephir_array_fetch_long(&_10, &eig, 0, PH_NOISY, "tensor/decompositions/eigen.zep", 67);
 	zephir_get_arrval(&_11, &_10);
 	ZEPHIR_CPY_WRT(&eigenvalues, &_11);
+	ZEPHIR_INIT_VAR(&_12);
+	object_init_ex(&_12, tensor_matrix_ce);
 	zephir_array_fetch_long(&_13, &eig, 1, PH_NOISY | PH_READONLY, "tensor/decompositions/eigen.zep", 68);
 	ZEPHIR_CALL_METHOD(&_14, a, "n", NULL, 0);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_15, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_CE_STATIC(&_12, tensor_matrix_ce, "fromTensorBuffer", NULL, 0, &_13, &_14, &_15);
+	ZEPHIR_CALL_METHOD(NULL, &_12, "__construct", NULL, 15, &_13, &_14, &_15);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&eigenvectors, &_12, "transpose", NULL, 0);
+	ZEPHIR_CALL_METHOD(&eigenvectors, &_12, "transpose", NULL, 23);
 	zephir_check_call_status();
 	object_init_ex(return_value, tensor_decompositions_eigen_ce);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 22, &eigenvalues, &eigenvectors);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 24, &eigenvalues, &eigenvectors);
 	zephir_check_call_status();
 	RETURN_MM();
 }

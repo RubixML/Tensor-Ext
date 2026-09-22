@@ -25,14 +25,14 @@ class CholeskyTest extends TestCase
      */
     public function decompose2x2() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [9.0, 3.0],
             [3.0, 5.0],
         ]);
 
         $ch = Cholesky::decompose($a);
 
-        $l = Matrix::quick([
+        $l = Matrix::fromArray([
             [3.0, 0.0],
             [1.0, 2.0],
         ]);
@@ -50,7 +50,7 @@ class CholeskyTest extends TestCase
      */
     public function decompose3x3() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, -1.0,  0.0],
             [-1.0, 2.0, -1.0],
             [0.0, -1.0, 2.0],
@@ -58,7 +58,7 @@ class CholeskyTest extends TestCase
 
         $ch = Cholesky::decompose($a);
 
-        $l = Matrix::quick([
+        $l = Matrix::fromArray([
             [1.4142135623730951, 0, 0],
             [-0.7071067811865475, 1.224744871391589, 0],
             [0, -0.8164965809277261, 1.1547005383792515],
@@ -74,11 +74,11 @@ class CholeskyTest extends TestCase
      */
     public function decompose1x1() : void
     {
-        $a = Matrix::quick([[9.0]]);
+        $a = Matrix::fromArray([[9.0]]);
 
         $ch = Cholesky::decompose($a);
 
-        $l = Matrix::quick([[3.0]]);
+        $l = Matrix::fromArray([[3.0]]);
 
         $expected = new Cholesky($l);
 
@@ -90,7 +90,7 @@ class CholeskyTest extends TestCase
      */
     public function decomposeDiagonal() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [4.0, 0.0, 0.0],
             [0.0, 9.0, 0.0],
             [0.0, 0.0, 16.0],
@@ -98,7 +98,7 @@ class CholeskyTest extends TestCase
 
         $ch = Cholesky::decompose($a);
 
-        $l = Matrix::quick([
+        $l = Matrix::fromArray([
             [2.0, 0.0, 0.0],
             [0.0, 3.0, 0.0],
             [0.0, 0.0, 4.0],
@@ -116,7 +116,7 @@ class CholeskyTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        Cholesky::decompose(Matrix::quick([
+        Cholesky::decompose(Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]));
@@ -129,7 +129,7 @@ class CholeskyTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        Cholesky::decompose(Matrix::quick([
+        Cholesky::decompose(Matrix::fromArray([
             [1.0, 2.0],
             [2.0, 1.0],
         ]));
@@ -142,7 +142,7 @@ class CholeskyTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        Cholesky::decompose(Matrix::quick([
+        Cholesky::decompose(Matrix::fromArray([
             [0.0, 1.0],
             [1.0, 1.0],
         ]));
@@ -155,7 +155,7 @@ class CholeskyTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        Cholesky::decompose(Matrix::quick([
+        Cholesky::decompose(Matrix::fromArray([
             [1.0, 2.0],
             [2.0, 4.0],
         ]));
@@ -166,7 +166,7 @@ class CholeskyTest extends TestCase
      */
     public function lTIsTranspose() : void
     {
-        $l = Matrix::quick([
+        $l = Matrix::fromArray([
             [3.0, 0.0],
             [1.0, 2.0],
         ]);
@@ -181,7 +181,7 @@ class CholeskyTest extends TestCase
      */
     public function accessorsReturnMatrices() : void
     {
-        $l = Matrix::quick([
+        $l = Matrix::fromArray([
             [1.0, 0.0],
             [0.5, 1.0],
         ]);
@@ -190,7 +190,7 @@ class CholeskyTest extends TestCase
 
         $this->assertEquals($l, $ch->l());
 
-        $expectedT = Matrix::quick([
+        $expectedT = Matrix::fromArray([
             [1.0, 0.5],
             [0.0, 1.0],
         ]);

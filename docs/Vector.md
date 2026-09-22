@@ -14,28 +14,12 @@ Interface methods are implemented by Vectors with scalar-level semantics — red
 
 ## Constructors & Factories
 
-### `__construct(array $a, bool $validate = true)`
+### `__construct(array $a)`
 
-Instantiate a vector directly.
+Instantiate a vector directly from an array of elements.
 
-- **Parameters:**
-  - `$a` — the 1-dimensional element array `(int|float)[]`
-  - `$validate` — whether to validate and cast elements to floats (default `true`)
-- **Note:** Prefer the factory methods below.
-
-### `Vector::build(array $a = [])`
-
-Factory method to build a new vector from an array, running validation.
-
-- **Parameters:** `$a` — `(int|float)[]`
-- **Returns:** `mixed` (a `Vector`/`static`)
-
-### `Vector::quick(array $a = [])`
-
-Build a vector foregoing any validation for quicker instantiation.
-
-- **Parameters:** `$a` — `(int|float)[]`
-- **Returns:** `mixed` (a `Vector`/`static`)
+- **Parameters:** `$a` — the 1-dimensional element array `(int|float)[]`
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$a` is not an array or a `TensorBuffer`
 
 ### `Vector::zeros(int $n) : Vector`
 

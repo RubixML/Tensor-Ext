@@ -3,9 +3,6 @@ extern zend_class_entry *tensor_columnvector_ce;
 
 ZEPHIR_INIT_CLASS(Tensor_ColumnVector);
 
-PHP_METHOD(Tensor_ColumnVector, build);
-PHP_METHOD(Tensor_ColumnVector, quick);
-PHP_METHOD(Tensor_ColumnVector, fromTensorBuffer);
 PHP_METHOD(Tensor_ColumnVector, m);
 PHP_METHOD(Tensor_ColumnVector, n);
 PHP_METHOD(Tensor_ColumnVector, transpose);
@@ -22,18 +19,6 @@ PHP_METHOD(Tensor_ColumnVector, greaterMatrix);
 PHP_METHOD(Tensor_ColumnVector, greaterEqualMatrix);
 PHP_METHOD(Tensor_ColumnVector, lessMatrix);
 PHP_METHOD(Tensor_ColumnVector, lessEqualMatrix);
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_columnvector_build, 0, 0, 0)
-ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, a, IS_ARRAY, 0, "[]")
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_columnvector_quick, 0, 0, 0)
-ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, a, IS_ARRAY, 0, "[]")
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_columnvector_fromtensorbuffer, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, a, Tensor\\TensorBuffer, 0)
-ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_columnvector_m, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -97,9 +82,6 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_columnvector_lessequalmatr
 ZEND_END_ARG_INFO()
 
 ZEPHIR_INIT_FUNCS(tensor_columnvector_method_entry) {
-	PHP_ME(Tensor_ColumnVector, build, arginfo_tensor_columnvector_build, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Tensor_ColumnVector, quick, arginfo_tensor_columnvector_quick, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Tensor_ColumnVector, fromTensorBuffer, arginfo_tensor_columnvector_fromtensorbuffer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_ColumnVector, m, arginfo_tensor_columnvector_m, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_ColumnVector, n, arginfo_tensor_columnvector_n, ZEND_ACC_PUBLIC)
 PHP_ME(Tensor_ColumnVector, transpose, arginfo_tensor_columnvector_transpose, ZEND_ACC_PUBLIC)

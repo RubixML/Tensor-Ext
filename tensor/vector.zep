@@ -28,40 +28,7 @@ class Vector implements Tensor
      *
      * @var int
      */
-    protected n;
-
-    /**
-     * Factory method to build a new vector from an array.
-     *
-     * @param float[] a
-     * @return self
-     */
-    public static function build(const array a = [])
-    {
-        return new self(a, true);
-    }
-
-    /**
-     * Build a vector foregoing any validation for quicker instantiation.
-     *
-     * @param float[] a
-     * @return self
-     */
-    public static function quick(const array a = [])
-    {
-        return new self(a, false);
-    }
-
-    /**
-     * Build a vector from a TensorBuffer object.
-     *
-     * @param \Tensor\TensorBuffer a
-     * @return self
-     */
-    public static function fromTensorBuffer(<TensorBuffer> a)
-    {
-        return new self(a, false);
-    }
+        protected n;
 
     /**
      * Build a vector of zeros with n elements.
@@ -108,7 +75,7 @@ class Vector implements Tensor
                 . " greater than 0, " . strval(n) . " given.");
         }
 
-        return static::quick(array_fill(0, n, value));
+        return new static(array_fill(0, n, value));
     }
 
     /**
@@ -133,7 +100,7 @@ class Vector implements Tensor
             let a[] = rand() / max;
         }
 
-        return static::quick(a);
+        return new static(a);
     }
 
     /**
@@ -170,7 +137,7 @@ class Vector implements Tensor
             array_pop(a);
         }
 
-        return static::quick(a);
+        return new static(a);
     }
 
     /**
@@ -218,7 +185,7 @@ class Vector implements Tensor
             let a[] = k - 1.0;
         }
 
-        return static::quick(a);
+        return new static(a);
     }
 
     /**
@@ -243,7 +210,7 @@ class Vector implements Tensor
             let a[] = rand(-max, max) / max;
         }
 
-        return static::quick(a);
+        return new static(a);
     }
 
     /**
@@ -256,7 +223,7 @@ class Vector implements Tensor
      */
     public static function range(const float start, const float end, const float interval = 1.0) -> <Vector>
     {
-        return static::quick(range(start, end, interval));
+        return new static(range(start, end, interval));
     }
 
     /**
@@ -291,14 +258,17 @@ class Vector implements Tensor
 
         let a[] = max;
 
-        return self::quick(a);
+        return new self(a);
     }
 
     /**
+     * Construct a new vector from a PHP array of elements or an existing
+     * TensorBuffer.
+     *
      * @param float[] a
-     * @param bool validate
+     * @throws \Tensor\Exceptions\InvalidArgumentException
      */
-    public function __construct(var a, const bool validate = true)
+    public function __construct(var a)
     {
         var buffer;
 
@@ -392,7 +362,7 @@ class Vector implements Tensor
      */
     public function asRowMatrix() -> <Matrix>
     {
-        return Matrix::fromTensorBuffer(this->a, 1, this->n);
+        return new Matrix(this->a, 1, this->n);
     }
 
     /**
@@ -402,7 +372,7 @@ class Vector implements Tensor
      */
     public function asColumnMatrix() -> <Matrix>
     {
-        return Matrix::fromTensorBuffer(this->a, this->n, 1);
+        return new Matrix(this->a, this->n, 1);
     }
 
     /**
@@ -427,7 +397,7 @@ class Vector implements Tensor
                 . " are needed but vector only has " . this->n . ".");
         }
 
-        return Matrix::fromTensorBuffer(this->a, m, n);
+        return new Matrix(this->a, m, n);
     }
 
     /**
@@ -437,7 +407,7 @@ class Vector implements Tensor
      */
     public function transpose()
     {
-        return ColumnVector::fromTensorBuffer(this->a);
+        return new ColumnVector(this->a);
     }
 
     /**
@@ -450,7 +420,7 @@ class Vector implements Tensor
      */
     public function map(const var callback) -> <Vector>
     {
-        return static::quick(array_map(callback, this->a->toArray()));
+        return new static(array_map(callback, this->a->toArray()));
     }
 
     /**
@@ -505,7 +475,7 @@ class Vector implements Tensor
                 . " less than 1, " . strval(stride). " given.");
         }
 
-        return static::fromTensorBuffer(tensor_convolve_1d(this->a, b->a, stride));
+        return new static(tensor_convolve_1d(this->a, b->a, stride));
     }
 
     /**
@@ -540,7 +510,7 @@ class Vector implements Tensor
     {
         var result = tensor_outer(this->a, b->asTensorBuffer(), this->n, b->n());
 
-        return Matrix::fromTensorBuffer(result, this->n, b->n());
+        return new Matrix(result, this->n, b->n());
     }
 
     /**
@@ -978,7 +948,7 @@ class Vector implements Tensor
      */
     public function abs() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_abs(this->a));
+        return new static(tensor_abs(this->a));
     }
 
     /**
@@ -998,7 +968,7 @@ class Vector implements Tensor
      */
     public function sqrt() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_sqrt(this->a));
+        return new static(tensor_sqrt(this->a));
     }
 
     /**
@@ -1008,7 +978,7 @@ class Vector implements Tensor
      */
     public function exp() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_exp(this->a));
+        return new static(tensor_exp(this->a));
     }
 
     /**
@@ -1018,7 +988,7 @@ class Vector implements Tensor
     */
     public function expm1() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_expm1(this->a));
+        return new static(tensor_expm1(this->a));
     }
 
     /**
@@ -1035,10 +1005,10 @@ class Vector implements Tensor
         }
 
         if base === self::M_E {
-            return static::fromTensorBuffer(tensor_log(this->a));
+            return new static(tensor_log(this->a));
         }
 
-        return static::fromTensorBuffer(tensor_log_base(this->a, (double) base));
+        return new static(tensor_log_base(this->a, (double) base));
     }
 
     /**
@@ -1048,7 +1018,7 @@ class Vector implements Tensor
     */
     public function log1p() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_log1p(this->a));
+        return new static(tensor_log1p(this->a));
     }
 
     /**
@@ -1058,7 +1028,7 @@ class Vector implements Tensor
      */
     public function sin() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_sin(this->a));
+        return new static(tensor_sin(this->a));
     }
 
     /**
@@ -1068,7 +1038,7 @@ class Vector implements Tensor
      */
     public function asin() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_asin(this->a));
+        return new static(tensor_asin(this->a));
     }
 
     /**
@@ -1078,7 +1048,7 @@ class Vector implements Tensor
      */
     public function cos() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_cos(this->a));
+        return new static(tensor_cos(this->a));
     }
 
     /**
@@ -1088,7 +1058,7 @@ class Vector implements Tensor
      */
     public function acos() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_acos(this->a));
+        return new static(tensor_acos(this->a));
     }
 
     /**
@@ -1098,7 +1068,7 @@ class Vector implements Tensor
      */
     public function tan() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_tan(this->a));
+        return new static(tensor_tan(this->a));
     }
 
     /**
@@ -1108,7 +1078,7 @@ class Vector implements Tensor
      */
     public function atan() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_atan(this->a));
+        return new static(tensor_atan(this->a));
     }
 
     /**
@@ -1118,7 +1088,7 @@ class Vector implements Tensor
      */
     public function rad2deg() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_rad2deg(this->a));
+        return new static(tensor_rad2deg(this->a));
     }
 
     /**
@@ -1128,7 +1098,7 @@ class Vector implements Tensor
      */
     public function deg2rad() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_deg2rad(this->a));
+        return new static(tensor_deg2rad(this->a));
     }
 
     /**
@@ -1277,7 +1247,7 @@ class Vector implements Tensor
                 . " be less than 0, " . strval(precision)  . " given.");
         }
 
-        return static::fromTensorBuffer(tensor_round(this->a, (int) precision));
+        return new static(tensor_round(this->a, (int) precision));
     }
 
     /**
@@ -1287,7 +1257,7 @@ class Vector implements Tensor
      */
     public function floor() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_floor(this->a));
+        return new static(tensor_floor(this->a));
     }
 
     /**
@@ -1297,7 +1267,7 @@ class Vector implements Tensor
      */
     public function ceil() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_ceil(this->a));
+        return new static(tensor_ceil(this->a));
     }
 
     /**
@@ -1316,7 +1286,7 @@ class Vector implements Tensor
                 . " greater than maximum.");
         }
 
-        return static::fromTensorBuffer(tensor_clip(this->a, (double) min, (double) max));
+        return new static(tensor_clip(this->a, (double) min, (double) max));
     }
 
     /**
@@ -1327,7 +1297,7 @@ class Vector implements Tensor
      */
     public function clipLower(const float min) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_clip_lower(this->a, (double) min));
+        return new static(tensor_clip_lower(this->a, (double) min));
     }
 
     /**
@@ -1338,7 +1308,7 @@ class Vector implements Tensor
      */
     public function clipUpper(const float max) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_clip_upper(this->a, (double) max));
+        return new static(tensor_clip_upper(this->a, (double) max));
     }
 
     /**
@@ -1348,7 +1318,7 @@ class Vector implements Tensor
      */
     public function sign() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_sign(this->a));
+        return new static(tensor_sign(this->a));
     }
 
     /**
@@ -1358,7 +1328,7 @@ class Vector implements Tensor
      */
     public function negate() -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_negate(this->a));
+        return new static(tensor_negate(this->a));
     }
 
     /**
@@ -1688,7 +1658,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_multiply(this->a, b->a));
+        return new static(tensor_multiply(this->a, b->a));
     }
 
     /**
@@ -1706,7 +1676,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_divide(this->a, b->a));
+        return new static(tensor_divide(this->a, b->a));
     }
 
     /**
@@ -1724,7 +1694,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_add(this->a, b->a));
+        return new static(tensor_add(this->a, b->a));
     }
 
     /**
@@ -1742,7 +1712,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_subtract(this->a, b->a));
+        return new static(tensor_subtract(this->a, b->a));
     }
 
     /**
@@ -1760,7 +1730,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_pow(this->a, b->a));
+        return new static(tensor_pow(this->a, b->a));
     }
 
     /**
@@ -1778,7 +1748,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_mod(this->a, b->a));
+        return new static(tensor_mod(this->a, b->a));
     }
 
     /**
@@ -1797,7 +1767,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_equal(this->a, b->a));
+        return new static(tensor_equal(this->a, b->a));
     }
 
     /**
@@ -1815,7 +1785,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_not_equal(this->a, b->a));
+        return new static(tensor_not_equal(this->a, b->a));
     }
 
     /**
@@ -1833,7 +1803,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_greater(this->a, b->a));
+        return new static(tensor_greater(this->a, b->a));
     }
 
     /**
@@ -1851,7 +1821,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_greater_equal(this->a, b->a));
+        return new static(tensor_greater_equal(this->a, b->a));
     }
 
     /**
@@ -1869,7 +1839,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_less(this->a, b->a));
+        return new static(tensor_less(this->a, b->a));
     }
 
     /**
@@ -1887,7 +1857,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return static::fromTensorBuffer(tensor_less_equal(this->a, b->a));
+        return new static(tensor_less_equal(this->a, b->a));
     }
 
     /**
@@ -1898,7 +1868,7 @@ class Vector implements Tensor
      */
      public function multiplyScalar(const float b) -> <Vector>
      {
-        return static::fromTensorBuffer(tensor_multiply_scalar(this->a, b));
+        return new static(tensor_multiply_scalar(this->a, b));
     }
 
     /**
@@ -1909,7 +1879,7 @@ class Vector implements Tensor
      */
     public function divideScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_divide_scalar(this->a, b));
+        return new static(tensor_divide_scalar(this->a, b));
     }
 
     /**
@@ -1920,7 +1890,7 @@ class Vector implements Tensor
      */
     public function addScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_add_scalar(this->a, b));
+        return new static(tensor_add_scalar(this->a, b));
     }
 
     /**
@@ -1931,7 +1901,7 @@ class Vector implements Tensor
      */
     public function subtractScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_subtract_scalar(this->a, b));
+        return new static(tensor_subtract_scalar(this->a, b));
     }
 
     /**
@@ -1942,7 +1912,7 @@ class Vector implements Tensor
      */
      public function powScalar(const float b) -> <Vector>
      {
-        return static::fromTensorBuffer(tensor_pow_scalar(this->a, b));
+        return new static(tensor_pow_scalar(this->a, b));
      }
 
     /**
@@ -1953,7 +1923,7 @@ class Vector implements Tensor
      */
     public function modScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_mod_scalar(this->a, b));
+        return new static(tensor_mod_scalar(this->a, b));
     }
 
     /**
@@ -1964,7 +1934,7 @@ class Vector implements Tensor
      */
     public function equalScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_equal_scalar(this->a, b));
+        return new static(tensor_equal_scalar(this->a, b));
     }
 
     /**
@@ -1975,7 +1945,7 @@ class Vector implements Tensor
      */
     public function notEqualScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_not_equal_scalar(this->a, b));
+        return new static(tensor_not_equal_scalar(this->a, b));
     }
 
     /**
@@ -1986,7 +1956,7 @@ class Vector implements Tensor
      */
     public function greaterScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_greater_scalar(this->a, b));
+        return new static(tensor_greater_scalar(this->a, b));
     }
 
     /**
@@ -1998,7 +1968,7 @@ class Vector implements Tensor
      */
     public function greaterEqualScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_greater_equal_scalar(this->a, b));
+        return new static(tensor_greater_equal_scalar(this->a, b));
     }
 
     /**
@@ -2009,7 +1979,7 @@ class Vector implements Tensor
      */
     public function lessScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_less_scalar(this->a, b));
+        return new static(tensor_less_scalar(this->a, b));
     }
 
     /**
@@ -2021,7 +1991,7 @@ class Vector implements Tensor
      */
     public function lessEqualScalar(const float b) -> <Vector>
     {
-        return static::fromTensorBuffer(tensor_less_equal_scalar(this->a, b));
+        return new static(tensor_less_equal_scalar(this->a, b));
     }
 
     /**

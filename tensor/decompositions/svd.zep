@@ -52,9 +52,9 @@ class Svd
 
         let usvT = (array) result;
 
-        var u = Matrix::fromTensorBuffer(usvT[0], a->m(), a->m());
+        var u = new Matrix(usvT[0], a->m(), a->m());
         var singularValues = (array) usvT[1];
-        var vT = Matrix::fromTensorBuffer(usvT[2], a->n(), a->n());
+        var vT = new Matrix(usvT[2], a->n(), a->n());
 
         return new self(u, singularValues, vT);
     }

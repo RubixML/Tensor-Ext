@@ -23,7 +23,7 @@ class SVDTest extends TestCase
      */
     public function decomposeSquare3x3() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -50,7 +50,7 @@ class SVDTest extends TestCase
      */
     public function decomposeSquare2x2() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
@@ -70,7 +70,7 @@ class SVDTest extends TestCase
      */
     public function decomposeTall() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
             [5.0, 6.0],
@@ -95,7 +95,7 @@ class SVDTest extends TestCase
      */
     public function decomposeWide() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]);
@@ -118,7 +118,7 @@ class SVDTest extends TestCase
      */
     public function decompose1x1() : void
     {
-        $a = Matrix::quick([[9.0]]);
+        $a = Matrix::fromArray([[9.0]]);
 
         $svd = SVD::decompose($a);
 
@@ -132,7 +132,7 @@ class SVDTest extends TestCase
      */
     public function decomposeRankDeficient() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 1.0],
             [2.0, 2.0],
         ]);
@@ -155,7 +155,7 @@ class SVDTest extends TestCase
      */
     public function decomposePreservesTinySingularValues() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 0.0, 0.0],
             [0.0, 1e-9, 0.0],
             [0.0, 0.0, 0.0],
@@ -177,14 +177,14 @@ class SVDTest extends TestCase
      */
     public function constructAndAccess() : void
     {
-        $u = Matrix::quick([
+        $u = Matrix::fromArray([
             [1.0, 0.0],
             [0.0, 1.0],
         ]);
 
         $singularValues = [5.0, 3.0];
 
-        $vT = Matrix::quick([
+        $vT = Matrix::fromArray([
             [1.0, 0.0],
             [0.0, 1.0],
         ]);
@@ -201,7 +201,7 @@ class SVDTest extends TestCase
         // The singular value matrix is an m by n matrix with the singular values on the diagonal.
         $this->assertSame([2, 2], $svd->s()->shape());
 
-        $expectedS = Matrix::quick([
+        $expectedS = Matrix::fromArray([
             [5.0, 0.0],
             [0.0, 3.0],
         ]);
@@ -225,6 +225,6 @@ class SVDTest extends TestCase
             $s[$i][$i] = $value;
         }
 
-        return $svd->u()->matmul(Matrix::quick($s))->matmul($svd->vT());
+        return $svd->u()->matmul(Matrix::fromArray($s))->matmul($svd->vT());
     }
 }

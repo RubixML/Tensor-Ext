@@ -24,7 +24,7 @@ class EigenTest extends TestCase
      */
     public function decomposeGeneral3x3() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -52,7 +52,7 @@ class EigenTest extends TestCase
      */
     public function decomposeSymmetric3x3() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [3.0, -1.0, 0.0],
             [-1.0, 2.0, -1.0],
             [0.0, -1.0, 3.0],
@@ -72,7 +72,7 @@ class EigenTest extends TestCase
      */
     public function decomposeSymmetric2x2() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [9.0, 3.0],
             [3.0, 5.0],
         ]);
@@ -89,7 +89,7 @@ class EigenTest extends TestCase
      */
     public function decomposeGeneralAndSymmetricAgree() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [3.0, -1.0, 0.0],
             [-1.0, 2.0, -1.0],
             [0.0, -1.0, 3.0],
@@ -112,7 +112,7 @@ class EigenTest extends TestCase
      */
     public function decompose1x1() : void
     {
-        $a = Matrix::quick([[9.0]]);
+        $a = Matrix::fromArray([[9.0]]);
 
         $eig = Eigen::decompose($a);
 
@@ -120,7 +120,7 @@ class EigenTest extends TestCase
 
         $this->assertEquals([9.0], $eig->eigenvalues());
 
-        $this->assertEqualsWithDelta(Matrix::quick([[1.0]]), $eig->eigenvectors(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::fromArray([[1.0]]), $eig->eigenvectors(), self::MAX_DELTA);
     }
 
     /**
@@ -128,7 +128,7 @@ class EigenTest extends TestCase
      */
     public function decomposeDiagonal() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, 0.0, 0.0],
             [0.0, 3.0, 0.0],
             [0.0, 0.0, 5.0],
@@ -148,7 +148,7 @@ class EigenTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        Eigen::decompose(Matrix::quick([
+        Eigen::decompose(Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]));
@@ -161,7 +161,7 @@ class EigenTest extends TestCase
     {
         $eigenvalues = [1.0, 2.0, 3.0];
 
-        $eigenvectors = Matrix::quick([
+        $eigenvectors = Matrix::fromArray([
             [1.0, 0.0, 0.0],
             [0.0, 1.0, 0.0],
             [0.0, 0.0, 1.0],
@@ -180,7 +180,7 @@ class EigenTest extends TestCase
      */
     public function decomposeComplexPair() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [0.0, -1.0],
             [1.0, 0.0],
         ]);
@@ -226,7 +226,7 @@ class EigenTest extends TestCase
      */
     public function decomposeComplexPairWithReal() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [0.0, -1.0, 0.0],
             [1.0, 0.0, 0.0],
             [0.0, 0.0, 2.0],
