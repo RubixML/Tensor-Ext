@@ -223,10 +223,10 @@ zephir_concat_cleanup:
 
 }
 
-void zephir_concat_ssvsvssvs(zval *result, const char *op1, uint32_t op1_len, const char *op2, uint32_t op2_len, zval *op3, const char *op4, uint32_t op4_len, zval *op5, const char *op6, uint32_t op6_len, const char *op7, uint32_t op7_len, zval *op8, const char *op9, uint32_t op9_len, int self_var){
+void zephir_concat_ssvsvsvs(zval *result, const char *op1, uint32_t op1_len, const char *op2, uint32_t op2_len, zval *op3, const char *op4, uint32_t op4_len, zval *op5, const char *op6, uint32_t op6_len, zval *op7, const char *op8, uint32_t op8_len, int self_var){
 
-	zval result_copy, op3_copy, op5_copy, op8_copy;
-	int use_copy = 0, use_copy3 = 0, use_copy5 = 0, use_copy8 = 0;
+	zval result_copy, op3_copy, op5_copy, op7_copy;
+	int use_copy = 0, use_copy3 = 0, use_copy5 = 0, use_copy7 = 0;
 	size_t offset = 0, length;
 
 	if (Z_TYPE_P(op3) != IS_STRING) {
@@ -243,10 +243,10 @@ void zephir_concat_ssvsvssvs(zval *result, const char *op1, uint32_t op1_len, co
 	   }
 	}
 
-	if (Z_TYPE_P(op8) != IS_STRING) {
-	   use_copy8 = zend_make_printable_zval(op8, &op8_copy);
-	   if (use_copy8) {
-	       op8 = &op8_copy;
+	if (Z_TYPE_P(op7) != IS_STRING) {
+	   use_copy7 = zend_make_printable_zval(op7, &op7_copy);
+	   if (use_copy7) {
+	       op7 = &op7_copy;
 	   }
 	}
 
@@ -271,18 +271,14 @@ void zephir_concat_ssvsvssvs(zval *result, const char *op1, uint32_t op1_len, co
 		goto zephir_concat_overflow;
 	}
 	length += op6_len;
-	if (UNEXPECTED(op7_len > ZSTR_MAX_LEN - length)) {
+	if (UNEXPECTED(Z_STRLEN_P(op7) > ZSTR_MAX_LEN - length)) {
 		goto zephir_concat_overflow;
 	}
-	length += op7_len;
-	if (UNEXPECTED(Z_STRLEN_P(op8) > ZSTR_MAX_LEN - length)) {
+	length += Z_STRLEN_P(op7);
+	if (UNEXPECTED(op8_len > ZSTR_MAX_LEN - length)) {
 		goto zephir_concat_overflow;
 	}
-	length += Z_STRLEN_P(op8);
-	if (UNEXPECTED(op9_len > ZSTR_MAX_LEN - length)) {
-		goto zephir_concat_overflow;
-	}
-	length += op9_len;
+	length += op8_len;
 	if (self_var) {
 
 		if (Z_TYPE_P(result) != IS_STRING) {
@@ -309,9 +305,8 @@ void zephir_concat_ssvsvssvs(zval *result, const char *op1, uint32_t op1_len, co
 	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3), op4, op4_len);
 	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3) + op4_len, Z_STRVAL_P(op5), Z_STRLEN_P(op5));
 	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3) + op4_len + Z_STRLEN_P(op5), op6, op6_len);
-	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3) + op4_len + Z_STRLEN_P(op5) + op6_len, op7, op7_len);
-	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3) + op4_len + Z_STRLEN_P(op5) + op6_len + op7_len, Z_STRVAL_P(op8), Z_STRLEN_P(op8));
-	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3) + op4_len + Z_STRLEN_P(op5) + op6_len + op7_len + Z_STRLEN_P(op8), op9, op9_len);
+	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3) + op4_len + Z_STRLEN_P(op5) + op6_len, Z_STRVAL_P(op7), Z_STRLEN_P(op7));
+	memcpy(Z_STRVAL_P(result) + offset + op1_len + op2_len + Z_STRLEN_P(op3) + op4_len + Z_STRLEN_P(op5) + op6_len + Z_STRLEN_P(op7), op8, op8_len);
 	Z_STRVAL_P(result)[length] = 0;
 	zend_string_forget_hash_val(Z_STR_P(result));
 	goto zephir_concat_cleanup;
@@ -331,8 +326,8 @@ zephir_concat_cleanup:
 	   zval_dtor(op5);
 	}
 
-	if (use_copy8) {
-	   zval_dtor(op8);
+	if (use_copy7) {
+	   zval_dtor(op7);
 	}
 
 	if (use_copy) {

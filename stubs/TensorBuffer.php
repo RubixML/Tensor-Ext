@@ -116,6 +116,10 @@ namespace Tensor {
         {
         }
 
+        public function map(callable $callback) : TensorBuffer
+        {
+        }
+
         public function sum() : float
         {
         }

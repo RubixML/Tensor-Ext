@@ -124,6 +124,31 @@ class TensorBuffer
     }
 
     /**
+     * Map a function over the elements in the buffer and return a new decorator.
+     *
+     * @internal
+     *
+     * @param callable callback
+     * @return self
+     */
+    public function map(const var callback) -> <TensorBuffer>
+    {
+        var value;
+
+        array b = [];
+
+        var a = this->buffer->toArray();
+
+        for value in a {
+            let b[] = {callback}(value);
+        }
+
+        var buffer = tensor_buffer_from_array(b);
+
+        return new TensorBuffer(<Buffer> buffer);
+    }
+
+    /**
      * Return the sum of the elements in the buffer.
      *
      * @return float

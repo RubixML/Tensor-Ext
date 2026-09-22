@@ -213,6 +213,23 @@ class TensorBufferTest extends TestCase
     /**
      * @test
      */
+    public function map() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0]));
+
+        $mapped = $decorator->map(static function ($value) : float {
+            return $value ** 2;
+        });
+
+        $this->assertInstanceOf(TensorBuffer::class, $mapped);
+        $this->assertNotSame($decorator->asBuffer(), $mapped->asBuffer());
+        $this->assertEqualsWithDelta([1.0, 4.0, 9.0], $mapped->toArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 2.0, 3.0], $decorator->toArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
     public function sum() : void
     {
         $decorator = new TensorBuffer(Buffer::fromArray([3.0, 1.0, 2.0]));

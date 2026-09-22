@@ -1,4 +1,4 @@
-# Change Logdd
+# Change Log
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension

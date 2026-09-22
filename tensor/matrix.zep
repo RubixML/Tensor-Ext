@@ -66,6 +66,27 @@ class Matrix implements Tensor
     }
 
     /**
+     * Build a matrix from a TensorBuffer object.
+     *
+     * @param \Tensor\TensorBuffer a
+     * @param int m
+     * @param int n
+     * @return self
+     */
+    public static function fromTensorBuffer(<TensorBuffer> a, const int m, const int n) -> <Matrix>
+    {
+        var rowBuffer;
+
+        array rows = [];
+
+        for rowBuffer in a->split(n) {
+            let rows[] = rowBuffer;
+        }
+
+        return new self(rows, false);
+    }
+
+    /**
      * Return an identity matrix with dimensionality n x n.
      *
      * @param int n
