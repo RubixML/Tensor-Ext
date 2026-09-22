@@ -70,7 +70,7 @@ Every public method a new `tensor/` class adds typically routes into the C backi
 1. Update the Zephir class in `tensor/`.
 2. Add/adjust the matching `optimizers/Tensor<Op>Optimizer.php` if it is a callable that the extension should route into C.
 3. Ensure the underlying C implementation exists under `ext/include/*.c` and is linked (already wired in `config.json` `extra-sources`).
-4. Bump the version in both `config.json` and `package.xml` if this is a released change, and record it in `CHANGELOG.md`.
+4. Bump the version in both `config.json` if this is a released change, and record it in `CHANGELOG.md`.
 
 Do **not** hand-edit the generated C in `ext/` (files like `*.dep`, `*.lo`, `*.o`, `Makefile*`, `config.h`). They are produced by `composer compile`. Hand-written logic belongs in `ext/include/*.c`.
 
