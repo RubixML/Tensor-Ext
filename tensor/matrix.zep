@@ -445,9 +445,28 @@ public static function build(const array a = []) -> <Matrix>
                     }
                 }
             } else {
-                for rowA in a {
+                for i, rowA in a {
                     if typeof rowA == "object" {
+                        if unlikely !(rowA instanceof TensorBuffer) {
+                            throw new InvalidArgumentException("Matrix requires an"
+                                . " array of arrays.");
+                        }
+
+                        if unlikely rowA->count() !== nHat {
+                            throw new InvalidArgumentException("The number of"
+                                . " columns must be equal for all rows, "
+                                .  strval(nHat) . " needed but " . rowA->count()
+                                .  " given at row offset " . i . ".");
+                        }
+
                         let rowA = rowA->toArray();
+                    } else {
+                        if unlikely count(rowA) !== nHat {
+                            throw new InvalidArgumentException("The number of"
+                                . " columns must be equal for all rows, "
+                                .  strval(nHat) . " needed but " . count(rowA)
+                                .  " given at row offset " . i . ".");
+                        }
                     }
 
                     for valueA in rowA {
@@ -586,17 +605,17 @@ public static function build(const array a = []) -> <Matrix>
     /**
      * Return the diagonal elements of a square matrix as a vector.
      *
-     * @return \Tensor\ColumnVector
+     * @return \Tensor\Vector
      * @throws \Tensor\Exceptions\InvalidArgumentException
      */
-    public function diagonalAsVector() -> <ColumnVector>
+    public function diagonalAsVector() -> <Vector>
     {
         if unlikely !this->isSquare() {
             throw new InvalidArgumentException("Matrix must be"
                 . " square, " . this->shapeString() . " given.");
         }
 
-        return ColumnVector::fromTensorBuffer(this->a->sliceStrided(0, this->m, this->n + 1));
+        return Vector::fromTensorBuffer(this->a->sliceStrided(0, this->m, this->n + 1));
     }
 
     /**
@@ -755,17 +774,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function reduce(const var callback, float initial = 0.0) -> float
     {
-        var rowBuffer, valueA;
-
-        var carry = initial;
-
-        for rowBuffer in this->a->split(this->n) {
-            for valueA in rowBuffer {
-                let carry = {callback}(carry, valueA);
-            }
-        }
-
-        return carry;
+        return array_reduce(this->a->toArray(), callback, initial);
     }
  
     /**
