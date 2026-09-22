@@ -57,9 +57,9 @@ class TensorBufferBench
         $this->buffer = new TensorBuffer(Buffer::fromArray($a));
         $this->concatOther = new TensorBuffer(Buffer::fromArray($a));
 
-        $this->offset = 2500;
-        $this->length = 5000;
-        $this->stride = 2;
+        $this->offset = 500;
+        $this->length = 2500;
+        $this->stride = 3;
         $this->chunkLength = 100;
         $this->times = 10;
     }
