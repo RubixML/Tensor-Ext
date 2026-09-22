@@ -529,9 +529,6 @@ class Matrix implements Tensor
         return Vector::fromTensorBuffer(this->a->slice(index * this->n, this->n));
     }
 
-        return Vector::fromTensorBuffer(this->a->slice(index * this->n, this->n));
-    }
-
     /**
      * Return a column as a vector from the matrix.
      *
@@ -549,9 +546,6 @@ class Matrix implements Tensor
         return ColumnVector::fromTensorBuffer(this->a->sliceStrided(index, this->m, this->n));
     }
 
-        return ColumnVector::fromTensorBuffer(this->a->sliceStrided(index, this->m, this->n));
-    }
-
     /**
      * Return the diagonal elements of a square matrix as a vector.
      *
@@ -564,9 +558,6 @@ class Matrix implements Tensor
             throw new InvalidArgumentException("Matrix must be"
                 . " square, " . this->shapeString() . " given.");
         }
-
-        return ColumnVector::fromTensorBuffer(this->a->sliceStrided(0, this->m, this->n + 1));
-    }
 
         return ColumnVector::fromTensorBuffer(this->a->sliceStrided(0, this->m, this->n + 1));
     }
@@ -603,13 +594,6 @@ class Matrix implements Tensor
         return b;
     }
 
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = rowBuffer->toArray();
-        }
-
-        return b;
-    }
-
     /**
      * Return each row of the matrix as a TensorBuffer.
      *
@@ -620,9 +604,6 @@ class Matrix implements Tensor
         if unlikely this->n < 1 {
             return [];
         }
-
-        return this->a->split(this->n);
-    }
 
         return this->a->split(this->n);
     }
@@ -641,13 +622,6 @@ class Matrix implements Tensor
         if unlikely this->n < 1 {
             return [];
         }
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = Vector::fromTensorBuffer(rowBuffer);
-        }
-
-        return b;
-    }
 
         for rowBuffer in this->a->split(this->n) {
             let b[] = Vector::fromTensorBuffer(rowBuffer);
@@ -678,9 +652,6 @@ class Matrix implements Tensor
         return b;
     }
 
-        return b;
-    }
-
     /**
      * Return the columns of the matrix as an array of ColumnVector objects.
      *
@@ -699,9 +670,6 @@ class Matrix implements Tensor
         for columnBuffer in this->asColumnBuffers() {
             let b[] = ColumnVector::fromTensorBuffer(columnBuffer);
         }
-
-        return b;
-    }
 
         return b;
     }
