@@ -1023,7 +1023,7 @@ class Vector implements Tensor
      */
     public function abs() -> <Vector>
     {
-        return this->map("abs");
+        return static::fromTensorBuffer(tensor_abs(this->a));
     }
 
     /**
@@ -1043,7 +1043,7 @@ class Vector implements Tensor
      */
     public function sqrt() -> <Vector>
     {
-        return this->map("sqrt");
+        return static::fromTensorBuffer(tensor_sqrt(this->a));
     }
 
     /**
@@ -1053,7 +1053,7 @@ class Vector implements Tensor
      */
     public function exp() -> <Vector>
     {
-        return this->map("exp");
+        return static::fromTensorBuffer(tensor_exp(this->a));
     }
 
     /**
@@ -1063,7 +1063,7 @@ class Vector implements Tensor
     */
     public function expm1() -> <Vector>
     {
-        return this->map("expm1");
+        return static::fromTensorBuffer(tensor_expm1(this->a));
     }
 
     /**
@@ -1074,21 +1074,16 @@ class Vector implements Tensor
      */
     public function log(const float base = self::M_E) -> <Vector>
     {
+        if unlikely base <= 0.0 {
+            throw new InvalidArgumentException("Log base must be greater"
+                . " than 0, " . strval(base) . " given.");
+        }
+
         if base === self::M_E {
-            return this->map("log");
+            return static::fromTensorBuffer(tensor_log(this->a));
         }
 
-        var valueA;
-
-        var a = this->a->toArray();
-
-        array b = [];
-
-        for valueA in a {
-            let b[] = log(valueA, base);
-        }
-
-        return static::quick(b);
+        return static::fromTensorBuffer(tensor_log_base(this->a, (double) base));
     }
 
     /**
@@ -1098,7 +1093,7 @@ class Vector implements Tensor
     */
     public function log1p() -> <Vector>
     {
-        return this->map("log1p");
+        return static::fromTensorBuffer(tensor_log1p(this->a));
     }
 
     /**
@@ -1108,7 +1103,7 @@ class Vector implements Tensor
      */
     public function sin() -> <Vector>
     {
-        return this->map("sin");
+        return static::fromTensorBuffer(tensor_sin(this->a));
     }
 
     /**
@@ -1118,7 +1113,7 @@ class Vector implements Tensor
      */
     public function asin() -> <Vector>
     {
-        return this->map("asin");
+        return static::fromTensorBuffer(tensor_asin(this->a));
     }
 
     /**
@@ -1128,7 +1123,7 @@ class Vector implements Tensor
      */
     public function cos() -> <Vector>
     {
-        return this->map("cos");
+        return static::fromTensorBuffer(tensor_cos(this->a));
     }
 
     /**
@@ -1138,7 +1133,7 @@ class Vector implements Tensor
      */
     public function acos() -> <Vector>
     {
-        return this->map("acos");
+        return static::fromTensorBuffer(tensor_acos(this->a));
     }
 
     /**
@@ -1148,7 +1143,7 @@ class Vector implements Tensor
      */
     public function tan() -> <Vector>
     {
-        return this->map("tan");
+        return static::fromTensorBuffer(tensor_tan(this->a));
     }
 
     /**
@@ -1158,7 +1153,7 @@ class Vector implements Tensor
      */
     public function atan() -> <Vector>
     {
-        return this->map("atan");
+        return static::fromTensorBuffer(tensor_atan(this->a));
     }
 
     /**
@@ -1168,7 +1163,7 @@ class Vector implements Tensor
      */
     public function rad2deg() -> <Vector>
     {
-        return this->map("rad2deg");
+        return static::fromTensorBuffer(tensor_rad2deg(this->a));
     }
 
     /**
@@ -1178,7 +1173,7 @@ class Vector implements Tensor
      */
     public function deg2rad() -> <Vector>
     {
-        return this->map("deg2rad");
+        return static::fromTensorBuffer(tensor_deg2rad(this->a));
     }
 
     /**
@@ -1322,26 +1317,12 @@ class Vector implements Tensor
      */
     public function round(const int precision = 0) -> <Vector>
     {
-        if precision === 0 {
-            return this->map("round");
-        }
-
         if unlikely precision < 0 {
             throw new InvalidArgumentException("Decimal precision cannot"
                 . " be less than 0, " . strval(precision)  . " given.");
         }
 
-        var valueA;
-
-        array b = [];
-
-        var a = this->a->toArray();
-
-        for valueA in a {
-            let b[] = round(valueA, precision);
-        }
-
-        return static::quick(b);
+        return static::fromTensorBuffer(tensor_round(this->a, (int) precision));
     }
 
     /**
@@ -1351,7 +1332,7 @@ class Vector implements Tensor
      */
     public function floor() -> <Vector>
     {
-        return this->map("floor");
+        return static::fromTensorBuffer(tensor_floor(this->a));
     }
 
     /**
@@ -1361,7 +1342,7 @@ class Vector implements Tensor
      */
     public function ceil() -> <Vector>
     {
-        return this->map("ceil");
+        return static::fromTensorBuffer(tensor_ceil(this->a));
     }
 
     /**
@@ -1380,29 +1361,7 @@ class Vector implements Tensor
                 . " greater than maximum.");
         }
 
-        var valueA;
-
-        array b = [];
-
-        var a = this->a->toArray();
-
-        for valueA in a {
-            if valueA > max {
-                let b[] = max;
-
-                continue;
-            }
-
-            if valueA < min {
-                let b[] = min;
-
-                continue;
-            }
-
-            let b[] = valueA;
-        }
-
-        return static::quick(b);
+        return static::fromTensorBuffer(tensor_clip(this->a, (double) min, (double) max));
     }
 
     /**
@@ -1413,23 +1372,7 @@ class Vector implements Tensor
      */
     public function clipLower(const float min) -> <Vector>
     {
-        var valueA;
-
-        array b = [];
-        
-        var a = this->a->toArray();
-
-        for valueA in a {
-            if valueA < min {
-                let b[] = min;
-
-                continue;
-            }
-
-            let b[] = valueA;
-        }
-
-        return static::quick(b);
+        return static::fromTensorBuffer(tensor_clip_lower(this->a, (double) min));
     }
 
     /**
@@ -1440,23 +1383,7 @@ class Vector implements Tensor
      */
     public function clipUpper(const float max) -> <Vector>
     {
-        var valueA;
-
-        array b = [];
-
-        var a = this->a->toArray();
-
-        for valueA in a {
-            if valueA > max {
-                let b[] = max;
-
-                continue;
-            }
-
-            let b[] = valueA;
-        }
-
-        return static::quick(b);
+        return static::fromTensorBuffer(tensor_clip_upper(this->a, (double) max));
     }
 
     /**
@@ -1466,23 +1393,7 @@ class Vector implements Tensor
      */
     public function sign() -> <Vector>
     {
-        var valueA;
-
-        array b = [];
-
-        var a = this->a->toArray();
-
-        for valueA in a {
-            if valueA > 0 {
-                let b[] = 1.0;
-            } elseif valueA < 0 {
-                let b[] = -1.0;
-            } else {
-                let b[] = 0.0;
-            }
-        }
-
-        return static::quick(b);
+        return static::fromTensorBuffer(tensor_sign(this->a));
     }
 
     /**
@@ -1492,17 +1403,7 @@ class Vector implements Tensor
      */
     public function negate() -> <Vector>
     {
-        var valueA;
-        
-        array b = [];
-
-        var a = this->a->toArray();
-
-        for valueA in a {
-            let b[] = -valueA;
-        }
-
-        return static::quick(b);
+        return static::fromTensorBuffer(tensor_negate(this->a));
     }
 
     /**

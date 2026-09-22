@@ -49,7 +49,7 @@ class Matrix implements Tensor
      * @param array[] a
      * @return self
      */
-public static function build(const array a = []) -> <Matrix>
+    public static function build(const array a = []) -> <Matrix>
     {
         return new self(a, 0, 0, true);
     }
@@ -1539,7 +1539,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function abs() -> <Matrix>
     {
-        return this->map("abs");
+        return self::fromTensorBuffer(tensor_abs(this->a), this->m, this->n);
     }
 
     /**
@@ -1559,9 +1559,9 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function sqrt() -> <Matrix>
     {
-        return this->map("sqrt");
+        return self::fromTensorBuffer(tensor_sqrt(this->a), this->m, this->n);
     }
- 
+
     /**
      * Return the exponential of the matrix.
      *
@@ -1569,7 +1569,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function exp() -> <Matrix>
     {
-        return this->map("exp");
+        return self::fromTensorBuffer(tensor_exp(this->a), this->m, this->n);
     }
 
     /**
@@ -1579,7 +1579,7 @@ public static function build(const array a = []) -> <Matrix>
     */
     public function expm1() -> <Matrix>
     {
-        return this->map("expm1");
+        return self::fromTensorBuffer(tensor_expm1(this->a), this->m, this->n);
     }
 
     /**
@@ -1591,30 +1591,12 @@ public static function build(const array a = []) -> <Matrix>
     public function log(const float base = self::M_E) -> <Matrix>
     {
         if base === self::M_E {
-            return this->map("log");
+            return self::fromTensorBuffer(tensor_log(this->a), this->m, this->n);
         }
 
-        var rowA, valueA;
-
-        int i;
-
-        array b = [];
- 
-        for rowA in this->a->split(this->n) {
-            let i = 0;
-
-            while i < this->n {
-                let valueA = rowA->get(i);
-
-                rowA->set(i, log(valueA, base));
-
-                let i++;
-            }
- 
-            let b[] = rowA;
-        }
- 
-        return self::quick(b);
+        return self::fromTensorBuffer(
+            tensor_log_base(this->a, (double) base), this->m, this->n
+        );
     }
 
     /**
@@ -1624,7 +1606,7 @@ public static function build(const array a = []) -> <Matrix>
     */
     public function log1p() -> <Matrix>
     {
-        return this->map("log1p");
+        return self::fromTensorBuffer(tensor_log1p(this->a), this->m, this->n);
     }
  
     /**
@@ -1634,7 +1616,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function sin() -> <Matrix>
     {
-        return this->map("sin");
+        return self::fromTensorBuffer(tensor_sin(this->a), this->m, this->n);
     }
 
     /**
@@ -1644,7 +1626,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function asin() -> <Matrix>
     {
-        return this->map("asin");
+        return self::fromTensorBuffer(tensor_asin(this->a), this->m, this->n);
     }
  
     /**
@@ -1654,7 +1636,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function cos() -> <Matrix>
     {
-        return this->map("cos");
+        return self::fromTensorBuffer(tensor_cos(this->a), this->m, this->n);
     }
 
     /**
@@ -1664,7 +1646,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function acos() -> <Matrix>
     {
-        return this->map("acos");
+        return self::fromTensorBuffer(tensor_acos(this->a), this->m, this->n);
     }
  
     /**
@@ -1674,7 +1656,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function tan() -> <Matrix>
     {
-        return this->map("tan");
+        return self::fromTensorBuffer(tensor_tan(this->a), this->m, this->n);
     }
 
     /**
@@ -1684,7 +1666,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function atan() -> <Matrix>
     {
-        return this->map("atan");
+        return self::fromTensorBuffer(tensor_atan(this->a), this->m, this->n);
     }
  
     /**
@@ -1694,7 +1676,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function rad2deg() -> <Matrix>
     {
-        return this->map("rad2deg");
+        return self::fromTensorBuffer(tensor_rad2deg(this->a), this->m, this->n);
     }
  
     /**
@@ -1704,7 +1686,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function deg2rad() -> <Matrix>
     {
-      return this->map("deg2rad");
+        return self::fromTensorBuffer(tensor_deg2rad(this->a), this->m, this->n);
     }
 
     /**
@@ -1925,7 +1907,9 @@ public static function build(const array a = []) -> <Matrix>
     public function round(const int precision = 0) -> <Matrix>
     {
         if precision === 0 {
-            return this->map("round");
+            return self::fromTensorBuffer(
+                tensor_round(this->a, 0), this->m, this->n
+            );
         }
 
         if unlikely precision < 0 {
@@ -1963,7 +1947,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function floor() -> <Matrix>
     {
-        return this->map("floor");
+        return self::fromTensorBuffer(tensor_floor(this->a), this->m, this->n);
     }
 
     /**
@@ -1973,7 +1957,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function ceil() -> <Matrix>
     {
-        return this->map("ceil");
+        return self::fromTensorBuffer(tensor_ceil(this->a), this->m, this->n);
     }
 
     /**
@@ -1992,41 +1976,9 @@ public static function build(const array a = []) -> <Matrix>
                 . " greater than maximum.");
         }
 
-        var rowA, valueA;
-
-        int i;
-
-        array b = [];
-
-        for rowA in this->a->split(this->n) {
-            let i = 0;
-
-            while i < this->n {
-                let valueA = rowA->get(i);
-
-                if valueA > max {
-                    rowA->set(i, max);
-
-                    let i++;
-
-                    continue;
-                }
-
-                if valueA < min {
-                    rowA->set(i, min);
-
-                    let i++;
-
-                    continue;
-                }
-
-                let i++;
-            }
-
-            let b[] = rowA;
-        }
-
-        return self::quick(b);
+        return self::fromTensorBuffer(
+            tensor_clip(this->a, (double) min, (double) max), this->m, this->n
+        );
     }
 
     /**
@@ -2037,29 +1989,9 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function clipLower(const float min) -> <Matrix>
     {
-        var rowA, valueA;
-
-        int i;
-
-        array b = [];
-
-        for rowA in this->a->split(this->n) {
-            let i = 0;
-
-            while i < this->n {
-                let valueA = rowA->get(i);
-
-                if valueA < min {
-                    rowA->set(i, min);
-                }
-
-                let i++;
-            }
-
-            let b[] = rowA;
-        }
-
-        return self::quick(b);
+        return self::fromTensorBuffer(
+            tensor_clip_lower(this->a, (double) min), this->m, this->n
+        );
     }
 
     /**
@@ -2070,29 +2002,9 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function clipUpper(const float max) -> <Matrix>
     {
-        var rowA, valueA;
-
-        int i;
-
-        array b = [];
-
-        for rowA in this->a->split(this->n) {
-            let i = 0;
-
-            while i < this->n {
-                let valueA = rowA->get(i);
-
-                if valueA > max {
-                    rowA->set(i, max);
-                }
-
-                let i++;
-            }
-
-            let b[] = rowA;
-        }
-
-        return self::quick(b);
+        return self::fromTensorBuffer(
+            tensor_clip_upper(this->a, (double) max), this->m, this->n
+        );
     }
 
     /**
@@ -2102,33 +2014,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function sign() -> <Matrix>
     {
-        var rowA, valueA;
-
-        int i;
-
-        array b = [];
-
-        for rowA in this->a->split(this->n) {
-            let i = 0;
-
-            while i < this->n {
-                let valueA = rowA->get(i);
-
-                if valueA > 0 {
-                    rowA->set(i, 1.0);
-                } elseif valueA < 0 {
-                    rowA->set(i, -1.0);
-                } else {
-                    rowA->set(i, 0.0);
-                }
-
-                let i++;
-            }
-
-            let b[] = rowA;
-        }
-
-        return self::quick(b);
+        return self::fromTensorBuffer(tensor_sign(this->a), this->m, this->n);
     }
 
     /**
@@ -2138,27 +2024,7 @@ public static function build(const array a = []) -> <Matrix>
      */
     public function negate() -> <Matrix>
     {
-        var rowA, valueA;
-
-        int i;
-
-        array b = [];
-
-        for rowA in this->a->split(this->n) {
-            let i = 0;
-
-            while i < this->n {
-                let valueA = rowA->get(i);
-
-                rowA->set(i, -valueA);
-
-                let i++;
-            }
-
-            let b[] = rowA;
-        }
-
-        return self::quick(b);
+        return self::fromTensorBuffer(tensor_negate(this->a), this->m, this->n);
     }
 
     /**
