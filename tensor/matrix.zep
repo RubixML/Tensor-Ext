@@ -385,7 +385,7 @@ class Matrix implements Tensor
 
         int m = count(a);
 
-        int n = 0;
+        var n;
 
         array flat = [];
 
@@ -517,12 +517,12 @@ class Matrix implements Tensor
      *
      * @param int index
      * @return \Tensor\Vector
-     * @throws \Tensor\Exceptions\OutOfBoundsException
+     * @throws \InvalidArgumentException
      */
     public function rowAsVector(const int index) -> <Vector>
     {
         if unlikely index < 0 || index >= this->m {
-            throw new OutOfBoundsException("Row offset out of"
+            throw new InvalidArgumentException("Row offset out of"
                 . " bounds.");
         }
 
@@ -534,12 +534,12 @@ class Matrix implements Tensor
      *
      * @param int index
      * @return \Tensor\ColumnVector
-     * @throws \Tensor\Exceptions\OutOfBoundsException
+     * @throws \InvalidArgumentException
      */
     public function columnAsVector(const int index) -> <ColumnVector>
     {
         if unlikely index < 0 || index >= this->n {
-            throw new OutOfBoundsException("Column offset out of"
+            throw new InvalidArgumentException("Column offset out of"
                 . " bounds.");
         }
 
