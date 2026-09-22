@@ -515,3 +515,111 @@ void tensor_mod_col_reverse(zval * return_value, zval * a, zval * b, zval * n)
 {
 	tensor_col_apply(return_value, a, b, n, tensor_col_mod_value, 1);
 }
+
+/* Binary operation applied to every element of a matrix using a shared
+ * row vector. The matrix is wrapped up in `a` (m * n doubles in row-major
+ * order) and the row vector in `b` (n doubles) so that element (i, j) of the
+ * result is op(a[i * n + j], b[j]). */
+
+typedef double (*tensor_row_op)(double x, double y);
+
+static double tensor_row_multiply_value(double x, double y)
+{
+	return x * y;
+}
+
+static double tensor_row_add_value(double x, double y)
+{
+	return x + y;
+}
+
+static double tensor_row_divide_value(double x, double y)
+{
+	return x / y;
+}
+
+static double tensor_row_subtract_value(double x, double y)
+{
+	return x - y;
+}
+
+static double tensor_row_pow_value(double x, double y)
+{
+	return pow(x, y);
+}
+
+static double tensor_row_mod_value(double x, double y)
+{
+	return fmod(x, y);
+}
+
+static void tensor_row_apply(zval * return_value, zval * a, zval * b, zval * n_zval, tensor_row_op fn)
+{
+	zend_long nHat = 0, m = 0, total = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
+
+	double * va = tensor_tensorbuffer_doubles(a, &total, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
+
+	nHat = zephir_get_intval(n_zval);
+
+	if (UNEXPECTED(nHat < 1 || nb != nHat || total < nHat || total % nHat != 0)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Matrix and vector dimensions must agree."));
+		return;
+	}
+
+	m = total / nHat;
+
+	zval c;
+
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) {
+		return;
+	}
+
+	double * vc = zephir_buffer_doubles(&c);
+
+	zend_long i, j;
+
+	for (i = 0; i < m; ++i) {
+		for (j = 0; j < nHat; ++j) {
+			vc[i * nHat + j] = fn(va[i * nHat + j], vb[j]);
+		}
+	}
+
+	zval_ptr_dtor(&c);
+}
+
+void tensor_multiply_row(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_multiply_value);
+}
+
+void tensor_add_row(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_add_value);
+}
+
+void tensor_divide_row(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_divide_value);
+}
+
+void tensor_subtract_row(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_subtract_value);
+}
+
+void tensor_pow_row(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_pow_value);
+}
+
+void tensor_mod_row(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_mod_value);
+}

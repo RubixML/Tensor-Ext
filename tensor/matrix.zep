@@ -2295,17 +2295,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_multiply_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_multiply(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2323,17 +2319,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_divide_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_divide(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2351,17 +2343,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_add_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_add(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2379,17 +2367,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_subtract_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_subtract(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2407,17 +2391,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_pow_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_pow(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2435,17 +2415,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_mod_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_mod(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2464,17 +2440,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_equal_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_equal(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2492,17 +2464,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_not_equal_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_not_equal(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2520,17 +2488,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_greater_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_greater(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2548,17 +2512,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_greater_equal_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_greater_equal(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2576,17 +2536,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_less_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_less(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2605,17 +2561,13 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var i;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
 
-        var bHat = b->asTensorBuffer();
+        let result = tensor_less_equal_row(this->a, bHat, this->n);
 
-        for i in range(0, this->m - 1) {
-            let c[] = tensor_less_equal(this->a->slice(i * this->n, this->n), bHat);
-        }
-
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n);
+        return new self(result, this->m, this->n);
     }
 
     /**
@@ -2636,6 +2588,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_multiply_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2659,6 +2612,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_divide_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2682,6 +2636,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_add_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2705,6 +2660,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_subtract_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2728,6 +2684,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_pow_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2751,6 +2708,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_mod_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2774,6 +2732,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_equal_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2797,6 +2756,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_not_equal_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2820,6 +2780,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_greater_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2843,6 +2804,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_greater_equal_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2866,6 +2828,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+
         let result = tensor_less_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -2889,6 +2852,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
+        
         let result = tensor_less_equal_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
