@@ -66,7 +66,6 @@
         "clean": "zephir fullclean",
         "compile": [
             "zephir generate",
-            "@php build-ext",
             "zephir compile --no-dev"
         ],
         "install-ext": "zephir install",

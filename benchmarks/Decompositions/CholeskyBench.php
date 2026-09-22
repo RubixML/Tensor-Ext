@@ -17,7 +17,9 @@ class CholeskyBench
 
     public function setUp() : void
     {
-        $this->a = Matrix::rand(500, 500);
+        $a = Matrix::rand(500, 500);
+
+        $this->a = $a->transpose()->matmul($a);
     }
 
     /**
