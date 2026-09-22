@@ -24,9 +24,9 @@ class TensorPseudoinverseOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 1) {
+        if (count($expression['parameters']) !== 3) {
             throw new CompilerException(
-                'Pseudo inverse accepts exactly one argument, ' . count($expression['parameters']) . 'given.',
+                'Pseudo inverse accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorPseudoinverseOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_pseudoinverse($symbol, {$resolvedParams[0]});"
+            "tensor_pseudoinverse($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
         );
 
         return new CompiledExpression(

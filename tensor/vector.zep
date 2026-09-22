@@ -376,6 +376,16 @@ class Vector implements Tensor
     }
 
     /**
+     * Return the underlying TensorBuffer of the vector.
+     *
+     * @return \Tensor\TensorBuffer
+     */
+    public function asTensorBuffer() -> <TensorBuffer>
+    {
+        return this->a;
+    }
+
+    /**
      * Return this vector as a row matrix.
      *
      * @return \Tensor\Matrix

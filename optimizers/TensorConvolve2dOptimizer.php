@@ -24,9 +24,9 @@ class TensorConvolve2dOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 3) {
+        if (count($expression['parameters']) !== 7) {
             throw new CompilerException(
-                'Convolve 1D accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
+                'Convolve 2D accepts exactly seven arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorConvolve2dOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_convolve_2d($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
+            "tensor_convolve_2d($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]}, {$resolvedParams[3]}, {$resolvedParams[4]}, {$resolvedParams[5]}, {$resolvedParams[6]});"
         );
 
         return new CompiledExpression(
