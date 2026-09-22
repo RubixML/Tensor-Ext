@@ -251,39 +251,25 @@ void tensor_pseudoinverse(zval * return_value, zval * a, zval * m, zval * n)
 }
 
 /**
- * Build the row echelon form of a singular matrix using row reduction,
- * mirroring the pure-PHP rowReductionMethod in REF. Pivot rows are not
- * normalised so the output matches the non-singular (LAPACK dgetrf) path.
- * 
- * @param return_value
- * @param a
+ * Reduce a (possibly singular) row echelon matrix stored in `w` in place,
+ * mirroring the pure-PHP row reduction path. Pivot rows are not normalized so
+ * the output matches the non-singular (LAPACK dgetrf) path. Returns the
+ * number of row swaps performed.
+ *
+ * @param w
  * @param m
  * @param n
+ * @return long
  */
-static void tensor_ref_singular(zval * return_value, zval * a, unsigned int m, unsigned int n)
+static long tensor_ref_singular(double * w, unsigned int m, unsigned int n)
 {
     unsigned int i, j;
-    zval * row;
-    zval rowB, b;
-    zval tuple;
 
     double epsilon = 0.00000001;
     double pivot, scale, tmp;
     unsigned int r = 0;
     unsigned int c = 0;
     long swaps = 0;
-
-    zend_array * aa = Z_ARR_P(a);
-
-    double * w = emalloc(m * n * sizeof(double));
-
-    for (i = 0; i < m; ++i) {
-        row = zend_hash_index_find(aa, i);
-
-        for (j = 0; j < n; ++j) {
-            w[i * n + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
-    }
 
     while (r < m && c < n) {
         double * pivotRow = w + r * n;
@@ -326,21 +312,86 @@ static void tensor_ref_singular(zval * return_value, zval * a, unsigned int m, u
         ++c;
     }
 
-    array_init_size(&b, m);
+    return swaps;
+}
 
-    for (i = 0; i < m; ++i) {
-        array_init_size(&rowB, n);
+/**
+ * Bring a matrix in row-echelon form on a scratch buffer in place, mirroring
+ * the pure-PHP forward elimination path. Returns the number of row swaps and
+ * sets `*status` to the LAPACK result (negative on failure).
+ */
+static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, lapack_int * status);
 
-        for (j = 0; j < n; ++j) {
-            add_next_index_double(&rowB, w[i * n + j]);
-        }
+/**
+ * Compute the row echelon form (REF) of matrix A, reading A out of a
+ * TensorBuffer, and return a tuple with the reduced matrix (as a TensorBuffer)
+ * and the number of row swaps performed.
+ *
+ * @param return_value
+ * @param a
+ * @param m
+ * @param n
+ */
+void tensor_ref(zval * return_value, zval * a, zval * m, zval * n)
+{
+    zend_long nbuf = 0;
+    int ok_a = 0;
+    unsigned int i;
 
-        add_next_index_zval(&b, &rowB);
+    unsigned int ma = (unsigned int) zephir_get_intval(m);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
+
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
+
+    if (UNEXPECTED(!ok_a)) {
+        return;
     }
+
+    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
+    }
+
+    double * w = emalloc(ma * na * sizeof(double));
+
+    for (i = 0; i < ma * na; ++i) {
+        w[i] = va[i];
+    }
+
+    lapack_int status;
+
+    long swaps = tensor_ref_step(w, va, ma, na, &status);
+
+    if (status < 0) {
+        efree(w);
+
+        RETURN_NULL();
+    }
+
+    zval matrix, buf;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&matrix, (zend_long) ma * na, &buf) == FAILURE)) {
+        efree(w);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&buf);
+
+        for (i = 0; i < (zend_ulong)(ma * na); ++i) {
+            vc[i] = w[i];
+        }
+    }
+
+    zval_ptr_dtor(&buf);
+
+    zval tuple;
 
     array_init_size(&tuple, 2);
 
-    add_next_index_zval(&tuple, &b);
+    add_next_index_zval(&tuple, &matrix);
     add_next_index_long(&tuple, swaps);
 
     RETVAL_ARR(Z_ARR(tuple));
@@ -349,220 +400,154 @@ static void tensor_ref_singular(zval * return_value, zval * a, unsigned int m, u
 }
 
 /**
- * Compute the row echelon form (REF) of matrix A and return a tuple with the
- * reduced matrix and the number of row swaps performed.
- * 
+ * Compute the Cholesky decomposition of matrix A (read from a TensorBuffer)
+ * and return the lower triangular matrix as a TensorBuffer.
+ *
  * @param return_value
  * @param a
+ * @param n
  */
-void tensor_ref(zval * return_value, zval * a)
+void tensor_cholesky(zval * return_value, zval * a, zval * n)
 {
+    zend_long nbuf = 0;
+    int ok_a = 0;
     unsigned int i, j;
-    zval * row;
-    zval rowB, b;
-    zval tuple;
 
-    zend_array * aa = Z_ARR_P(a);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    unsigned int m = zend_array_count(aa);
-    unsigned int n = zend_array_count(Z_ARR_P(zend_hash_index_find(aa, 0)));
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
 
-    double * va = emalloc(m * n * sizeof(double));
-    int * pivots = emalloc(MIN(m, n) * sizeof(int));
+    if (UNEXPECTED(!ok_a)) {
+        return;
+    }
 
-    for (i = 0; i < m; ++i) {
-        row = zend_hash_index_find(aa, i);
+    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
+    }
 
-        for (j = 0; j < n; ++j) {
-            va[i * n + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
+    double * w = emalloc(na * na * sizeof(double));
+
+    for (i = 0; i < na * na; ++i) {
+        w[i] = va[i];
+    }
+
+    lapack_int status = LAPACKE_dpotrf(LAPACK_ROW_MAJOR, 'L', na, w, na);
+
+    if (status != 0) {
+        efree(w);
+
+        RETURN_NULL();
+    }
+
+    /* zero the upper triangle so the result is a proper lower triangular matrix */
+    for (i = 0; i < na; ++i) {
+        for (j = i + 1; j < na; ++j) {
+            w[i * na + j] = 0.0;
         }
     }
 
-    lapack_int status = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, m, n, va, n, pivots);
+    zval l, buf;
 
-    if (status > 0) {
-        efree(va);
-        efree(pivots);
-
-        tensor_ref_singular(return_value, a, m, n);
+    if (UNEXPECTED(tensor_tensorbuffer_create(&l, (zend_long) na * na, &buf) == FAILURE)) {
+        efree(w);
 
         return;
     }
 
-    if (status != 0) {
-        efree(va);
-        efree(pivots);
+    {
+        double * vc = (double *) zephir_buffer_doubles(&buf);
 
-        RETURN_NULL();
-    }
-    
-    array_init_size(&b, m);
-
-    long swaps = 0;
-
-    for (i = 0; i < m; ++i) {
-        array_init_size(&rowB, n);
-
-        for (j = 0; j < i; ++j) {
-            add_next_index_double(&rowB, 0.0);
-        }
-
-        for (j = i; j < n; ++j) {
-            add_next_index_double(&rowB, va[i * n + j]);
-        }
-
-        add_next_index_zval(&b, &rowB);
-
-        if (i + 1 != pivots[i]) {
-            ++swaps;
+        for (i = 0; i < (zend_ulong)(na * na); ++i) {
+            vc[i] = w[i];
         }
     }
 
-    array_init_size(&tuple, 2);
-    
-    add_next_index_zval(&tuple, &b);
-    add_next_index_long(&tuple, swaps);
+    zval_ptr_dtor(&buf);
 
-    RETVAL_ARR(Z_ARR(tuple));
+    *return_value = l;
 
-    efree(va);
-    efree(pivots);
+    efree(w);
 }
 
 /**
- * Compute the Cholesky decomposition of matrix A and return the lower triangular matrix.
- * 
+ * Compute the LU factorization of matrix A (read from a TensorBuffer) and
+ * return a tuple with the lower, upper, and permutation matrices (each as a
+ * TensorBuffer).
+ *
  * @param return_value
  * @param a
+ * @param n
  */
-void tensor_cholesky(zval * return_value, zval * a)
+void tensor_lu(zval * return_value, zval * a, zval * n)
 {
+    zend_long nbuf = 0;
+    int ok_a = 0;
     unsigned int i, j;
-    zval * row;
-    zval rowB, b;
 
-    zend_array * aa = Z_ARR_P(a);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    unsigned int n = zend_array_count(aa);
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
 
-    double * va = emalloc(n * n * sizeof(double));
-
-    for (i = 0; i < n; ++i) {
-        row = zend_hash_index_find(aa, i);
-
-        for (j = 0; j < n; ++j) {
-            va[i * n + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
+    if (UNEXPECTED(!ok_a)) {
+        return;
     }
 
-    lapack_int status = LAPACKE_dpotrf(LAPACK_ROW_MAJOR, 'L', n, va, n);
-
-    if (status != 0) {
-        efree(va);
-
-        RETURN_NULL();
+    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
     }
-    
-    array_init_size(&b, n);
-
-    for (i = 0; i < n; ++i) {
-        array_init_size(&rowB, n);
-
-        for (j = 0; j <= i; ++j) {
-            add_next_index_double(&rowB, va[i * n + j]);
-        }
-
-        for (j = i + 1; j < n; ++j) {
-            add_next_index_double(&rowB, 0.0);
-        }
-
-        add_next_index_zval(&b, &rowB);
-    }
-
-    RETVAL_ARR(Z_ARR(b));
-
-    efree(va);
-}
-
-/**
- * Compute the LU factorization of matrix A and return a tuple with lower, upper, and permutation matrices.
- * 
- * @param return_value
- * @param a
- */
-void tensor_lu(zval * return_value, zval * a)
-{
-    unsigned int i, j;
-    zval * row;
-    zval rowL, l, rowU, u, rowP, p;
-    zval tuple;
-
-    zend_array * aa = Z_ARR_P(a);
-
-    unsigned int n = zend_array_count(aa);
 
     unsigned int * perm;
-    double * va = emalloc(n * n * sizeof(double));
-    int * pivots = emalloc(n * sizeof(int));
+    double * va_ = emalloc(na * na * sizeof(double));
+    int * pivots = emalloc(na * sizeof(int));
 
-    for (i = 0; i < n; ++i) {
-        row = zend_hash_index_find(aa, i);
-
-        for (j = 0; j < n; ++j) {
-            va[i * n + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
+    for (i = 0; i < na * na; ++i) {
+        va_[i] = va[i];
     }
 
-    lapack_int status = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, n, n, va, n, pivots);
+    lapack_int status = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, na, na, va_, na, pivots);
 
     if (status != 0) {
-        efree(va);
+        efree(va_);
         efree(pivots);
 
         RETURN_NULL();
     }
-    
-    array_init_size(&l, n);
-    array_init_size(&u, n);
-    array_init_size(&p, n);
 
-    for (i = 0; i < n; ++i) {
-        array_init_size(&rowL, n);
+    double * lbuf = emalloc(na * na * sizeof(double));
+    double * ubuf = emalloc(na * na * sizeof(double));
+    double * pbuf = emalloc(na * na * sizeof(double));
+
+    for (i = 0; i < na; ++i) {
+        for (j = 0; j < i; ++j) {
+            lbuf[i * na + j] = va_[i * na + j];
+        }
+
+        lbuf[i * na + i] = 1.0;
+
+        for (j = i + 1; j < na; ++j) {
+            lbuf[i * na + j] = 0.0;
+        }
 
         for (j = 0; j < i; ++j) {
-            add_next_index_double(&rowL, va[i * n + j]);
+            ubuf[i * na + j] = 0.0;
         }
 
-        add_next_index_double(&rowL, 1.0);
-
-        for (j = i + 1; j < n; ++j) {
-            add_next_index_double(&rowL, 0.0);
+        for (j = i; j < na; ++j) {
+            ubuf[i * na + j] = va_[i * na + j];
         }
-
-        add_next_index_zval(&l, &rowL);
     }
 
-    for (i = 0; i < n; ++i) {
-        array_init_size(&rowU, n);
+    perm = emalloc(na * sizeof(unsigned int));
 
-        for (j = 0; j < i; ++j) {
-            add_next_index_double(&rowU, 0.0);
-        }
-
-        for (j = i; j < n; ++j) {
-            add_next_index_double(&rowU, va[i * n + j]);
-        }
-
-        add_next_index_zval(&u, &rowU);
-    }
-
-    perm = emalloc(n * sizeof(unsigned int));
-
-    for (i = 0; i < n; ++i) {
+    for (i = 0; i < na; ++i) {
         perm[i] = i;
     }
 
-    for (i = 0; i < n; ++i) {
+    for (i = 0; i < na; ++i) {
         unsigned int r = (unsigned int)(pivots[i] - 1);
 
         if (r != i) {
@@ -573,22 +558,80 @@ void tensor_lu(zval * return_value, zval * a)
         }
     }
 
-    for (i = 0; i < n; ++i) {
-        array_init_size(&rowP, n);
-
-        for (j = 0; j < n; ++j) {
-            if (j == perm[i]) {
-                add_next_index_long(&rowP, 1);
-            } else {
-                add_next_index_long(&rowP, 0);
-            }
+    for (i = 0; i < na; ++i) {
+        for (j = 0; j < na; ++j) {
+            pbuf[i * na + j] = (j == perm[i]) ? 1.0 : 0.0;
         }
-
-        add_next_index_zval(&p, &rowP);
     }
 
+    zval l, u, p, tuple;
+    zval bufL, bufU, bufP;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&l, (zend_long) na * na, &bufL) == FAILURE)) {
+        efree(perm);
+        efree(lbuf);
+        efree(ubuf);
+        efree(pbuf);
+        efree(va_);
+        efree(pivots);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufL);
+
+        for (i = 0; i < (zend_ulong)(na * na); ++i) {
+            vc[i] = lbuf[i];
+        }
+    }
+
+    zval_ptr_dtor(&bufL);
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&u, (zend_long) na * na, &bufU) == FAILURE)) {
+        efree(perm);
+        efree(lbuf);
+        efree(ubuf);
+        efree(pbuf);
+        efree(va_);
+        efree(pivots);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufU);
+
+        for (i = 0; i < (zend_ulong)(na * na); ++i) {
+            vc[i] = ubuf[i];
+        }
+    }
+
+    zval_ptr_dtor(&bufU);
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&p, (zend_long) na * na, &bufP) == FAILURE)) {
+        efree(perm);
+        efree(lbuf);
+        efree(ubuf);
+        efree(pbuf);
+        efree(va_);
+        efree(pivots);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufP);
+
+        for (i = 0; i < (zend_ulong)(na * na); ++i) {
+            vc[i] = pbuf[i];
+        }
+    }
+
+    zval_ptr_dtor(&bufP);
+
     array_init_size(&tuple, 3);
-    
+
     add_next_index_zval(&tuple, &l);
     add_next_index_zval(&tuple, &u);
     add_next_index_zval(&tuple, &p);
@@ -596,7 +639,10 @@ void tensor_lu(zval * return_value, zval * a)
     RETVAL_ARR(Z_ARR(tuple));
 
     efree(perm);
-    efree(va);
+    efree(lbuf);
+    efree(ubuf);
+    efree(pbuf);
+    efree(va_);
     efree(pivots);
 }
 
@@ -606,36 +652,39 @@ void tensor_lu(zval * return_value, zval * a)
  * @param return_value
  * @param a
  */
-void tensor_eig(zval * return_value, zval * a)
+void tensor_eig(zval * return_value, zval * a, zval * n)
 {
-    unsigned int i, j;
-    zval * row;
-    zval eigenvalues;
-    zval eigenvectors;
-    zval eigenvector;
-    zval tuple;
+    zend_long nbuf = 0;
+    int ok_a = 0;
+    unsigned int i;
 
-    zend_array * aa = Z_ARR_P(a);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    unsigned int n = zend_array_count(aa);
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
 
-    double * va = emalloc(n * n * sizeof(double));
-    double * wr = emalloc(n * sizeof(double));
-    double * wi = emalloc(n * sizeof(double));
-    double * vr = emalloc(n * n * sizeof(double));
-
-    for (i = 0; i < n; ++i) {
-        row = zend_hash_index_find(aa, i);
-
-        for (j = 0; j < n; ++j) {
-            va[i * n + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
+    if (UNEXPECTED(!ok_a)) {
+        return;
     }
 
-    lapack_int status = LAPACKE_dgeev(LAPACK_ROW_MAJOR, 'N', 'V', n, va, n, wr, wi, NULL, n, vr, n);
+    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
+    }
+
+    double * w = emalloc(na * na * sizeof(double));
+    double * wr = emalloc(na * sizeof(double));
+    double * wi = emalloc(na * sizeof(double));
+    double * vr = emalloc(na * na * sizeof(double));
+
+    for (i = 0; i < na * na; ++i) {
+        w[i] = va[i];
+    }
+
+    lapack_int status = LAPACKE_dgeev(LAPACK_ROW_MAJOR, 'N', 'V', na, w, na, wr, wi, NULL, na, vr, na);
 
     if (status != 0) {
-        efree(va);
+        efree(w);
         efree(wr);
         efree(wi);
         efree(vr);
@@ -643,29 +692,45 @@ void tensor_eig(zval * return_value, zval * a)
         RETURN_NULL();
     }
 
-    array_init_size(&eigenvalues, n);
-    array_init_size(&eigenvectors, n);
+    zval eigenvalues;
 
-    for (i = 0; i < n; ++i) {
+    array_init_size(&eigenvalues, na);
+
+    for (i = 0; i < na; ++i) {
         add_next_index_double(&eigenvalues, wr[i]);
-
-        array_init_size(&eigenvector, n);
-
-        for (j = 0; j < n; ++j) {
-            add_next_index_double(&eigenvector, vr[i * n + j]);
-        }
-
-        add_next_index_zval(&eigenvectors, &eigenvector);
     }
 
+    zval eigenvectors, buf;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
+        efree(w);
+        efree(wr);
+        efree(wi);
+        efree(vr);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&buf);
+
+        for (i = 0; i < (zend_ulong)(na * na); ++i) {
+            vc[i] = vr[i];
+        }
+    }
+
+    zval_ptr_dtor(&buf);
+
+    zval tuple;
+
     array_init_size(&tuple, 2);
-    
+
     add_next_index_zval(&tuple, &eigenvalues);
     add_next_index_zval(&tuple, &eigenvectors);
 
     RETVAL_ARR(Z_ARR(tuple));
 
-    efree(va);
+    efree(w);
     efree(wr);
     efree(wi);
     efree(vr);
@@ -677,62 +742,79 @@ void tensor_eig(zval * return_value, zval * a)
  * @param return_value
  * @param a
  */
-void tensor_eig_symmetric(zval * return_value, zval * a)
+void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
 {
-    unsigned int i, j;
-    zval * row;
-    zval eigenvalues;
-    zval eigenvectors;
-    zval eigenvector;
-    zval tuple;
+    zend_long nbuf = 0;
+    int ok_a = 0;
+    unsigned int i;
 
-    zend_array * aa = Z_ARR_P(a);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    unsigned int n = zend_array_count(aa);
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
 
-    double * va = emalloc(n * n * sizeof(double));
-    double * wr = emalloc(n * sizeof(double));
-
-    for (i = 0; i < n; ++i) {
-        row = zend_hash_index_find(aa, i);
-
-        for (j = 0; j < n; ++j) {
-            va[i * n + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
+    if (UNEXPECTED(!ok_a)) {
+        return;
     }
 
-    lapack_int status = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', n, va, n, wr);
+    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
+    }
+
+    double * w = emalloc(na * na * sizeof(double));
+    double * wr = emalloc(na * sizeof(double));
+
+    for (i = 0; i < na * na; ++i) {
+        w[i] = va[i];
+    }
+
+    lapack_int status = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', na, w, na, wr);
 
     if (status != 0) {
-        efree(va);
+        efree(w);
         efree(wr);
 
         RETURN_NULL();
     }
 
-    array_init_size(&eigenvalues, n);
-    array_init_size(&eigenvectors, n);
+    zval eigenvalues;
 
-    for (i = 0; i < n; ++i) {
+    array_init_size(&eigenvalues, na);
+
+    for (i = 0; i < na; ++i) {
         add_next_index_double(&eigenvalues, wr[i]);
-
-        array_init_size(&eigenvector, n);
-
-        for (j = 0; j < n; ++j) {
-            add_next_index_double(&eigenvector, va[i * n + j]);
-        }
-
-        add_next_index_zval(&eigenvectors, &eigenvector);
     }
 
+    zval eigenvectors, buf;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
+        efree(w);
+        efree(wr);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&buf);
+
+        for (i = 0; i < (zend_ulong)(na * na); ++i) {
+            vc[i] = w[i];
+        }
+    }
+
+    zval_ptr_dtor(&buf);
+
+    zval tuple;
+
     array_init_size(&tuple, 2);
-    
+
     add_next_index_zval(&tuple, &eigenvalues);
     add_next_index_zval(&tuple, &eigenvectors);
 
     RETVAL_ARR(Z_ARR(tuple));
 
-    efree(va);
+    efree(w);
     efree(wr);
 }
 
@@ -742,38 +824,41 @@ void tensor_eig_symmetric(zval * return_value, zval * a)
  * @param return_value
  * @param a
  */
-void tensor_svd(zval * return_value, zval * a)
+void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
 {
-    unsigned int i, j;
-    zval * row;
-    zval u, rowU;
-    zval s;
-    zval vt, rowVt;
-    zval tuple;
+    zend_long nbuf = 0;
+    int ok_a = 0;
+    unsigned int i;
 
-    zend_array * aa = Z_ARR_P(a);
+    unsigned int ma = (unsigned int) zephir_get_intval(m);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
+    unsigned int k = MIN(ma, na);
 
-    unsigned int m = zend_array_count(aa);
-    unsigned int n = zend_array_count(Z_ARR_P(zend_hash_index_find(aa, 0)));
-    unsigned int k = MIN(m, n);
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
 
-    double * va = emalloc(m * n * sizeof(double));
-    double * vu = emalloc(m * m * sizeof(double));
-    double * vs = emalloc(k * sizeof(double));
-    double * vvt = emalloc(n * n * sizeof(double));
-
-    for (i = 0; i < m; ++i) {
-        row = zend_hash_index_find(aa, i);
-
-        for (j = 0; j < n; ++j) {
-            va[i * n + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
+    if (UNEXPECTED(!ok_a)) {
+        return;
     }
 
-    lapack_int status = LAPACKE_dgesdd(LAPACK_ROW_MAJOR, 'A', m, n, va, n, vs, vu, m, vvt, n);
+    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
+    }
+
+    double * w = emalloc(ma * na * sizeof(double));
+    double * vu = emalloc(ma * ma * sizeof(double));
+    double * vs = emalloc(k * sizeof(double));
+    double * vvt = emalloc(na * na * sizeof(double));
+
+    for (i = 0; i < ma * na; ++i) {
+        w[i] = va[i];
+    }
+
+    lapack_int status = LAPACKE_dgesdd(LAPACK_ROW_MAJOR, 'A', ma, na, w, na, vs, vu, ma, vvt, na);
 
     if (status != 0) {
-        efree(va);
+        efree(w);
         efree(vu);
         efree(vs);
         efree(vvt);
@@ -781,44 +866,388 @@ void tensor_svd(zval * return_value, zval * a)
         RETURN_NULL();
     }
 
-    array_init_size(&u, m);
-    array_init_size(&s, k);
-    array_init_size(&vt, n);
+    zval u, bufU;
 
-    for (i = 0; i < m; ++i) {
-        array_init_size(&rowU, m);
+    if (UNEXPECTED(tensor_tensorbuffer_create(&u, (zend_long) ma * ma, &bufU) == FAILURE)) {
+        efree(w);
+        efree(vu);
+        efree(vs);
+        efree(vvt);
 
-        for (j = 0; j < m; ++j) {
-            add_next_index_double(&rowU, vu[i * m + j]);
-        }
-
-        add_next_index_zval(&u, &rowU);
+        return;
     }
-    
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufU);
+
+        for (i = 0; i < (zend_ulong)(ma * ma); ++i) {
+            vc[i] = vu[i];
+        }
+    }
+
+    zval_ptr_dtor(&bufU);
+
+    zval s;
+
+    array_init_size(&s, k);
+
     for (i = 0; i < k; ++i) {
         add_next_index_double(&s, vs[i]);
     }
 
-    for (i = 0; i < n; ++i) {
-        array_init_size(&rowVt, n);
+    zval vt, bufVt;
 
-        for (j = 0; j < n; ++j) {
-            add_next_index_double(&rowVt, vvt[i * n + j]);
-        }
+    if (UNEXPECTED(tensor_tensorbuffer_create(&vt, (zend_long) na * na, &bufVt) == FAILURE)) {
+        efree(w);
+        efree(vu);
+        efree(vs);
+        efree(vvt);
 
-        add_next_index_zval(&vt, &rowVt);
+        return;
     }
 
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufVt);
+
+        for (i = 0; i < (zend_ulong)(na * na); ++i) {
+            vc[i] = vvt[i];
+        }
+    }
+
+    zval_ptr_dtor(&bufVt);
+
+    zval tuple;
+
     array_init_size(&tuple, 3);
-    
+
     add_next_index_zval(&tuple, &u);
     add_next_index_zval(&tuple, &s);
     add_next_index_zval(&tuple, &vt);
 
     RETVAL_ARR(Z_ARR(tuple));
 
-    efree(va);
+    efree(w);
     efree(vu);
     efree(vs);
     efree(vvt);
+}
+
+/**
+ * Run the forward elimination + singular row reduction used by both
+ * `tensor_ref` and `tensor_rref`. On failure (LAPACK error) sets *status to a
+ * large negative value. On success returns the number of row swaps.
+ */
+static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, lapack_int * status)
+{
+    unsigned int i, j;
+
+    int * pivots = emalloc(MIN(m, n) * sizeof(int));
+
+    *status = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, m, n, w, n, pivots);
+
+    long swaps = 0;
+
+    if (*status > 0) {
+        /* Singular: `dgetrf` left `w` partially eliminated. The pure-PHP REF
+         * fallback must operate on the original (unmodified) matrix to match
+         * the previous behaviour, so restore `w` from `orig` first. */
+        for (i = 0; i < m * n; ++i) {
+            w[i] = orig[i];
+        }
+
+        swaps = tensor_ref_singular(w, m, n);
+    } else if (*status != 0) {
+        efree(pivots);
+
+        return 0;
+    } else {
+        for (i = 0; i < m; ++i) {
+            if (i + 1 != (unsigned int) pivots[i]) {
+                ++swaps;
+            }
+        }
+
+        /* `dgetrf` returns the `L + U` factor in `w`. Extract the upper
+         * triangular `U` (row-echelon form) by clearing the strictly-lower
+         * triangle, matching the original `tensor_ref` output shape. */
+        for (i = 0; i < m; ++i) {
+            unsigned int lim = i < n ? i : n;
+
+            for (j = 0; j < lim; ++j) {
+                w[i * n + j] = 0.0;
+            }
+        }
+    }
+
+    efree(pivots);
+
+    return swaps;
+}
+
+/**
+ * Compute the reduced row echelon form (RREF) of matrix A (read from a
+ * TensorBuffer). The matrix is first brought to row-echelon form via LAPACK
+ * `dgetrf` (with a singular-matrix fallback), and then Gauss-Jordan
+ * normalization and elimination are applied to produce unit pivots, matching
+ * the pure-PHP `Rref::reduce` path.
+ *
+ * @param return_value
+ * @param a
+ * @param m
+ * @param n
+ */
+void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
+{
+    zend_long nbuf = 0;
+    int ok_a = 0;
+    unsigned int i, j;
+
+    double epsilon = 0.00000001;
+
+    unsigned int ma = (unsigned int) zephir_get_intval(m);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
+
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
+
+    if (UNEXPECTED(!ok_a)) {
+        return;
+    }
+
+    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
+    }
+
+    double * w = emalloc(ma * na * sizeof(double));
+
+    for (i = 0; i < ma * na; ++i) {
+        w[i] = va[i];
+    }
+
+    lapack_int status;
+
+    (void) tensor_ref_step(w, va, ma, na, &status);
+
+    if (status < 0) {
+        efree(w);
+
+        RETURN_NULL();
+    }
+
+    /* Normalize each pivot to 1 and eliminate the entries above it, matching
+     * the pure-PHP `Rref::reduce` path. */
+    unsigned int r = 0, c = 0;
+
+    while (r < ma && c < na) {
+        double pivot = w[r * na + c];
+
+        if (fabs(pivot) < epsilon) {
+            int found = 0;
+
+            for (i = c; i < na; ++i) {
+                if (fabs(w[r * na + i]) >= epsilon) {
+                    found = 1;
+                    break;
+                }
+            }
+
+            if (!found) {
+                for (j = c; j < na; ++j) {
+                    w[r * na + j] = 0.0;
+                }
+
+                ++r;
+
+                continue;
+            }
+
+            ++c;
+
+            continue;
+        }
+
+        if (pivot != 1.0) {
+            for (j = 0; j < na; ++j) {
+                w[r * na + j] /= pivot;
+            }
+        }
+
+        for (i = 0; i < r; ++i) {
+            double scale = w[i * na + c];
+
+            if (fabs(scale) >= epsilon) {
+                for (j = 0; j < na; ++j) {
+                    w[i * na + j] -= scale * w[r * na + j];
+                }
+            }
+        }
+
+        ++r;
+        ++c;
+    }
+
+    zval result, buf;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&result, (zend_long) ma * na, &buf) == FAILURE)) {
+        efree(w);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&buf);
+
+        for (i = 0; i < (zend_ulong)(ma * na); ++i) {
+            vc[i] = w[i];
+        }
+    }
+
+    zval_ptr_dtor(&buf);
+
+    *return_value = result;
+
+    efree(w);
+}
+
+/**
+ * Return the rank of an already-reduced matrix stored in a TensorBuffer, i.e.
+ * the number of rows containing at least one non-zero element.
+ *
+ * @param return_value
+ * @param a
+ * @param m
+ * @param n
+ */
+void tensor_rank(zval * return_value, zval * a, zval * m, zval * n)
+{
+    zend_long nbuf = 0;
+    int ok_a = 0;
+    unsigned int i, j;
+
+    double epsilon = 0.00000001;
+
+    unsigned int ma = (unsigned int) zephir_get_intval(m);
+    unsigned int na = (unsigned int) zephir_get_intval(n);
+
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
+
+    if (UNEXPECTED(!ok_a)) {
+        return;
+    }
+
+    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must match the given dimensions."));
+        return;
+    }
+
+    unsigned int rank = 0;
+
+    for (i = 0; i < ma; ++i) {
+        for (j = 0; j < na; ++j) {
+            if (fabs(va[i * na + j]) >= epsilon) {
+                ++rank;
+
+                break;
+            }
+        }
+    }
+
+    RETVAL_LONG((zend_long) rank);
+}
+
+/**
+ * Return whether the square matrix A (read from a TensorBuffer) is symmetric
+ * with respect to a strict element-wise equality (matching PHP `!=`).
+ *
+ * @param return_value
+ * @param a
+ * @param n
+ */
+void tensor_is_symmetric(zval * return_value, zval * a, zval * n)
+{
+    zend_long nbuf = 0;
+    int ok_a = 0;
+
+    unsigned int i, j;
+
+    unsigned int na = (unsigned int) zephir_get_intval(n);
+
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
+
+    if (UNEXPECTED(!ok_a)) {
+        return;
+    }
+
+    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffer must be square."));
+        return;
+    }
+
+    for (i = 0; i < na - 1; ++i) {
+        for (j = i + 1; j < na; ++j) {
+            if (va[i * na + j] != va[j * na + i]) {
+                RETVAL_FALSE;
+
+                return;
+            }
+        }
+    }
+
+    RETVAL_TRUE;
+}
+
+/**
+ * Compute the outer product of two vectors (read from TensorBuffers) and
+ * return the resulting matrix as a TensorBuffer.
+ *
+ * @param return_value
+ * @param a
+ * @param b
+ * @param na
+ * @param nb
+ */
+void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
+{
+    zend_long nbufa = 0, nbufb = 0;
+    int ok_a = 0, ok_b = 0;
+
+    unsigned int naHat = (unsigned int) zephir_get_intval(na);
+    unsigned int nbHat = (unsigned int) zephir_get_intval(nb);
+
+    double * va = tensor_tensorbuffer_doubles(a, &nbufa, &ok_a);
+    double * vb = tensor_tensorbuffer_doubles(b, &nbufb, &ok_b);
+
+    if (UNEXPECTED(!ok_a || !ok_b)) {
+        return;
+    }
+
+    if (UNEXPECTED(nbufa != (zend_long) naHat || nbufb != (zend_long) nbHat)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Buffer lengths must match the given dimensions."));
+        return;
+    }
+
+    zval product, buf;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&product, (zend_long) naHat * nbHat, &buf) == FAILURE)) {
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&buf);
+        unsigned int i, j;
+
+        for (i = 0; i < naHat; ++i) {
+            for (j = 0; j < nbHat; ++j) {
+                vc[i * nbHat + j] = va[i] * vb[j];
+            }
+        }
+    }
+
+    zval_ptr_dtor(&buf);
+
+    *return_value = product;
 }

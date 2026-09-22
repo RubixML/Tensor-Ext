@@ -1,5 +1,8 @@
 # Change Log
 
+- 4.0.0
+    - Performance: the linear algebra operations (REF, RREF, Cholesky, LU, eigendecomposition, SVD), `rank()`, `symmetric()`, and the vector `outer()` product now read their input from, and return their output into, `TensorBuffer`s directly instead of round-tripping through PHP arrays, eliminating the intermediate array copies
+
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension
     - Implemented the Moore-Penrose pseudoinverse in the extension via SVD

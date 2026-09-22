@@ -9,7 +9,7 @@ use Zephir\HeadersManager;
 use Zephir\Exception\CompilerException;
 use Zephir\Optimizers\OptimizerAbstract;
 
-class TensorRefOptimizer extends OptimizerAbstract
+class TensorRrefOptimizer extends OptimizerAbstract
 {
     /**
      * @param mixed[] $expression
@@ -26,7 +26,7 @@ class TensorRefOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 3) {
             throw new CompilerException(
-                'REF accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
+                'RREF accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorRefOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_ref($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
+            "tensor_rref($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
         );
 
         return new CompiledExpression(

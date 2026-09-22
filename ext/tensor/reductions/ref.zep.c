@@ -59,20 +59,25 @@ ZEPHIR_INIT_CLASS(Tensor_Reductions_Ref)
  */
 PHP_METHOD(Tensor_Reductions_Ref, reduce)
 {
-	zval ref, _2;
+	zval ref, _4;
 	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
-	zend_long ZEPHIR_LAST_CALL_STATUS;
-	zval *a, a_sub, result, _0, _1, b, _3, swaps;
+	zend_long ZEPHIR_LAST_CALL_STATUS, swaps;
+	zval *a, a_sub, result, _0, _1, _2, _3, b, _5, _6, _7, _8, _9;
 
 	ZVAL_UNDEF(&a_sub);
 	ZVAL_UNDEF(&result);
 	ZVAL_UNDEF(&_0);
 	ZVAL_UNDEF(&_1);
-	ZVAL_UNDEF(&b);
-	ZVAL_UNDEF(&_3);
-	ZVAL_UNDEF(&swaps);
-	ZVAL_UNDEF(&ref);
 	ZVAL_UNDEF(&_2);
+	ZVAL_UNDEF(&_3);
+	ZVAL_UNDEF(&b);
+	ZVAL_UNDEF(&_5);
+	ZVAL_UNDEF(&_6);
+	ZVAL_UNDEF(&_7);
+	ZVAL_UNDEF(&_8);
+	ZVAL_UNDEF(&_9);
+	ZVAL_UNDEF(&ref);
+	ZVAL_UNDEF(&_4);
 	ZEND_PARSE_PARAMETERS_START(1, 1)
 		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
@@ -80,25 +85,35 @@ PHP_METHOD(Tensor_Reductions_Ref, reduce)
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &a);
 	ZEPHIR_INIT_VAR(&result);
-	ZEPHIR_CALL_METHOD(&_0, a, "asarray", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_0, a, "asTensorBuffer", NULL, 0);
 	zephir_check_call_status();
-	tensor_ref(&result, &_0);
+	ZEPHIR_CALL_METHOD(&_1, a, "m", NULL, 0);
+	zephir_check_call_status();
+	ZEPHIR_CALL_METHOD(&_2, a, "n", NULL, 0);
+	zephir_check_call_status();
+	tensor_ref(&result, &_0, &_1, &_2);
 	if (Z_TYPE_P(&result) == IS_NULL) {
 		ZEPHIR_THROW_EXCEPTION_DEBUG_STR(tensor_exceptions_runtimeexception_ce, "Failed to decompose matrix.", "tensor/reductions/ref.zep", 44);
 		return;
 	}
 	ZEPHIR_INIT_VAR(&ref);
 	array_init(&ref);
-	ZEPHIR_CPY_WRT(&_1, &result);
-	zephir_get_arrval(&_2, &_1);
-	ZEPHIR_CPY_WRT(&ref, &_2);
-	zephir_array_fetch_long(&_3, &ref, 0, PH_NOISY | PH_READONLY, "tensor/reductions/ref.zep", 51);
-	ZEPHIR_CALL_CE_STATIC(&b, tensor_matrix_ce, "quick", NULL, 0, &_3);
+	ZEPHIR_CPY_WRT(&_3, &result);
+	zephir_get_arrval(&_4, &_3);
+	ZEPHIR_CPY_WRT(&ref, &_4);
+	zephir_array_fetch_long(&_5, &ref, 0, PH_NOISY | PH_READONLY, "tensor/reductions/ref.zep", 51);
+	ZEPHIR_CALL_METHOD(&_6, a, "m", NULL, 0);
 	zephir_check_call_status();
-	zephir_memory_observe(&swaps);
-	zephir_array_fetch_long(&swaps, &ref, 1, PH_NOISY, "tensor/reductions/ref.zep", 52);
+	ZEPHIR_CALL_METHOD(&_7, a, "n", NULL, 0);
+	zephir_check_call_status();
+	ZEPHIR_CALL_CE_STATIC(&b, tensor_matrix_ce, "fromTensorBuffer", NULL, 0, &_5, &_6, &_7);
+	zephir_check_call_status();
+	zephir_memory_observe(&_8);
+	zephir_array_fetch_long(&_8, &ref, 1, PH_NOISY, "tensor/reductions/ref.zep", 52);
+	swaps = zephir_get_intval(&_8);
 	object_init_ex(return_value, tensor_reductions_ref_ce);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 31, &b, &swaps);
+	ZVAL_LONG(&_9, swaps);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 31, &b, &_9);
 	zephir_check_call_status();
 	RETURN_MM();
 }

@@ -38,7 +38,7 @@ class Ref
      */
     public static function reduce(const <Matrix> a) -> <Ref>
     {
-        var result = tensor_ref(a->asArray());
+        var result = tensor_ref(a->asTensorBuffer(), a->m(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to decompose matrix.");
@@ -48,8 +48,8 @@ class Ref
 
         let ref = (array) result;
 
-        var b = Matrix::quick(ref[0]);
-        var swaps = ref[1];
+        var b = Matrix::fromTensorBuffer(ref[0], a->m(), a->n());
+        var swaps = (int) ref[1];
 
         return new self(b, swaps);
     }

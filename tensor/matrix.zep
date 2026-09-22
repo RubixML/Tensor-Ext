@@ -869,35 +869,9 @@ class Matrix implements Tensor
      */
     public function rank() -> int
     {
-        var rowA, valueA;
-        
-        array a = [];
+        var rref = this->rref()->a();
 
-        let a = (array) this->rref()->a()->asArray();
-
-        int pivots = 0;
-
-        bool stop;
-
-        float epsilon = (float) self::EPSILON;
-
-        for rowA in a {
-            let stop = false;
-
-            for valueA in rowA {
-                if stop {
-                    continue;
-                }
-
-                if abs(valueA) >= epsilon {
-                    let pivots++;
-
-                    let stop = true;
-                }
-            }
-        }
-
-        return pivots;
+        return tensor_rank(rref->asTensorBuffer(), rref->m(), rref->n());
     }
 
     /**
@@ -921,17 +895,7 @@ class Matrix implements Tensor
             return false;
         }
 
-        int i, j;
-
-        for i in range(0, this->m - 2) {
-            for j in range(i + 1, this->n - 1) {
-                if this->a->get(i * this->n + j) != this->a->get(j * this->n + i) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return tensor_is_symmetric(this->a, this->n);
     }
 
     /**

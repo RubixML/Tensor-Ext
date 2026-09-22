@@ -37,13 +37,13 @@ class Cholesky
                 . " square, " . $a->shapeString() . " given.");
         }
 
-        var l = tensor_cholesky(a->asArray());
+        var l = tensor_cholesky(a->asTensorBuffer(), a->n());
 
         if is_null(l) {
             throw new RuntimeException("Failed to decompose matrix.");
         }
 
-        return new self(Matrix::quick(l));
+        return new self(Matrix::fromTensorBuffer(l, a->n(), a->n()));
     }
 
     /**

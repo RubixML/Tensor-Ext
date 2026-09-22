@@ -538,27 +538,9 @@ class Vector implements Tensor
      */
     public function outer(const <Vector> b) -> <Matrix>
     {
-        var j, valueA, valueB;
-        
-        var aHat = this->a->toArray();
+        var result = tensor_outer(this->a, b->asTensorBuffer(), this->n, b->n());
 
-        array bHat = [];
-        array c = [];
-        array rowC = [];
-
-        let bHat = (array) b->asArray();
-
-        for valueA in aHat {
-            let rowC = [];
-
-            for j, valueB in bHat {
-                let rowC[] = valueA * valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::fromTensorBuffer(result, this->n, b->n());
     }
 
     /**

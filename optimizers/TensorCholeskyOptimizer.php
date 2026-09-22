@@ -24,9 +24,9 @@ class TensorCholeskyOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 1) {
+        if (count($expression['parameters']) !== 2) {
             throw new CompilerException(
-                'Cholesky accepts exactly one argument, ' . count($expression['parameters']) . 'given.',
+                'Cholesky accepts exactly two arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorCholeskyOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_cholesky($symbol, {$resolvedParams[0]});"
+            "tensor_cholesky($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
         );
 
         return new CompiledExpression(

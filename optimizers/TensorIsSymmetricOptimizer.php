@@ -9,7 +9,7 @@ use Zephir\HeadersManager;
 use Zephir\Exception\CompilerException;
 use Zephir\Optimizers\OptimizerAbstract;
 
-class TensorRefOptimizer extends OptimizerAbstract
+class TensorIsSymmetricOptimizer extends OptimizerAbstract
 {
     /**
      * @param mixed[] $expression
@@ -24,9 +24,9 @@ class TensorRefOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 3) {
+        if (count($expression['parameters']) !== 2) {
             throw new CompilerException(
-                'REF accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
+                'IsSymmetric accepts exactly two arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorRefOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_ref($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
+            "tensor_is_symmetric($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
         );
 
         return new CompiledExpression(
