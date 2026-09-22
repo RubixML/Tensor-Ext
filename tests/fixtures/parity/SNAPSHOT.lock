@@ -1,0 +1,6 @@
+{
+    "snapshot/blob-100x4.json": "sha256:5862e74de7c5721349e8f88c7ca4c4f27cbd86b518b5a25a3b5b25e20619318d",
+    "snapshot/circle-500x2.json": "sha256:46990ef67d31ce4daa518b574702773602b479eb82d547ad27e307e8285a735a",
+    "snapshot/halfmoon-500x2.json": "sha256:12096565171515709253c6bf31ab703f8e4f1d9fa17e032b9a964a914bc2ff05",
+    "snapshot/swissroll-1000x3.json": "sha256:f6661d8ba7efb4e823f7db1898c4f8ad6640fe8896d22aee92202eb02b96f20b"
+}

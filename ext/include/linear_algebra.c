@@ -207,7 +207,12 @@ void tensor_pseudoinverse(zval * return_value, zval * a)
         cblas_dscal(m, 1.0 / vs[i], &vu[i], m);
     }
 
-    cblas_dgemm(CblasRowMajor, CblasTrans, CblasTrans, n, m, m, 1.0, vvt, n, vu, m, 0.0, vb, m);
+    /* The inner dimension is the thin SVD's rank, MIN(m, n), not m. With
+     * CblasTrans the first operand is read as K x M, so passing m here walked
+     * m rows of n off the end of the n x n right singular vectors on every tall
+     * matrix -- silently wrong for small m, entirely non-finite past roughly
+     * m = 203 at n = 2, and dependent on surrounding heap state in between. */
+    cblas_dgemm(CblasRowMajor, CblasTrans, CblasTrans, n, m, k, 1.0, vvt, n, vu, m, 0.0, vb, m);
 
     array_init_size(&b, n);
 

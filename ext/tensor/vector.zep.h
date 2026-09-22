@@ -15,6 +15,7 @@ PHP_METHOD(Tensor_Vector, uniform);
 PHP_METHOD(Tensor_Vector, range);
 PHP_METHOD(Tensor_Vector, linspace);
 PHP_METHOD(Tensor_Vector, __construct);
+PHP_METHOD(Tensor_Vector, wrap);
 PHP_METHOD(Tensor_Vector, shape);
 PHP_METHOD(Tensor_Vector, shapeString);
 PHP_METHOD(Tensor_Vector, size);
@@ -173,9 +174,13 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_linspace, 0, 3, Ten
 	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_vector___construct, 0, 0, 1)
-	ZEND_ARG_ARRAY_INFO(0, a, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_vector___construct, 0, 0, 0)
+	ZEND_ARG_INFO(0, a)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, validate, _IS_BOOL, 0, "true")
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_vector_wrap, 0, 0, 1)
+	ZEND_ARG_INFO(0, buffer)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_vector_shape, 0, 0, IS_ARRAY, 0)
@@ -587,6 +592,7 @@ ZEPHIR_INIT_FUNCS(tensor_vector_method_entry) {
 	PHP_ME(Tensor_Vector, range, arginfo_tensor_vector_range, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Vector, linspace, arginfo_tensor_vector_linspace, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Vector, __construct, arginfo_tensor_vector___construct, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
+	PHP_ME(Tensor_Vector, wrap, arginfo_tensor_vector_wrap, ZEND_ACC_PROTECTED|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Vector, shape, arginfo_tensor_vector_shape, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, shapeString, arginfo_tensor_vector_shapestring, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, size, arginfo_tensor_vector_size, ZEND_ACC_PUBLIC)

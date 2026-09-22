@@ -1,0 +1,12 @@
+{
+    "name": "tensor/parity-oracle",
+    "description": "Isolated install of the pure-PHP rubix/tensor, used as a cross-check oracle for the parity harness.",
+    "license": "MIT",
+    "type": "project",
+    "require": {
+        "rubix/tensor": "^3.1"
+    },
+    "config": {
+        "preferred-install": "dist"
+    }
+}

@@ -555,7 +555,7 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
+     * @requires extension tensor_ext
      */
     public function pseudoinverse() : void
     {
@@ -965,7 +965,7 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
+     * @requires extension tensor_ext
      * @dataProvider eigProvider
      *
      * @param Matrix $matrix
@@ -1004,7 +1004,7 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
+     * @requires extension tensor_ext
      */
     public function eigSymmetric() : void
     {
@@ -1031,7 +1031,7 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
+     * @requires extension tensor_ext
      */
     public function svd() : void
     {
@@ -3354,5 +3354,66 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEqualsWithDelta($expected, $a->pseudoinverse(), self::MAX_DELTA);
+    }
+
+    /**
+     * A pseudoinverse must satisfy the first Moore-Penrose condition, A A+ A = A,
+     * at every shape. Before the K argument of the dgemm in tensor_pseudoinverse
+     * was corrected from m to MIN(m, n), any tall matrix drove an out-of-bounds
+     * read of the n x n right singular vectors: benign for small m, entirely
+     * non-finite from around m = 203 at n = 2, and dependent on surrounding heap
+     * state in between.
+     *
+     * @test
+     * @dataProvider pseudoinverseShapeProvider
+     * @requires extension tensor_ext
+     * @param int $m
+     * @param int $n
+     */
+    public function pseudoinverseSatisfiesMoorePenrose(int $m, int $n) : void
+    {
+        mt_srand(11);
+
+        $samples = [];
+
+        for ($i = 0; $i < $m; ++$i) {
+            $row = [];
+
+            for ($j = 0; $j < $n; ++$j) {
+                $row[] = mt_rand(-1000, 1000) / 100;
+            }
+
+            $samples[] = $row;
+        }
+
+        $a = Matrix::quick($samples);
+        $pseudoinverse = $a->pseudoinverse();
+
+        foreach ($pseudoinverse->asArray() as $row) {
+            foreach ($row as $value) {
+                $this->assertTrue(is_finite($value), "{$m}x{$n} pseudoinverse contains a non-finite element.");
+            }
+        }
+
+        $this->assertEqualsWithDelta(
+            $a->asArray(),
+            $a->matmul($pseudoinverse)->matmul($a)->asArray(),
+            1e-6
+        );
+    }
+
+    /**
+     * @return Generator<array{0: int, 1: int}>
+     */
+    public function pseudoinverseShapeProvider() : Generator
+    {
+        yield 'wide 2x3' => [2, 3];
+        yield 'tall 3x2' => [3, 2];
+        yield 'square 4x4' => [4, 4];
+        yield 'tall 100x4' => [100, 4];
+        yield 'tall 203x2' => [203, 2];
+        yield 'tall 151x3' => [151, 3];
+        yield 'tall 500x2' => [500, 2];
+        yield 'wide 2x500' => [2, 500];
     }
 }

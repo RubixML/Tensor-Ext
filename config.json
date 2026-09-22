@@ -4,7 +4,7 @@
     "extension-name": "tensor_ext",
     "description": "Scientific computing for the PHP language.",
     "author": "The Rubix ML Community",
-    "version": "3.1.1",
+    "version": "4.0.0",
     "verbose": true,
     "extra-cflags": "-O3",
     "extra-libs": "-lopenblas -llapacke -lgfortran",
@@ -13,7 +13,12 @@
         "include/comparison.c",
         "include/linear_algebra.c",
         "include/signal_processing.c",
-        "include/settings.c"
+        "include/settings.c",
+        "include/buffer_ops.c",
+        "include/buffer_unary.c",
+        "include/buffer_binary.c",
+        "include/buffer_matrix.c",
+        "include/buffer_linalg.c"
     ],
     "initializers": {
         "module": [
@@ -49,5 +54,8 @@
     "extra": {
         "export-classes": false,
         "indent": "spaces"
+    },
+    "kernel-classes": {
+        "buffer": true
     }
 }

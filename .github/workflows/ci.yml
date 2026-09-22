@@ -6,6 +6,13 @@ on:
       - ".github/workflows/ci.*"
       - "ext/**"
       - "tests/**"
+      - "tensor/**"
+      - "optimizers/**"
+      - "tools/**"
+      - "benchmarks/**"
+      - "build-ext"
+      - "config.json"
+      - "composer.json"
   push:
     branches:
       - "**"
@@ -13,6 +20,13 @@ on:
       - ".github/workflows/ci.*"
       - "ext/**"
       - "tests/**"
+      - "tensor/**"
+      - "optimizers/**"
+      - "tools/**"
+      - "benchmarks/**"
+      - "build-ext"
+      - "config.json"
+      - "composer.json"
     tags-ignore:
       - "**"
 

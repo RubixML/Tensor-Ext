@@ -54,3 +54,8 @@ Thumbs.db
 /.vscode
 /.vs
 .venv
+
+# Parity cross-check oracle (see tools/oracle/README.md)
+/tools/oracle/vendor
+/tools/oracle/composer.lock
+/.phpbench

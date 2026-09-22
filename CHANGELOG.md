@@ -1,5 +1,39 @@
 # Change Log
 
+- 4.0.0
+    - `Vector`, `ColumnVector` and `Matrix` now store their elements in a contiguous C buffer
+      (`Tensor\Buffer`) rather than PHP arrays. Rank-1 arithmetic is 7-8x faster and the inner
+      product 25x; storage for a million elements falls from 16.0 MB to 7.6 MB. A matrix is one
+      flat row-major buffer, so an element-wise operation is a single call over m * n rather than
+      one call per row: chained matrix workloads run 3-9x faster and `transpose()` 363x, having
+      previously rebuilt the whole matrix once per column.
+    - `matmul()` and `inverse()` now hand their operands straight to BLAS and LAPACK with no
+      packing. With the marshalling gone, `matmul` also finally threads: 3.1x on four threads at
+      n = 512, against 2.1x before.
+    - Fixed `Matrix::pseudoinverse()` reading out of bounds for every matrix with more rows than
+      columns. Results were silently wrong for small matrices and entirely non-finite past roughly
+      200 rows, and depended on unrelated heap state in between.
+    - Fixed `ColumnVector::modMatrix()` and `divideMatrix()` aborting the process (SIGABRT) when
+      the operation raised. They now throw, catchably.
+    - Fixed `composer compile`, which had been failing since the extension was renamed to
+      `tensor_ext`: `build-ext` still looked for the anchors Zephir emits under the old name, so
+      none of its three patches applied and it exited 1 on the first of them.
+    - Four tests (`pseudoinverse`, `eig`, `eigSymmetric`, `svd`) carried `@requires extension
+      tensor` and had therefore been skipped, not run, since the rename.
+    - **Behaviour change.** Comparison and modulo operations on rank-1 tensors now return floats
+      where they returned integers; a buffer of doubles cannot hold an integer. Values are
+      unaffected.
+    - **Behaviour change.** `Vector::dot()` and `inner()` now use `cblas_ddot`, whose blocked
+      accumulation moves the last couple of ulps relative to the previous sequential loop.
+    - **Behaviour change.** `mod` no longer emits an "implicit conversion from float" deprecation
+      per element.
+    - OpenBLAS still defaults to a single thread, now on re-measured grounds. Threading one process
+      is a 3.3x win on `matmul(512)`, but four concurrent workers at four threads each run 1.94x
+      slower per operation and deliver half the throughput, because OpenBLAS's pthread pool
+      busy-waits between parallel regions. `Tensor\Settings::setNumThreads()` remains the opt-in for
+      workloads that own the machine; `tools/concurrency-probe.php` measures it.
+    - Major version because comparison and modulo results changed type. See `docs/buffers.md`.
+
 - 3.1.1
     - Just triggering the first Packagist release
 

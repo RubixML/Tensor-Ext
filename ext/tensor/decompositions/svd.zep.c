@@ -79,13 +79,13 @@ PHP_METHOD(Tensor_Decompositions_Svd, decompose)
 	ZVAL_UNDEF(&usvT);
 	ZVAL_UNDEF(&_2);
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
+		Z_PARAM_OBJECT_OF_CLASS(a, tensor_matrix_ce)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &a);
 	ZEPHIR_INIT_VAR(&result);
-	ZEPHIR_CALL_METHOD(&_0, a, "asarray", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_0, a, "asArray", NULL, 0);
 	zephir_check_call_status();
 	tensor_svd(&result, &_0);
 	if (Z_TYPE_P(&result) == IS_NULL) {
@@ -106,7 +106,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, decompose)
 	ZEPHIR_CALL_CE_STATIC(&vT, tensor_matrix_ce, "quick", NULL, 0, &_4);
 	zephir_check_call_status();
 	object_init_ex(return_value, tensor_decompositions_svd_ce);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 27, &u, &singularValues, &vT);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 21, &u, &singularValues, &vT);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -140,17 +140,17 @@ PHP_METHOD(Tensor_Decompositions_Svd, __construct)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(3, 3)
-		Z_PARAM_OBJECT_OF_CLASS(u, zephir_get_internal_ce(SL("tensor\\matrix")))
+		Z_PARAM_OBJECT_OF_CLASS(u, tensor_matrix_ce)
 		ZEPHIR_Z_PARAM_ARRAY(singularValues, singularValues_param)
-		Z_PARAM_OBJECT_OF_CLASS(vT, zephir_get_internal_ce(SL("tensor\\matrix")))
+		Z_PARAM_OBJECT_OF_CLASS(vT, tensor_matrix_ce)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 3, 0, &u, &singularValues_param, &vT);
 	zephir_get_arrval(&singularValues, singularValues_param);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 11, u);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 12, &singularValues);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 13, vT);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 13, u);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 14, &singularValues);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 15, vT);
 	ZEPHIR_MM_RESTORE();
 }
 
@@ -196,7 +196,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, s)
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 
-	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 12, PH_NOISY_CC | PH_READONLY);
+	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 14, PH_NOISY_CC | PH_READONLY);
 	ZEPHIR_RETURN_CALL_CE_STATIC(tensor_matrix_ce, "diagonal", NULL, 0, &_0);
 	zephir_check_call_status();
 	RETURN_MM();
@@ -222,7 +222,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, v)
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 
-	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 13, PH_NOISY_CC | PH_READONLY);
+	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZEPHIR_RETURN_CALL_METHOD(&_0, "transpose", NULL, 0);
 	zephir_check_call_status();
 	RETURN_MM();

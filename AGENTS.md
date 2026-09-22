@@ -17,7 +17,7 @@ Guidance for AI coding agents contributing to **Tensor** — a scientific-comput
 
 ## Environment
 
-- PHP **8.1+** (CI matrix is 8.1 → 8.5). `composer.json` declares `>=1.0`.
+- PHP **8.1+** (CI matrix is 8.1 → 8.5). `composer.json` declares `>=8.1`.
 - Dev tooling is installed as Composer dev dependencies (PHPStan, php-cs-fixer, phpunit, phpbench, Zephir).
 - Compiling the extension additionally needs a C compiler, GFortran, `phpize`, OpenBLAS dev headers, LAPACKE, and re2c (see README for per-OS install commands).
 
@@ -70,7 +70,7 @@ Every public method a new `tensor/` class adds typically routes into the C backi
 1. Update the Zephir class in `tensor/`.
 2. Add/adjust the matching `optimizers/Tensor<Op>Optimizer.php` if it is a callable that the extension should route into C.
 3. Ensure the underlying C implementation exists under `ext/include/*.c` and is linked (already wired in `config.json` `extra-sources`).
-4. Bump the version in both `config.json` and `package.xml` if this is a released change, and record it in `CHANGELOG.md`.
+4. Bump the version in `config.json` if this is a released change, and record it in `CHANGELOG.md`.
 
 Do **not** hand-edit the generated C in `ext/` (files like `*.dep`, `*.lo`, `*.o`, `Makefile*`, `config.h`). They are produced by `composer compile`. Hand-written logic belongs in `ext/include/*.c`.
 
@@ -79,10 +79,75 @@ Do **not** hand-edit the generated C in `ext/` (files like `*.dep`, `*.lo`, `*.o
 To run the tests against the locally compiled extension, load the built shared object. For example:
 
 ```sh
-php -n -d extension=$PWD/ext/modules/tensor.so vendor/bin/phpunit ...
+php -n -d extension=$PWD/ext/modules/tensor_ext.so vendor/bin/phpunit ...
 ```
 
 If a system-installed `tensor` extension is already enabled, you can rely on it instead of building locally.
+
+## Running the suite and the analyser
+
+The built artefact is `ext/modules/tensor_ext.so`. Two things about loading it are easy to get
+wrong and cost an afternoon each:
+
+- **`composer analyze` needs the extension in `php.ini`, not on the command line.** PHPStan
+  analyses in worker processes that do not inherit `-d extension=`, so without it every
+  `Tensor\*` symbol is unresolvable and level 8 reports well over a thousand errors that have
+  nothing to do with your change. CI gets this right by way of `docker-php-ext-enable tensor_ext`.
+  Locally, drop an ini file into the scan directory:
+
+  ```sh
+  echo "extension=$PWD/ext/modules/tensor_ext.so" > "$(php -i | sed -n 's/^Scan this dir.*=> //p')/zz-tensor-ext.ini"
+  ```
+
+- **`php -n` drops `zephir_parser` as well as Xdebug.** Use `-n` for `phpunit` and `phpbench`, so
+  the numbers and the exact-output tests are not contaminated. Do **not** use it for
+  `composer compile`, which needs the parser extension.
+
+On a host without AVX (any QEMU vCPU reporting only `sse4_2`), OpenBLAS's `DYNAMIC_ARCH` dispatch
+picks a kernel the CPU cannot execute and every BLAS call dies with SIGILL, exit 132 — on a
+pristine checkout too. Export `OPENBLAS_CORETYPE=NEHALEM`. A pipeline hides this, because the
+pipeline exits 0; read `${PIPESTATUS[0]}`.
+
+## Storage
+
+`Vector` and `ColumnVector` hold their elements in a `Tensor\Buffer` — a contiguous C array of
+doubles — not a PHP array. `Matrix` is still array-backed.
+
+Two rules follow from that, and breaking either silently gives back everything the change bought:
+
+- **An operation ported to the buffer needs a C handler.** A Zephir-level `buf[i]` loop is barely
+  faster than the PHP array it replaced; the kernel fast paths exist to stop indexing a buffer
+  being *slower* than indexing an array, not to make it quick. If there is no handler, leave the
+  method on `asArray()`.
+- **`asArray()` is the boundary, and it costs about as much as three arithmetic operations.** Call
+  it once at the edge, never inside a loop. `this->asArray()` inside a per-row loop materialises
+  the whole buffer once per row.
+
+`map()` and `reduce()` stay array-backed on purpose: an arbitrary PHP callable cannot run over raw
+doubles, so they materialise, apply, and rebuild.
+
+Internally, `static::wrap($buffer)` adopts a buffer a C handler has just allocated. It is protected,
+so it stays off the public surface and out of the parity harness's coverage obligation.
+
+## The parity harness
+
+`tests/Parity/` compares this extension against two oracles over the committed synthetic fixtures
+in `tests/fixtures/synthetic/`.
+
+| test | oracle | strictness |
+| --- | --- | --- |
+| `SnapshotTest` | a transcript recorded from a known-good build | **exact** — raw IEEE-754 bytes |
+| `CrossCheckTest` | the pure-PHP `rubix/tensor`, installed under `tools/oracle/` | per-operation tolerance |
+
+`tests/Parity/Operations.php` is the single list both sides run, and `OperationsTest` asserts that
+every public method of `Vector`, `ColumnVector` and `Matrix` is either probed or listed in
+`EXCLUDED`/`EXCLUDED_OPS` with a reason — so a new method cannot arrive without a decision about
+its coverage.
+
+`SnapshotTest` going red means behaviour moved. Re-recording the transcript to make it pass
+defeats the point, and `tools/parity-dump.php` refuses to overwrite one without an explicit
+`--allow-overwrite` plus a matching `--commit`. `tests/fixtures/parity/SNAPSHOT.lock` and
+`TranscriptIntegrityTest` are the other half of that guard.
 
 ## Notes for agents
 

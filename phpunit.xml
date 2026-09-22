@@ -6,6 +6,9 @@
     </testsuite>
   </testsuites>
   <php>
+    <!-- The parity suite builds 2000x12 matrices and their m x m products; the
+         128M default runs out part way through. -->
+    <ini name="memory_limit" value="4G"/>
     <env name="ENV" value="testing"/>
   </php>
 </phpunit>

@@ -1,0 +1,37 @@
+{
+    "blob-100x4": {
+        "rows": 100,
+        "columns": 4,
+        "sha256": "09237a394c8f092051a626de38c40e18cae72fab11873ebf23c501e1b11c6cbc"
+    },
+    "blob-1000x8": {
+        "rows": 1000,
+        "columns": 8,
+        "sha256": "3511c2ea146f23aaf3a592c7250565b345d45e9225820759eeaa367b1eddc128"
+    },
+    "agglomerate-5000x16": {
+        "rows": 5000,
+        "columns": 16,
+        "sha256": "93ff01baef92b3ec9db06ee3c862161cc4a7b618601a26b8efdc97903e104045"
+    },
+    "hyperplane-2000x12": {
+        "rows": 2000,
+        "columns": 12,
+        "sha256": "3e799956fdd90e7637920c784e30256806db6348837c05514876bc69fb2f3501"
+    },
+    "swissroll-1000x3": {
+        "rows": 1000,
+        "columns": 3,
+        "sha256": "03855a420fea2fd21bb4d223683b23427207883f87b03d88363eb45ec41c495d"
+    },
+    "circle-500x2": {
+        "rows": 500,
+        "columns": 2,
+        "sha256": "181ee55b23eee8bc243e17b903622fb01c1f36d746cdedb9270835e7ae698c2d"
+    },
+    "halfmoon-500x2": {
+        "rows": 500,
+        "columns": 2,
+        "sha256": "48457cb4747ec370aada94283accf4b499b50b9ec367973a071632ebf29bd5aa"
+    }
+}

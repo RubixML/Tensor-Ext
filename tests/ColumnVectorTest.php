@@ -496,4 +496,71 @@ class ColumnVectorTest extends TestCase
             [3.0, 4.0],
         ]));
     }
+
+    /**
+     * Regression: this used to abort the process.
+     *
+     * ColumnVector's twelve *Matrix broadcasts were the last element-wise family
+     * running as interpreted Zephir. When the operator raised part-way through
+     * one of those loops the memory frame was not unwound, and the next
+     * ZEPHIR_OBS_VAR on the same slot tripped a kernel assertion and called
+     * abort() -- SIGABRT, exit 134, uncatchable, taking the whole PHP process
+     * with it. Stage 3 moved the loop into C, which unwinds properly.
+     *
+     * The parity snapshot cannot cover this: it was recorded before the fix,
+     * and what it recorded was a crash.
+     *
+     * @test
+     */
+    public function moduloByAZeroTruncatingDivisorThrowsInsteadOfAborting() : void
+    {
+        $a = ColumnVector::quick([1.5, 2.5]);
+
+        // 0.5 truncates to integer zero, which is what raises.
+        $b = Matrix::quick([
+            [0.5, 2.0],
+            [0.5, 2.0],
+        ]);
+
+        $this->expectException(\DivisionByZeroError::class);
+
+        $a->modMatrix($b);
+    }
+
+    /**
+     * The same failure reached through the polymorphic entry point.
+     *
+     * @test
+     */
+    public function moduloDispatchedThroughModThrowsInsteadOfAborting() : void
+    {
+        $this->expectException(\DivisionByZeroError::class);
+
+        ColumnVector::quick([1.5, 2.5])->mod(Matrix::quick([
+            [0.5, 2.0],
+            [0.5, 2.0],
+        ]));
+    }
+
+    /**
+     * Division by an exact zero aborted the same way, for the same reason. It
+     * is not an error in PHP -- it yields infinity -- so the whole operation
+     * must simply complete.
+     *
+     * @test
+     */
+    public function divisionByZeroYieldsInfinityInsteadOfAborting() : void
+    {
+        $c = ColumnVector::quick([1.5, 2.5])->divideMatrix(Matrix::quick([
+            [0.0, 2.0],
+            [0.0, 2.0],
+        ]));
+
+        $rows = $c->asArray();
+
+        $this->assertSame(INF, $rows[0][0]);
+        $this->assertSame(0.75, $rows[0][1]);
+        $this->assertSame(INF, $rows[1][0]);
+        $this->assertSame(1.25, $rows[1][1]);
+    }
 }

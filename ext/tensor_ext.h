@@ -16,6 +16,7 @@
 #include "tensor/exceptions/invalidargumentexception.zep.h"
 #include "tensor/exceptions/runtimeexception.zep.h"
 #include "tensor/vector.zep.h"
+#include "tensor/buffervector.zep.h"
 #include "tensor/columnvector.zep.h"
 #include "tensor/decompositions/cholesky.zep.h"
 #include "tensor/decompositions/eigen.zep.h"

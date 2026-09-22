@@ -23,9 +23,14 @@ use ArrayIterator;
 class Matrix implements Tensor
 {
     /**
-     * A 2-dimensional sequential array that holds the values of the matrix.
+     * The elements of the matrix, row-major, in one contiguous buffer.
      *
-     * @var list<list<float>>
+     * Flat, not nested: element (i, j) lives at i * n + j. One allocation for
+     * the whole matrix rather than one per row, which is also what lets an
+     * element-wise operation be a single call over m * n instead of m calls
+     * over n.
+     *
+     * @var \Tensor\Buffer
      */
     protected a;
 
@@ -374,9 +379,20 @@ class Matrix implements Tensor
      * @param bool validate
      * @throws \Tensor\Exceptions\InvalidArgumentException
      */
-    public function __construct(array a, const bool validate = true)
+    public function __construct(var a = [], const bool validate = true, const int rows = -1, const int columns = -1)
     {
         var i, rowA, valueA;
+
+        // Adopting a buffer a C handler has just produced. The shape cannot be
+        // recovered from a flat buffer, so it is passed alongside.
+        if typeof a != "array" {
+            let this->a = a;
+            let this->m = rows;
+            let this->n = columns;
+
+            return;
+        }
+
 
         int m = count(a);
         int n = count(current(a) ?: []);
@@ -407,9 +423,20 @@ class Matrix implements Tensor
             let a = b;
         }
  
-        let this->a = a;
+        let this->a = tensor_buffer_from_matrix(a);
         let this->m = m;
         let this->n = n;
+    }
+
+    /**
+     * Wrap a buffer a C handler has just allocated, without copying it.
+     *
+     * Protected, so it stays off the public surface and out of the parity
+     * harness's coverage obligation.
+     */
+    protected static function wrap(var buffer, const int rows, const int columns) -> <Matrix>
+    {
+        return new static(buffer, false, rows, columns);
     }
 
     /**
@@ -491,7 +518,7 @@ class Matrix implements Tensor
      */
     public function columnAsVector(const int index) -> <ColumnVector>
     {
-        return ColumnVector::quick(array_column(this->a, index));
+        return new ColumnVector(tensor_buffer_stride(this->a, index, this->n, this->m), false);
     }
 
     /**
@@ -507,15 +534,8 @@ class Matrix implements Tensor
                 . " square, " . this->shapeString() .  " given.");
         }
 
-        var i, rowA;
-
-        array b = [];
-
-        for i, rowA in this->a {
-            let b[] = rowA[i];
-        }
-
-        return Vector::quick(b);
+        // The diagonal of a row-major matrix is stride n + 1.
+        return new Vector(tensor_buffer_stride(this->a, 0, this->n + 1, this->m), false);
     }
 
     /**
@@ -525,7 +545,7 @@ class Matrix implements Tensor
      */
     public function asArray() -> array
     {
-        return this->a;
+        return tensor_buffer_to_matrix(this->a, this->n);
     }
 
     /**
@@ -535,7 +555,7 @@ class Matrix implements Tensor
      */
     public function asVectors() -> array
     {
-        return array_map(["Tensor\\Vector", "quick"], this->a);
+        return array_map(["Tensor\\Vector", "quick"], this->asArray());
     }
 
     /**
@@ -563,7 +583,7 @@ class Matrix implements Tensor
      */
     public function flatten() -> <Vector>
     {
-        return Vector::quick(call_user_func_array("array_merge", this->a));
+        return new Vector(tensor_buffer_stride(this->a, 0, 1, this->m * this->n), false);
     }
 
     /**
@@ -580,7 +600,7 @@ class Matrix implements Tensor
 
         array b = [];
  
-        for rowA in this->a {
+        for rowA in this->asArray() {
             let b[] = array_map(callback, rowA);
         }
  
@@ -602,7 +622,7 @@ class Matrix implements Tensor
 
         var carry = initial;
  
-        for rowA in this->a {
+        for rowA in this->asArray() {
             for valueA in rowA {
                 let carry = {callback}(carry, valueA);
             }
@@ -618,15 +638,9 @@ class Matrix implements Tensor
      */
     public function transpose() -> <Matrix>
     {
-        int i;
-        
-        array b = [];
- 
-        for i in range(0, this->n - 1) {
-            let b[] = array_column(this->a, i);
-        }
- 
-        return self::quick(b);
+        // array_column() per column re-materialised the whole matrix once per
+        // column: n full rebuilds for one transpose.
+        return self::wrap(tensor_buffer_transpose(this->a, this->n), this->n, this->m);
     }
 
     /**
@@ -647,14 +661,14 @@ class Matrix implements Tensor
                 . " of a singular matrix.");
         }
 
-        var result = tensor_inverse(this->a);
+        var result = tensor_buffer_inverse(this->a, this->n);
 
         if is_null(result) {
             throw new RuntimeException("Failed to compute the inverse"
                 . " of a singular matrix.");
         }
 
-        return self::quick(result);
+        return self::wrap(result, this->m, this->n);
     }
 
     /**
@@ -664,7 +678,7 @@ class Matrix implements Tensor
      */
       public function pseudoinverse() -> <Matrix>
     {
-        var result = tensor_pseudoinverse(this->a);
+        var result = tensor_pseudoinverse(this->asArray());
 
         if is_null(result) {
             throw new RuntimeException("Failed to compute the pseudoinverse"
@@ -767,11 +781,13 @@ class Matrix implements Tensor
         
         var rowA;
 
+        var aHat = this->asArray();
+
         for i in range(0, this->m - 2) {
-            let rowA = this->a[i];
+            let rowA = aHat[i];
 
             for j in range(i + 1, this->n - 1) {
-                if rowA[j] != this->a[j][i] {
+                if rowA[j] != aHat[j][i] {
                     return false;
                 }
             }
@@ -795,7 +811,7 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
          
-        return self::quick(tensor_matmul(this->a, b->asArray()));
+        return self::wrap(tensor_buffer_matmul(this->a, b->a, this->n, b->n()), this->m, b->n());
     }
 
     /**
@@ -836,7 +852,7 @@ class Matrix implements Tensor
                 . " less than 1, " . strval(stride) . " given.");
         }
 
-        return self::quick(tensor_convolve_2d(this->a, b->asArray(), stride));
+        return self::quick(tensor_convolve_2d(this->asArray(), b->asArray(), stride));
     }
 
     /**
@@ -1366,7 +1382,7 @@ class Matrix implements Tensor
      */
     public function abs() -> <Matrix>
     {
-        return this->map("abs");
+        return self::wrap(tensor_buffer_unary(this->a, "abs"), this->m, this->n);
     }
 
     /**
@@ -1386,7 +1402,7 @@ class Matrix implements Tensor
      */
     public function sqrt() -> <Matrix>
     {
-        return this->map("sqrt");
+        return self::wrap(tensor_buffer_unary(this->a, "sqrt"), this->m, this->n);
     }
  
     /**
@@ -1396,7 +1412,7 @@ class Matrix implements Tensor
      */
     public function exp() -> <Matrix>
     {
-        return this->map("exp");
+        return self::wrap(tensor_buffer_unary(this->a, "exp"), this->m, this->n);
     }
 
     /**
@@ -1406,7 +1422,7 @@ class Matrix implements Tensor
     */
     public function expm1() -> <Matrix>
     {
-        return this->map("expm1");
+        return self::wrap(tensor_buffer_unary(this->a, "expm1"), this->m, this->n);
     }
 
     /**
@@ -1418,25 +1434,10 @@ class Matrix implements Tensor
     public function log(const float base = self::M_E) -> <Matrix>
     {
         if base === self::M_E {
-            return this->map("log");
+            return self::wrap(tensor_buffer_unary(this->a, "log"), this->m, this->n);
         }
 
-        var rowA, valueA;
-
-        array rowB = [];
-        array b = [];
- 
-        for rowA in this->a {
-            let rowB = [];
- 
-            for valueA in rowA {
-                let rowB[] = log(valueA, base);
-            }
- 
-            let b[] = rowB;
-        }
- 
-        return self::quick(b);
+        return self::wrap(tensor_buffer_unary_arg(this->a, "log", base), this->m, this->n);
     }
 
     /**
@@ -1446,7 +1447,7 @@ class Matrix implements Tensor
     */
     public function log1p() -> <Matrix>
     {
-        return this->map("log1p");
+        return self::wrap(tensor_buffer_unary(this->a, "log1p"), this->m, this->n);
     }
  
     /**
@@ -1456,7 +1457,7 @@ class Matrix implements Tensor
      */
     public function sin() -> <Matrix>
     {
-        return this->map("sin");
+        return self::wrap(tensor_buffer_unary(this->a, "sin"), this->m, this->n);
     }
 
     /**
@@ -1466,7 +1467,7 @@ class Matrix implements Tensor
      */
     public function asin() -> <Matrix>
     {
-        return this->map("asin");
+        return self::wrap(tensor_buffer_unary(this->a, "asin"), this->m, this->n);
     }
  
     /**
@@ -1476,7 +1477,7 @@ class Matrix implements Tensor
      */
     public function cos() -> <Matrix>
     {
-        return this->map("cos");
+        return self::wrap(tensor_buffer_unary(this->a, "cos"), this->m, this->n);
     }
 
     /**
@@ -1486,7 +1487,7 @@ class Matrix implements Tensor
      */
     public function acos() -> <Matrix>
     {
-        return this->map("acos");
+        return self::wrap(tensor_buffer_unary(this->a, "acos"), this->m, this->n);
     }
  
     /**
@@ -1496,7 +1497,7 @@ class Matrix implements Tensor
      */
     public function tan() -> <Matrix>
     {
-        return this->map("tan");
+        return self::wrap(tensor_buffer_unary(this->a, "tan"), this->m, this->n);
     }
 
     /**
@@ -1506,7 +1507,7 @@ class Matrix implements Tensor
      */
     public function atan() -> <Matrix>
     {
-        return this->map("atan");
+        return self::wrap(tensor_buffer_unary(this->a, "atan"), this->m, this->n);
     }
  
     /**
@@ -1516,7 +1517,7 @@ class Matrix implements Tensor
      */
     public function rad2deg() -> <Matrix>
     {
-        return this->map("rad2deg");
+        return self::wrap(tensor_buffer_unary(this->a, "rad2deg"), this->m, this->n);
     }
  
     /**
@@ -1526,7 +1527,7 @@ class Matrix implements Tensor
      */
     public function deg2rad() -> <Matrix>
     {
-      return this->map("deg2rad");
+      return self::wrap(tensor_buffer_unary(this->a, "deg2rad"), this->m, this->n);
     }
 
     /**
@@ -1536,7 +1537,7 @@ class Matrix implements Tensor
      */
     public function sum() -> <ColumnVector>
     {
-        return ColumnVector::quick(array_map("array_sum", this->a));
+        return new ColumnVector(tensor_buffer_row_reduce(this->a, this->n, "sum"), false);
     }
 
     /**
@@ -1546,7 +1547,7 @@ class Matrix implements Tensor
      */
     public function product() -> <ColumnVector>
     {
-        return ColumnVector::quick(array_map("array_product", this->a));
+        return new ColumnVector(tensor_buffer_row_reduce(this->a, this->n, "product"), false);
     }
 
     /**
@@ -1556,7 +1557,7 @@ class Matrix implements Tensor
      */
     public function min() -> <ColumnVector>
     {
-        return ColumnVector::quick(array_map("min", this->a));
+        return new ColumnVector(tensor_buffer_row_reduce(this->a, this->n, "min"), false);
     }
 
     /**
@@ -1566,7 +1567,7 @@ class Matrix implements Tensor
      */
     public function max() -> <ColumnVector>
     {
-        return ColumnVector::quick(array_map("max", this->a));
+        return new ColumnVector(tensor_buffer_row_reduce(this->a, this->n, "max"), false);
     }
 
     /**
@@ -1593,7 +1594,7 @@ class Matrix implements Tensor
 
         bool odd = this->n % 2 === 1;
 
-        for rowA in this->a {
+        for rowA in this->asArray() {
             sort(rowA);
 
             if odd {
@@ -1633,7 +1634,7 @@ class Matrix implements Tensor
     
         float remainder = x - xHat;
 
-        for rowA in this->a {
+        for rowA in this->asArray() {
             sort(rowA);
 
             if xHat >= this->n {
@@ -1715,7 +1716,7 @@ class Matrix implements Tensor
     public function round(const int precision = 0) -> <Matrix>
     {
         if precision === 0 {
-            return this->map("round");
+            return self::wrap(tensor_buffer_unary(this->a, "round"), this->m, this->n);
         }
 
         if unlikely precision < 0 {
@@ -1723,22 +1724,7 @@ class Matrix implements Tensor
                 . " be less than 0, ". strval(precision) . " given.");
         }
 
-        var rowA, valueA;
-
-        array b = [];
-        array rowB = [];
-
-        for rowA in this->a {
-            let rowB = [];
-
-            for valueA in rowA {
-                let rowB[] = round(valueA, precision);
-            }
-
-            let b[] = rowB;
-        }
-
-        return self::quick(b);
+        return self::wrap(tensor_buffer_unary_arg(this->a, "round", precision), this->m, this->n);
     }
 
     /**
@@ -1748,7 +1734,7 @@ class Matrix implements Tensor
      */
     public function floor() -> <Matrix>
     {
-        return this->map("floor");
+        return self::wrap(tensor_buffer_unary(this->a, "floor"), this->m, this->n);
     }
 
     /**
@@ -1758,7 +1744,7 @@ class Matrix implements Tensor
      */
     public function ceil() -> <Matrix>
     {
-        return this->map("ceil");
+        return self::wrap(tensor_buffer_unary(this->a, "ceil"), this->m, this->n);
     }
 
     /**
@@ -1777,34 +1763,7 @@ class Matrix implements Tensor
                 . " greater than maximum.");
         }
 
-        var rowA, valueA;
-
-        array b = [];
-        array rowB = [];
-
-        for rowA in this->a {
-            let rowB = [];
-
-            for valueA in rowA {
-                if valueA > max {
-                    let rowB[] = max;
-
-                    continue;
-                }
-
-                if valueA < min {
-                    let rowB[] = min;
-
-                    continue;
-                }
-
-                let rowB[] = valueA;
-            }
-
-            let b[] = rowB;
-        }
-
-        return self::quick(b);
+        return self::wrap(tensor_buffer_clip(this->a, min, max), this->m, this->n);
     }
 
     /**
@@ -1815,28 +1774,7 @@ class Matrix implements Tensor
      */
     public function clipLower(const float min) -> <Matrix>
     {
-        var rowA, valueA;
-
-        array b = [];
-        array rowB = [];
-
-        for rowA in this->a {
-            let rowB = [];
-
-            for valueA in rowA {
-                if valueA < min {
-                    let rowB[] = min;
-
-                    continue;
-                }
-
-                let rowB[] = valueA;
-            }
-
-            let b[] = rowB;
-        }
-
-        return self::quick(b);
+        return self::wrap(tensor_buffer_unary_arg(this->a, "clipLower", min), this->m, this->n);
     }
 
     /**
@@ -1847,28 +1785,7 @@ class Matrix implements Tensor
      */
     public function clipUpper(const float max) -> <Matrix>
     {
-        var rowA, valueA;
-
-        array b = [];
-        array rowB = [];
-
-        for rowA in this->a {
-            let rowB = [];
-
-            for valueA in rowA {
-                if valueA > max {
-                    let rowB[] = max;
-
-                    continue;
-                }
-
-                let rowB[] = valueA;
-            }
-
-            let b[] = rowB;
-        }
-
-        return self::quick(b);
+        return self::wrap(tensor_buffer_unary_arg(this->a, "clipUpper", max), this->m, this->n);
     }
 
     /**
@@ -1878,28 +1795,7 @@ class Matrix implements Tensor
      */
     public function sign() -> <Matrix>
     {
-        var rowA, valueA;
-        
-        array b = [];
-        array rowB = [];
-
-        for rowA in this->a {
-            let rowB = [];
-
-            for valueA in rowA {
-                if valueA > 0 {
-                    let rowB[] = 1.0;
-                } elseif valueA < 0 {
-                    let rowB[] = -1.0;
-                } else {
-                    let rowB[] = 0.0;
-                }
-            }
-
-            let b[] = rowB;
-        }
-
-        return self::quick(b);
+        return self::wrap(tensor_buffer_unary(this->a, "sign"), this->m, this->n);
     }
 
     /**
@@ -1909,22 +1805,7 @@ class Matrix implements Tensor
      */
     public function negate() -> <Matrix>
     {
-        var rowA, valueA;
-
-        array b = [];
-        array rowB = [];
-
-        for rowA in this->a {
-            let rowB = [];
-
-            for valueA in rowA {
-                let rowB[] = -valueA;
-            }
-
-            let b[] = rowB;
-        }
-
-        return self::quick(b);
+        return self::wrap(tensor_buffer_unary(this->a, "negate"), this->m, this->n);
     }
 
     /**
@@ -1942,7 +1823,7 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        return self::quick(array_merge(b->asArray(), this->a));
+        return self::wrap(tensor_buffer_append(b->a, this->a), this->m + b->m(), this->n);
     }
 
     /**
@@ -1960,7 +1841,7 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        return self::quick(array_merge(this->a, b->asArray()));
+        return self::wrap(tensor_buffer_append(this->a, b->a), this->m + b->m(), this->n);
     }
 
     /**
@@ -1978,7 +1859,7 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        return self::quick(array_map("array_merge", b->asArray(), this->a));
+        return self::wrap(tensor_buffer_append_columns(b->a, this->a, b->n(), this->n), this->m, this->n + b->n());
     }
 
     /**
@@ -1996,7 +1877,7 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
         
-        return self::quick(array_map("array_merge", this->a, b->asArray()));
+        return self::wrap(tensor_buffer_append_columns(this->a, b->a, this->n, b->n()), this->m, this->n + b->n());
     }
 
     /**
@@ -2014,7 +1895,7 @@ class Matrix implements Tensor
         array temp = [];
 
         if n > 0 {
-            for rowA in this->a {
+            for rowA in this->asArray() {
                 let temp = [];
 
                 while count(temp) <= n {
@@ -2048,15 +1929,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_multiply(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "multiply"), this->m, this->n);
     }
 
     /**
@@ -2073,15 +1946,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_divide(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "divide"), this->m, this->n);
     }
 
     /**
@@ -2098,15 +1963,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_add(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "add"), this->m, this->n);
     }
 
     /**
@@ -2123,15 +1980,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_subtract(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "subtract"), this->m, this->n);
     }
 
     /**
@@ -2149,15 +1998,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_pow(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "pow"), this->m, this->n);
     }
 
     /**
@@ -2175,15 +2016,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_mod(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "mod"), this->m, this->n);
     }
 
     /**
@@ -2201,15 +2034,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_equal(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "equal"), this->m, this->n);
     }
 
     /**
@@ -2226,15 +2051,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_not_equal(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "notEqual"), this->m, this->n);
     }
 
     /**
@@ -2252,15 +2069,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_greater(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "greater"), this->m, this->n);
     }
 
     /**
@@ -2278,15 +2087,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_greater_equal(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "greaterEqual"), this->m, this->n);
     }
 
     /**
@@ -2303,15 +2104,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_less(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "less"), this->m, this->n);
     }
 
     /**
@@ -2328,15 +2121,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var i, rowB;
-        
-        array c = [];
-
-        for i, rowB in b->asArray() {
-            let c[] = tensor_less_equal(this->a[i], rowB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary(this->a, b->a, "lessEqual"), this->m, this->n);
     }
 
     /**
@@ -2354,17 +2139,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_multiply(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "multiply"), this->m, this->n);
     }
 
     /**
@@ -2382,17 +2161,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_divide(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "divide"), this->m, this->n);
     }
 
     /**
@@ -2410,17 +2183,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_add(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "add"), this->m, this->n);
     }
 
     /**
@@ -2438,17 +2205,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_subtract(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "subtract"), this->m, this->n);
     }
 
     /**
@@ -2466,17 +2227,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_pow(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "pow"), this->m, this->n);
     }
 
     /**
@@ -2494,17 +2249,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_mod(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "mod"), this->m, this->n);
     }
 
     /**
@@ -2523,17 +2272,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_equal(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "equal"), this->m, this->n);
     }
 
     /**
@@ -2551,17 +2294,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_not_equal(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "notEqual"), this->m, this->n);
     }
 
     /**
@@ -2579,17 +2316,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_greater(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "greater"), this->m, this->n);
     }
 
     /**
@@ -2607,17 +2338,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_greater_equal(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "greaterEqual"), this->m, this->n);
     }
 
     /**
@@ -2635,17 +2360,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_less(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "less"), this->m, this->n);
     }
 
     /**
@@ -2664,17 +2383,11 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowA;
+        // The operand is only n elements against the matrix's m * n, so
+        // converting it costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        var bHat = b->asArray();
-    
-        for rowA in this->a {
-            let c[] = tensor_less_equal(rowA, bHat);
-        }
-    
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_vector(this->a, bHat, this->n, "lessEqual"), this->m, this->n);
     }
 
     /**
@@ -2692,15 +2405,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_multiply_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "multiply"), this->m, this->n);
     }
 
     /**
@@ -2718,15 +2427,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_divide_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "divide"), this->m, this->n);
     }
 
     /**
@@ -2744,15 +2449,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_add_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "add"), this->m, this->n);
     }
 
     /**
@@ -2770,15 +2471,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_subtract_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "subtract"), this->m, this->n);
     }
 
     /**
@@ -2796,15 +2493,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_pow_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "pow"), this->m, this->n);
     }
 
     /**
@@ -2822,15 +2515,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_mod_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "mod"), this->m, this->n);
     }
 
     /**
@@ -2848,15 +2537,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_equal_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "equal"), this->m, this->n);
     }
 
     /**
@@ -2874,15 +2559,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_not_equal_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "notEqual"), this->m, this->n);
     }
 
     /**
@@ -2900,15 +2581,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_greater_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "greater"), this->m, this->n);
     }
 
     /**
@@ -2926,15 +2603,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_greater_equal_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "greaterEqual"), this->m, this->n);
     }
 
     /**
@@ -2952,15 +2625,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_less_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "less"), this->m, this->n);
     }
 
     /**
@@ -2978,15 +2647,11 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        // Only m elements against the matrix's m * n, so converting the
+        // operand costs nothing next to the operation itself.
+        var bHat = tensor_buffer_from_array(b->asArray());
 
-        array c = [];
-
-        for i, valueB in b->asArray() {
-            let c[] = tensor_less_equal_scalar(this->a[i], valueB);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_broadcast_column(this->a, bHat, this->n, "lessEqual"), this->m, this->n);
     }
 
     /**
@@ -2997,15 +2662,7 @@ class Matrix implements Tensor
      */
     public function multiplyScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_multiply_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "multiply"), this->m, this->n);
     }
 
     /**
@@ -3016,15 +2673,7 @@ class Matrix implements Tensor
      */
     public function divideScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_divide_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "divide"), this->m, this->n);
     }
 
     /**
@@ -3035,15 +2684,7 @@ class Matrix implements Tensor
      */
     public function addScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_add_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "add"), this->m, this->n);
     }
 
     /**
@@ -3054,15 +2695,7 @@ class Matrix implements Tensor
      */
     public function subtractScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_subtract_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "subtract"), this->m, this->n);
     }
 
     /**
@@ -3073,15 +2706,7 @@ class Matrix implements Tensor
      */
     public function powScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_pow_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "pow"), this->m, this->n);
     }
 
     /**
@@ -3092,15 +2717,7 @@ class Matrix implements Tensor
      */
     public function modScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_mod_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "mod"), this->m, this->n);
     }
 
     /**
@@ -3111,15 +2728,7 @@ class Matrix implements Tensor
      */
     public function equalScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_equal_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "equal"), this->m, this->n);
     }
 
     /**
@@ -3130,15 +2739,7 @@ class Matrix implements Tensor
      */
     public function notEqualScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_not_equal_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "notEqual"), this->m, this->n);
     }
 
     /**
@@ -3149,15 +2750,7 @@ class Matrix implements Tensor
      */
     public function greaterScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_greater_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "greater"), this->m, this->n);
     }
 
     /**
@@ -3169,15 +2762,7 @@ class Matrix implements Tensor
      */
     public function greaterEqualScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_greater_equal_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "greaterEqual"), this->m, this->n);
     }
 
     /**
@@ -3188,15 +2773,7 @@ class Matrix implements Tensor
      */
     public function lessScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_less_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "less"), this->m, this->n);
     }
 
     /**
@@ -3208,15 +2785,7 @@ class Matrix implements Tensor
      */
     public function lessEqualScalar(const float b) -> <Matrix>
     {
-        var rowA;
-
-        array c = [];
-
-        for rowA in this->a {
-            let c[] = tensor_less_equal_scalar(rowA, b);
-        }
-
-        return self::quick(c);
+        return self::wrap(tensor_buffer_binary_scalar(this->a, b, "lessEqual"), this->m, this->n);
     }
 
     /**
@@ -3245,7 +2814,8 @@ class Matrix implements Tensor
      */
     public function offsetExists(const var index) -> bool
     {
-        return isset this->a[index];
+        // The buffer is flat, so a row index is not a buffer index.
+        return is_int(index) && index >= 0 && index < this->m;
     }
 
     /**
@@ -3266,10 +2836,8 @@ class Matrix implements Tensor
      */
     public function offsetGet(const var index) -> <Vector>
     {
-        var row;
-
-        if likely fetch row, this->a[index] {
-            return Vector::quick(row);
+        if likely this->offsetExists(index) {
+            return new Vector(tensor_buffer_stride(this->a, index * this->n, 1, this->n), false);
         }
 
         throw new InvalidArgumentException("Element not found at"

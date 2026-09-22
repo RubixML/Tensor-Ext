@@ -36,6 +36,7 @@ zend_class_entry *tensor_tensor_ce;
 zend_class_entry *tensor_exceptions_invalidargumentexception_ce;
 zend_class_entry *tensor_exceptions_runtimeexception_ce;
 zend_class_entry *tensor_vector_ce;
+zend_class_entry *tensor_buffervector_ce;
 zend_class_entry *tensor_columnvector_ce;
 zend_class_entry *tensor_decompositions_cholesky_ce;
 zend_class_entry *tensor_decompositions_eigen_ce;
@@ -54,6 +55,18 @@ PHP_INI_BEGIN()
 	
 PHP_INI_END()
 
+/**
+ * Directives whose globals are put back to their php.ini value at the start
+ * of every request. globals_set() writes the struct member directly, so the
+ * engine cannot restore it the way it restores an ini_set(); without this the
+ * value would survive into the next request. Module-scoped globals are
+ * deliberately absent: they are set up once per process.
+ */
+static const char *const zephir_request_ini_entries[] = {
+	
+	NULL
+};
+
 static PHP_MINIT_FUNCTION(tensor_ext)
 {
 	REGISTER_INI_ENTRIES();
@@ -70,6 +83,7 @@ static PHP_MINIT_FUNCTION(tensor_ext)
 	ZEPHIR_INIT(Tensor_Exceptions_InvalidArgumentException);
 	ZEPHIR_INIT(Tensor_Exceptions_RuntimeException);
 	ZEPHIR_INIT(Tensor_Vector);
+	ZEPHIR_INIT(Tensor_BufferVector);
 	ZEPHIR_INIT(Tensor_ColumnVector);
 	ZEPHIR_INIT(Tensor_Decompositions_Cholesky);
 	ZEPHIR_INIT(Tensor_Decompositions_Eigen);
@@ -142,6 +156,7 @@ static PHP_RINIT_FUNCTION(tensor_ext)
 	tensor_ext_globals_ptr = ZEPHIR_VGLOBAL;
 
 	php_zephir_init_globals(tensor_ext_globals_ptr);
+	zephir_ini_activate_globals(zephir_request_ini_entries);
 	zephir_initialize_memory(tensor_ext_globals_ptr);
 
 	

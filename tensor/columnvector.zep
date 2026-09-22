@@ -63,7 +63,7 @@ class ColumnVector extends Vector
      */
     public function transpose()
     {
-        return Vector::quick(this->a);
+        return Vector::quick(this->asArray());
     }
 
     /**
@@ -92,24 +92,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA * valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "multiply"));
     }
 
     /**
@@ -127,24 +110,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA / valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "divide"));
     }
 
     /**
@@ -162,24 +128,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA + valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "add"));
     }
 
     /**
@@ -197,24 +146,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA - valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "subtract"));
     }
 
     /**
@@ -232,24 +164,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = pow(valueA, valueB);
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "pow"));
     }
  
     /**
@@ -267,24 +182,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA % valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "mod"));
     }
 
     /**
@@ -302,24 +200,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA == valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "equal"));
     }
 
     /**
@@ -337,24 +218,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA != valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "notEqual"));
     }
 
     /**
@@ -372,24 +236,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA > valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "greater"));
     }
 
     /**
@@ -407,24 +254,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA >= valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "greaterEqual"));
     }
 
     /**
@@ -442,24 +272,7 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA < valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "less"));
     }
 
     /**
@@ -477,23 +290,6 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
-        
-        array c = [];
-        array rowC = [];
-
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA <= valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return Matrix::quick(tensor_buffer_broadcast_rows(this->a, b->asArray(), "lessEqual"));
     }
 }
