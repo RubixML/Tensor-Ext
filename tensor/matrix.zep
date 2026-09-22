@@ -629,6 +629,16 @@ class Matrix implements Tensor
     }
 
     /**
+     * Return the underlying TensorBuffer of the matrix.
+     *
+     * @return \Tensor\TensorBuffer
+     */
+    public function asTensorBuffer() -> <TensorBuffer>
+    {
+        return this->a;
+    }
+
+    /**
      * Return the matrix as an array of arrays.
      *
      * @return array[]
@@ -2750,15 +2760,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_multiply_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_multiply_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2776,15 +2783,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_divide_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_divide_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2802,15 +2806,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_add_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_add_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2828,15 +2829,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_subtract_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_subtract_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2854,15 +2852,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_pow_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_pow_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2880,15 +2875,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_mod_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_mod_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2906,15 +2898,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_equal_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_equal_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2932,15 +2921,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_not_equal_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_not_equal_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2958,15 +2944,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_greater_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_greater_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -2984,15 +2967,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_greater_equal_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_greater_equal_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -3010,15 +2990,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_less_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_less_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**
@@ -3036,15 +3013,12 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var i, valueB;
+        var bHat, result;
 
-        array c = [];
+        let bHat = b->asTensorBuffer();
+        let result = tensor_less_equal_col(this->a, bHat, this->n);
 
-        for i, valueB in b->asArray() {
-            let c[] = tensor_less_equal_scalar(this->a->slice(i * this->n, this->n), valueB);
-        }
-
-        return self::quick(c);
+        return self::fromTensorBuffer(result, this->m, this->n);
     }
 
     /**

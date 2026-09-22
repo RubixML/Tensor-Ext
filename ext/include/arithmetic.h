@@ -17,4 +17,15 @@ void tensor_subtract_scalar(zval * return_value, zval * a, zval * b);
 void tensor_pow_scalar(zval * return_value, zval * a, zval * b);
 void tensor_mod_scalar(zval * return_value, zval * a, zval * b);
 
+void tensor_multiply_col(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_add_col(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_divide_col(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_divide_col_reverse(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_subtract_col(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_subtract_col_reverse(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_pow_col(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_pow_col_reverse(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_mod_col(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_mod_col_reverse(zval * return_value, zval * a, zval * b, zval * n);
+
 #endif
