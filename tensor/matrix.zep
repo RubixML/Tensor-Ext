@@ -44,25 +44,27 @@ class Matrix implements Tensor
     protected n;
 
     /**
-     * Factory method to build a new matrix from an array.
+     * Build a new matrix from a PHP array of arrays, validating the input.
      *
      * @param array[] a
+     * @throws \Tensor\Exceptions\InvalidArgumentException
      * @return self
      */
     public static function build(const array a = []) -> <Matrix>
     {
-        return new self(a, 0, 0, true);
+        return self::fromArray(a, true);
     }
-  
+
     /**
-     * Build a new matrix foregoing any validation for quicker instantiation.
+     * Build a new matrix from a PHP array of arrays, foregoing any row
+     * validation for quicker instantiation.
      *
      * @param array[] a
      * @return self
      */
     public static function quick(const array a = []) -> <Matrix>
     {
-        return new self(a, 0, 0, false);
+        return self::fromArray(a, false);
     }
 
     /**
@@ -75,7 +77,94 @@ class Matrix implements Tensor
      */
     public static function fromTensorBuffer(<TensorBuffer> a, const int m, const int n) -> <Matrix>
     {
-        return new self(a, m, n, false);
+        return new self(a, m, n);
+    }
+
+    /**
+     * Build a matrix by concatenating an array of TensorBuffers (each buffer
+     * representing one row) into a single contiguous buffer.
+     *
+     * @param \Tensor\TensorBuffer[] buffers
+     * @return self
+     */
+    public static function fromTensorBuffers(const array buffers) -> <Matrix>
+    {
+        int rows = count(buffers);
+
+        if unlikely rows < 1 {
+            var zero = tensor_buffer_from_array([]);
+            return new self(new TensorBuffer(<Buffer> zero), 0, 0);
+        }
+
+        var nHat;
+
+        let nHat = buffers[0]->count();
+
+        var b;
+
+        if unlikely rows == 1 {
+            let b = buffers[0]->asBuffer();
+        } else {
+            let b = buffers[0]->concat(array_slice(buffers, 1));
+            let b = b->asBuffer();
+        }
+
+        return new self(new TensorBuffer(<Buffer> b), rows, nHat);
+    }
+
+    /**
+     * Build a new matrix from a PHP array of rows, each row being a PHP array
+     * of numeric elements.
+     *
+     * @param array[] a
+     * @param bool validate
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
+     */
+    public static function fromArray(const array a, const bool validate = true) -> <Matrix>
+    {
+        int rows = count(a);
+
+        if unlikely rows < 1 {
+            var zero = tensor_buffer_from_array([]);
+            return new self(new TensorBuffer(<Buffer> zero), 0, 0);
+        }
+
+        var rowA, valueA;
+
+        var firstRow, n;
+
+        let firstRow = current(a);
+
+        if unlikely !is_array(firstRow) {
+            throw new InvalidArgumentException("Matrix requires an"
+                . " array of arrays.");
+        }
+
+        let n = count(firstRow);
+
+        array flat = [];
+
+        for rowA in a {
+            if unlikely validate && !is_array(rowA) {
+                throw new InvalidArgumentException("Matrix requires an"
+                    . " array of arrays.");
+            }
+
+            if unlikely validate && count(rowA) !== n {
+                throw new InvalidArgumentException("The number of"
+                    . " columns must be equal for all rows, "
+                    .  strval(n) . " needed but " . count(rowA) . " given.");
+            }
+
+            for valueA in rowA {
+                let flat[] = (float) valueA;
+            }
+        }
+
+        var buffer = tensor_buffer_from_array(flat);
+
+        return new self(new TensorBuffer(<Buffer> buffer), rows, n);
     }
 
     /**
@@ -383,129 +472,18 @@ class Matrix implements Tensor
     }
 
     /**
-     * @param array[]|TensorBuffer[]|TensorBuffer a
+     * Construct a matrix from a single TensorBuffer holding the elements in
+     * row-major order together with the target dimensionality.
+     *
+     * @param \Tensor\TensorBuffer a
      * @param int m
      * @param int n
-     * @param bool validate
-     * @throws \Tensor\Exceptions\InvalidArgumentException
      */
-    public function __construct(var a, const int m = 0, const int n = 0, const bool validate = true)
+    public function __construct(<TensorBuffer> a, const int m, const int n)
     {
-        var i, rowA, valueA, firstRow;
-
-        if unlikely typeof a == "array" {
-            int rows = count(a);
-
-            var nHat;
-
-            array flat = [];
-
-            let firstRow = current(a) ?: [];
-
-            if typeof firstRow == "object" {
-                if unlikely !(firstRow instanceof TensorBuffer) {
-                    throw new InvalidArgumentException("Matrix requires an"
-                        . " array of arrays.");
-                }
-
-                let nHat = firstRow->count();
-            } else {
-                let nHat = count(firstRow);
-            }
-
-            if validate {
-                let a = array_values(a);
-
-                for i, rowA in a {
-                    if typeof rowA == "object" {
-                        if unlikely !(rowA instanceof TensorBuffer) {
-                            throw new InvalidArgumentException("Matrix requires an"
-                                . " array of arrays.");
-                        }
-
-                        if unlikely rowA->count() !== nHat {
-                            throw new InvalidArgumentException("The number of"
-                                . " columns must be equal for all rows, "
-                                .  strval(nHat) . " needed but " . rowA->count()
-                                .  " given at row offset " . i . ".");
-                        }
-
-                        let rowA = rowA->toArray();
-                    } else {
-                        if unlikely count(rowA) !== nHat {
-                            throw new InvalidArgumentException("The number of"
-                                . " columns must be equal for all rows, "
-                                .  strval(nHat) . " needed but " . count(rowA)
-                                .  " given at row offset " . i . ".");
-                        }
-                    }
-
-                    for valueA in rowA {
-                        let flat[] = is_float(valueA) ? valueA : (float) valueA;
-                    }
-                }
-            } else {
-                for i, rowA in a {
-                    if typeof rowA == "object" {
-                        if unlikely !(rowA instanceof TensorBuffer) {
-                            throw new InvalidArgumentException("Matrix requires an"
-                                . " array of arrays.");
-                        }
-
-                        if unlikely rowA->count() !== nHat {
-                            throw new InvalidArgumentException("The number of"
-                                . " columns must be equal for all rows, "
-                                .  strval(nHat) . " needed but " . rowA->count()
-                                .  " given at row offset " . i . ".");
-                        }
-
-                        let rowA = rowA->toArray();
-                    } else {
-                        if unlikely count(rowA) !== nHat {
-                            throw new InvalidArgumentException("The number of"
-                                . " columns must be equal for all rows, "
-                                .  strval(nHat) . " needed but " . count(rowA)
-                                .  " given at row offset " . i . ".");
-                        }
-                    }
-
-                    for valueA in rowA {
-                        let flat[] = (float) valueA;
-                    }
-                }
-            }
-
-            var buffer = tensor_buffer_from_array(flat);
-
-            let this->a = new TensorBuffer(<Buffer> buffer);
-            let this->m = rows;
-            let this->n = nHat;
-        } elseif a instanceof TensorBuffer {
-            if unlikely validate {
-                if unlikely m < 1 {
-                    throw new InvalidArgumentException("The number of rows must be"
-                        . " greater than 0, " . strval(m) . " given.");
-                }
-
-                if unlikely n < 1 {
-                    throw new InvalidArgumentException("The number of columns must be"
-                        . " greater than 0, " . strval(n) . " given.");
-                }
-
-                if unlikely a->count() !== m * n {
-                    throw new InvalidArgumentException("The number of elements"
-                        . " in the buffer must equal m times n, "
-                        .  strval(a->count()) . " given.");
-                }
-            }
-
-            let this->a = <TensorBuffer> a;
-            let this->m = m;
-            let this->n = n;
-        } else {
-            throw new InvalidArgumentException("Matrix requires an array"
-                . " or TensorBuffer object.");
-        }
+        let this->a = a;
+        let this->m = m;
+        let this->n = n;
     }
 
     /**
@@ -1947,7 +1925,7 @@ class Matrix implements Tensor
             let b[] = rowA;
         }
 
-        return self::quick(b);
+        return self::fromTensorBuffers(b);
     }
 
     /**
@@ -2106,7 +2084,7 @@ class Matrix implements Tensor
             let c[] = bufferB->concat([bufferA]);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2138,7 +2116,7 @@ class Matrix implements Tensor
             let c[] = bufferA->concat([bufferB]);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2432,7 +2410,7 @@ class Matrix implements Tensor
             let c[] = tensor_multiply(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2460,7 +2438,7 @@ class Matrix implements Tensor
             let c[] = tensor_divide(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2488,7 +2466,7 @@ class Matrix implements Tensor
             let c[] = tensor_add(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2516,7 +2494,7 @@ class Matrix implements Tensor
             let c[] = tensor_subtract(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2544,7 +2522,7 @@ class Matrix implements Tensor
             let c[] = tensor_pow(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2572,7 +2550,7 @@ class Matrix implements Tensor
             let c[] = tensor_mod(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2601,7 +2579,7 @@ class Matrix implements Tensor
             let c[] = tensor_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2629,7 +2607,7 @@ class Matrix implements Tensor
             let c[] = tensor_not_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2657,7 +2635,7 @@ class Matrix implements Tensor
             let c[] = tensor_greater(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2685,7 +2663,7 @@ class Matrix implements Tensor
             let c[] = tensor_greater_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2713,7 +2691,7 @@ class Matrix implements Tensor
             let c[] = tensor_less(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
@@ -2742,7 +2720,7 @@ class Matrix implements Tensor
             let c[] = tensor_less_equal(this->a->slice(i * this->n, this->n), bHat);
         }
 
-        return self::quick(c);
+        return self::fromTensorBuffers(c);
     }
 
     /**
