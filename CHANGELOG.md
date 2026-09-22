@@ -1,13 +1,4 @@
-# Change Log
-
-- 3.2.0
-    - Added the `TensorBuffer` decorator class wrapping the kernel `Buffer`
-    - Added in-place `sort()` (ascending or descending) operating on the buffer's raw pointer
-    - Added `slice()` returning a new buffer without materialising a PHP array
-    - Added the `sum()`, `product()`, `min()`, `max()`, `argmin()`, and `argmax()` reductions operating on the buffer's raw pointer
-    - Added `sliceStrided()` for gathering elements at a fixed stride from a buffer
-    - Added `concat()` and `split()` for merging and partitioning buffers
-    - Added `repeat()` for tiling a buffer
+# Change Logdd
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension
