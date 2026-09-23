@@ -28,4 +28,11 @@ void tensor_pow_col_reverse(zval * return_value, zval * a, zval * b, zval * n);
 void tensor_mod_col(zval * return_value, zval * a, zval * b, zval * n);
 void tensor_mod_col_reverse(zval * return_value, zval * a, zval * b, zval * n);
 
+void tensor_multiply_row(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_add_row(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_divide_row(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_subtract_row(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_pow_row(zval * return_value, zval * a, zval * b, zval * n);
+void tensor_mod_row(zval * return_value, zval * a, zval * b, zval * n);
+
 #endif
