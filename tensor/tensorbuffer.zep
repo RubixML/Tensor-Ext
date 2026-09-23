@@ -216,8 +216,46 @@ class TensorBuffer
      */
     public function sliceStrided(const int offset, const int length, const int stride) -> <TensorBuffer>
     {
-        if unlikely offset < 0 || length < 0 || stride < 1
-            || (length > 0 && offset > this->buffer->count() - (length - 1) * stride - 1) {
+        int limit = 0;
+        int a = 0;
+        int acc = 0;
+        int product = 0;
+        bool invalid = offset < 0 || length < 0 || stride < 1;
+
+        if likely !invalid && length > 0 {
+            let limit = this->buffer->count() - 1 - offset;
+
+            let invalid = limit < 0 || (length > 1 && stride > limit);
+
+            if likely !invalid {
+                let a = length - 1;
+                let acc = stride;
+
+                while a > 0 {
+                    if (a & 1) {
+                        let product += acc;
+
+                        if product > limit {
+                            let invalid = true;
+                            break;
+                        }
+                    }
+
+                    let a = a >> 1;
+
+                    if a > 0 {
+                        if acc > (limit >> 1) {
+                            let invalid = true;
+                            break;
+                        }
+
+                        let acc = acc << 1;
+                    }
+                }
+            }
+        }
+
+        if unlikely invalid {
             throw new InvalidArgumentException("Offset, length, and"
                 . " stride must be within the bounds of the buffer.");
         }

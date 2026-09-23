@@ -6564,7 +6564,7 @@ PHP_METHOD(Tensor_Vector, offsetSet)
 }
 
 /**
- * Does a given column exist in the matrix.
+ * Does a given element exist in the vector.
  *
  * @param mixed index
  * @return bool
@@ -6615,7 +6615,7 @@ PHP_METHOD(Tensor_Vector, offsetUnset)
 }
 
 /**
- * Return a row from the matrix at the given index.
+ * Return an element from the vector at the given index.
  *
  * @param mixed index
  * @throws \Tensor\Exceptions\InvalidArgumentException
@@ -6679,7 +6679,7 @@ PHP_METHOD(Tensor_Vector, offsetGet)
 }
 
 /**
- * Get an iterator for the rows in the matrix.
+ * Get an iterator for the items in the vector.
  *
  * @return \ArrayIterator
  */

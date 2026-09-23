@@ -1215,7 +1215,7 @@ class VectorTest extends TestCase
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             4,
-            Vector::fromArray([-3, 1, 3, 0, 0, 1, 2, 1]),
+            Vector::fromArray([-3.0, 1.0, 3.0, 0.0, 0.0, 1.0, 2.0, 1.0]),
         ];
     }
 
@@ -1228,7 +1228,7 @@ class VectorTest extends TestCase
 
         $b = $a->abs();
 
-        $expected = Vector::fromArray([15, 25, 35, 36, 72, 89, 106, 45]);
+        $expected = Vector::fromArray([15.0, 25.0, 35.0, 36.0, 72.0, 89.0, 106.0, 45.0]);
 
         $this->assertEquals($expected, $b);
     }
@@ -1242,7 +1242,7 @@ class VectorTest extends TestCase
 
         $b = $a->square();
 
-        $expected = Vector::fromArray([225, 625, 1225, 1296, 5184, 7921, 11236, 2025]);
+        $expected = Vector::fromArray([225.0, 625.0, 1225.0, 1296.0, 5184.0, 7921.0, 11236.0, 2025.0]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }
@@ -1256,7 +1256,7 @@ class VectorTest extends TestCase
 
         $b = $a->pow(3);
 
-        $expected = Vector::fromArray([-3375, 15625, 42875, -46656, -373248, 704969, 1191016, 91125]);
+        $expected = Vector::fromArray([-3375.0, 15625.0, 42875.0, -46656.0, -373248.0, 704969.0, 1191016.0, 91125.0]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }

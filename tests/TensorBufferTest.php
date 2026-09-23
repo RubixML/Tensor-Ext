@@ -492,6 +492,42 @@ class TensorBufferTest extends TestCase
     /**
      * @test
      */
+    public function sliceStridedRejectsOverflowingRange() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $decorator->sliceStrided(0, 4097, 4503599627370496);
+    }
+
+    /**
+     * @test
+     */
+    public function sliceStridedRejectsHugeStride() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $decorator->sliceStrided(0, 10, 4611686018427387904);
+    }
+
+    /**
+     * @test
+     */
+    public function sliceStridedSingleElementHugeStride() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $slice = $decorator->sliceStrided(4, 1, PHP_INT_MAX);
+
+        $this->assertSame([5.0], $slice->toArray());
+    }
+
+    /**
+     * @test
+     */
     public function concat() : void
     {
         $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0]));
@@ -629,5 +665,30 @@ class TensorBufferTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $decorator->repeat(0);
+    }
+
+    /**
+     * @test
+     */
+    public function repeatRejectsOverflowingTimes() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0]));
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $decorator->repeat(PHP_INT_MAX);
+    }
+
+    /**
+     * @test
+     */
+    public function splitChunkLargerThanBuffer() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0]));
+
+        $chunks = $decorator->split(PHP_INT_MAX);
+
+        $this->assertCount(1, $chunks);
+        $this->assertEqualsWithDelta([1.0, 2.0, 3.0], $chunks[0]->toArray(), self::MAX_DELTA);
     }
 }

@@ -10,6 +10,7 @@
 #include "kernel/exception.h"
 #include "kernel/operators.h"
 #include "include/buffer.h"
+#include "../tensor/exceptions/invalidargumentexception.zep.h"
 
 #ifdef ZEPHIR_BUFFER_ENABLED
 
@@ -493,11 +494,24 @@ void tensor_buffer_slice_strided(zval * return_value, zval * obj, zval * offset,
 		return;
 	}
 
-	if (UNEXPECTED(offsetHat < 0 || lengthHat < 0 || strideHat < 1
-		|| (lengthHat > 0 && offsetHat + (lengthHat - 1) * strideHat > len - 1))) {
+	if (UNEXPECTED(offsetHat < 0 || lengthHat < 0 || strideHat < 1)) {
 		zephir_throw_exception_string(spl_ce_OutOfBoundsException,
 			SL("Slice offset, length, and stride must be within the bounds of the buffer."));
 		return;
+	}
+
+	if (lengthHat > 0) {
+		zend_long last = len - 1 - offsetHat;
+
+		/* Integer division on non-negative operands is exact and immune to the
+		 * signed overflow of (lengthHat - 1) * strideHat, which wraps for huge
+		 * arguments and previously let the guard pass while the copy below read
+		 * far out of bounds. */
+		if (UNEXPECTED(last < 0 || (lengthHat - 1) > last / strideHat)) {
+			zephir_throw_exception_string(spl_ce_OutOfBoundsException,
+				SL("Slice offset, length, and stride must be within the bounds of the buffer."));
+			return;
+		}
 	}
 
 	if (UNEXPECTED(zephir_buffer_create(return_value, lengthHat, kind) == FAILURE)) {
@@ -513,16 +527,26 @@ void tensor_buffer_slice_strided(zval * return_value, zval * obj, zval * offset,
 	if (kind == ZEPHIR_BUFFER_LONG) {
 		const zend_long * src = zephir_buffer_longs(obj);
 		zend_long * dst = zephir_buffer_longs(return_value);
+		zend_long index = offsetHat;
 
 		for (i = 0; i < lengthHat; ++i) {
-			dst[i] = src[offsetHat + i * strideHat];
+			dst[i] = src[index];
+
+			if (i + 1 < lengthHat) {
+				index += strideHat;
+			}
 		}
 	} else {
 		const double * src = zephir_buffer_doubles(obj);
 		double * dst = zephir_buffer_doubles(return_value);
+		zend_long index = offsetHat;
 
 		for (i = 0; i < lengthHat; ++i) {
-			dst[i] = src[offsetHat + i * strideHat];
+			dst[i] = src[index];
+
+			if (i + 1 < lengthHat) {
+				index += strideHat;
+			}
 		}
 	}
 }
@@ -626,7 +650,19 @@ void tensor_buffer_split(zval * return_value, zval * obj, zval * chunk_length)
 		return;
 	}
 
-	zend_long chunks = len == 0 ? 0 : (len + chunkHat - 1) / chunkHat;
+	zend_long chunks;
+
+	if (UNEXPECTED(len == 0)) {
+		chunks = 0;
+	} else if (UNEXPECTED(chunkHat > len)) {
+		/* The whole buffer fits in one chunk; avoids the overflow of
+		 * len + chunkHat - 1 for a chunk length near LONG_MAX. */
+		chunks = 1;
+	} else {
+		/* Both operands are at most 2 * len, so the sum cannot overflow. */
+		chunks = (len + chunkHat - 1) / chunkHat;
+	}
+
 	zend_long i;
 
 	array_init_size(return_value, (zend_ulong) chunks);
@@ -677,6 +713,14 @@ void tensor_buffer_repeat(zval * return_value, zval * obj, zval * times)
 	if (UNEXPECTED(timesHat < 1)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Times must be greater than 0."));
+		return;
+	}
+
+	/* Reject before len * timesHat wraps; the product is then guaranteed to
+	 * fit, so every i * len destination offset stays in bounds. */
+	if (UNEXPECTED(len > 0 && timesHat > ZEND_LONG_MAX / len)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Repeat count must not overflow the buffer length."));
 		return;
 	}
 
