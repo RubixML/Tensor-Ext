@@ -589,6 +589,8 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
     zval_ptr_dtor(&bufL);
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&u, (zend_long) na * na, &bufU) == FAILURE)) {
+        zval_ptr_dtor(&l);
+        
         efree(perm);
         efree(lbuf);
         efree(ubuf);
@@ -610,6 +612,9 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
     zval_ptr_dtor(&bufU);
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&p, (zend_long) na * na, &bufP) == FAILURE)) {
+        zval_ptr_dtor(&l);
+        zval_ptr_dtor(&u);
+
         efree(perm);
         efree(lbuf);
         efree(ubuf);
@@ -703,6 +708,8 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
     zval eigenvectors, buf;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
+        zval_ptr_dtor(&eigenvalues);
+
         efree(w);
         efree(wr);
         efree(wi);
@@ -789,6 +796,8 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
     zval eigenvectors, buf;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
+        zval_ptr_dtor(&eigenvalues);
+
         efree(w);
         efree(wr);
 
@@ -898,6 +907,9 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
     zval vt, bufVt;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&vt, (zend_long) na * na, &bufVt) == FAILURE)) {
+        zval_ptr_dtor(&u);
+        zval_ptr_dtor(&s);
+
         efree(w);
         efree(vu);
         efree(vs);
