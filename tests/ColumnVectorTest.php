@@ -33,7 +33,7 @@ class ColumnVectorTest extends TestCase
      */
     public function build() : void
     {
-        $vector = ColumnVector::fromArray([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $this->assertInstanceOf(ColumnVector::class, $vector);
         $this->assertInstanceOf(Tensor::class, $vector);
@@ -51,7 +51,7 @@ class ColumnVectorTest extends TestCase
      */
     public function shape() : void
     {
-        $vector = ColumnVector::fromArray([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $this->assertEquals([3], $vector->shape());
     }
@@ -61,7 +61,7 @@ class ColumnVectorTest extends TestCase
      */
     public function shapeString() : void
     {
-        $vector = ColumnVector::fromArray([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $this->assertEquals('3', $vector->shapeString());
     }
@@ -71,7 +71,7 @@ class ColumnVectorTest extends TestCase
      */
     public function size() : void
     {
-        $vector = ColumnVector::fromArray([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $this->assertEquals(3, $vector->size());
     }
@@ -81,7 +81,7 @@ class ColumnVectorTest extends TestCase
      */
     public function serialization() : void
     {
-        $vector = ColumnVector::fromArray([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $serialized = serialize($vector);
 
@@ -99,7 +99,7 @@ class ColumnVectorTest extends TestCase
      */
     public function m() : void
     {
-        $vector = ColumnVector::fromArray([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $this->assertEquals(3, $vector->m());
     }
@@ -109,7 +109,7 @@ class ColumnVectorTest extends TestCase
      */
     public function n() : void
     {
-        $vector = ColumnVector::fromArray([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $this->assertEquals(1, $vector->n());
     }
@@ -119,20 +119,20 @@ class ColumnVectorTest extends TestCase
      */
     public function multiply() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->multiply($b);
 
         $expected = Matrix::fromArray([
-            [-93.45, 15, -0.44999999999999996],
-            [0.25, 50.24999999999999, 25],
-            [38.5, 175, -175],
+            [-93.45, 15.0, -0.44999999999999996],
+            [0.25, 50.24999999999999, 25.0],
+            [38.5, 175.0, -175.0],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
@@ -143,20 +143,20 @@ class ColumnVectorTest extends TestCase
      */
     public function divide() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->divide($b);
 
         $expected = Matrix::fromArray([
-            [-2.407704654895666, 15, -500.],
-            [2500.0, 12.437810945273633, 25],
-            [31.818181818181817, 7, -7],
+            [-2.407704654895666, 15.0, -500.],
+            [2500.0, 12.437810945273633, 25.0],
+            [31.818181818181817, 7.0, -7.0],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
@@ -167,20 +167,20 @@ class ColumnVectorTest extends TestCase
      */
     public function add() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->add($b);
 
         $expected = Matrix::fromArray([
-            [-8.77, -16, -14.97],
-            [25.01, 27.009999999999998, 26],
-            [36.1, 40, 30],
+            [-8.77, -16.0, -14.97],
+            [25.01, 27.009999999999998, 26.0],
+            [36.1, 40.0, 30.0],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
@@ -191,20 +191,20 @@ class ColumnVectorTest extends TestCase
      */
     public function subtract() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->subtract($b);
 
         $expected = Matrix::fromArray([
-            [-21.23, -14, -15.03],
-            [24.99, 22.990000000000002, 24],
-            [33.9, 30, 40],
+            [-21.23, -14.0, -15.03],
+            [24.99, 22.990000000000002, 24.0],
+            [33.9, 30.0, 40.0],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
@@ -215,20 +215,20 @@ class ColumnVectorTest extends TestCase
      */
     public function equal() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->equal($b);
 
         $expected = Matrix::fromArray([
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -239,20 +239,20 @@ class ColumnVectorTest extends TestCase
      */
     public function notEqual() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->notEqual($b);
 
         $expected = Matrix::fromArray([
-            [1, 1, 1],
-            [1, 1, 1],
-            [1, 1, 1],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -263,20 +263,20 @@ class ColumnVectorTest extends TestCase
      */
     public function greater() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->greater($b);
 
         $expected = Matrix::fromArray([
-            [0, 0, 0],
-            [1, 1, 1],
-            [1, 1, 1],
+            [0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -287,20 +287,20 @@ class ColumnVectorTest extends TestCase
      */
     public function greaterEqual() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->greaterEqual($b);
 
         $expected = Matrix::fromArray([
-            [0, 0, 0],
-            [1, 1, 1],
-            [1, 1, 1],
+            [0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -311,20 +311,20 @@ class ColumnVectorTest extends TestCase
      */
     public function less() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->less($b);
 
         $expected = Matrix::fromArray([
-            [1, 1, 1],
-            [0, 0, 0],
-            [0, 0, 0],
+            [1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -335,20 +335,20 @@ class ColumnVectorTest extends TestCase
      */
     public function lessEqual() : void
     {
-        $a = ColumnVector::fromArray([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15.0, 25.0, 35.0]);
 
         $b = Matrix::fromArray([
-            [6.23, -1, 0.03],
-            [0.01, 2.01, 1],
-            [1.1, 5, -5],
+            [6.23, -1.0, 0.03],
+            [0.01, 2.01, 1.0],
+            [1.1, 5.0, -5.0],
         ]);
 
         $c = $a->lessEqual($b);
 
         $expected = Matrix::fromArray([
-            [1, 1, 1],
-            [0, 0, 0],
-            [0, 0, 0],
+            [1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());

@@ -36,7 +36,7 @@ class VectorTest extends TestCase
      */
     public function build() : void
     {
-        $vector = Vector::fromArray([1, 2, 3, 4, 5]);
+        $vector = Vector::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]);
 
         $this->assertInstanceOf(Vector::class, $vector);
         $this->assertInstanceOf(Tensor::class, $vector);
@@ -54,7 +54,7 @@ class VectorTest extends TestCase
      */
     public function buildCastsIntegersToFloats() : void
     {
-        $vector = Vector::fromArray([1, 2, 3, 4, 5]);
+        $vector = Vector::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]);
 
         $this->assertSame(5, $vector->size());
 
@@ -76,7 +76,7 @@ class VectorTest extends TestCase
     {
         $zeros = Vector::zeros(4);
 
-        $expected = Vector::fromArray([0, 0, 0, 0]);
+        $expected = Vector::fromArray([0.0, 0.0, 0.0, 0.0]);
 
         $this->assertEquals($expected->asArray(), $zeros->asArray());
     }
@@ -88,7 +88,7 @@ class VectorTest extends TestCase
     {
         $ones = Vector::ones(4);
 
-        $expected = Vector::fromArray([1, 1, 1, 1]);
+        $expected = Vector::fromArray([1.0, 1.0, 1.0, 1.0]);
 
         $this->assertEquals($expected->asArray(), $ones->asArray());
     }
@@ -98,9 +98,9 @@ class VectorTest extends TestCase
      */
     public function fill() : void
     {
-        $vector = Vector::fill(16, 4);
+        $vector = Vector::fill(16.0, 4);
 
-        $expected = Vector::fromArray([16, 16, 16, 16]);
+        $expected = Vector::fromArray([16.0, 16.0, 16.0, 16.0]);
 
         $this->assertEquals($expected->asArray(), $vector->asArray());
     }
@@ -470,7 +470,7 @@ class VectorTest extends TestCase
 
         $vector = $vector->map($sign);
 
-        $expected = Vector::fromArray([0, 1, 1, 0, 0, 1, 1, 1]);
+        $expected = Vector::fromArray([0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
 
         $this->assertEquals($expected->asArray(), $vector->asArray());
     }
@@ -674,7 +674,7 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [6.23, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 0.02, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, -0.001],
+                [1.1, 5.0, -5.0, 30.0, -0.005, -0.001],
             ]),
             Matrix::fromArray([
                 [24.92, -6.5, 0.087, -0.2, -1.3, 23.8],
@@ -721,7 +721,7 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [6.23, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 0.02, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, -0.001],
+                [1.1, 5.0, -5.0, 30.0, -0.005, -0.001],
             ]),
             Matrix::fromArray([
                 [0.6420545746388443, -6.5, 96.66666666666667, -2000.0, -5.2, 5.95],
@@ -739,7 +739,7 @@ class VectorTest extends TestCase
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             2.0,
-            Vector::fromArray([-7.5, 12.5, 17.5, -18.0, -36.0, 44.5, 53, 22.5]),
+            Vector::fromArray([-7.5, 12.5, 17.5, -18.0, -36.0, 44.5, 53.0, 22.5]),
         ];
     }
 
@@ -768,7 +768,7 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [6.23, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 0.02, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, -0.001],
+                [1.1, 5.0, -5.0, 30.0, -0.005, -0.001],
             ]),
             Matrix::fromArray([
                 [10.23, 5.5, 2.9299999999999997, 19.99, 2.1, 13.9],
@@ -815,7 +815,7 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [6.23, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 0.02, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, -0.001],
+                [1.1, 5.0, -5.0, 30.0, -0.005, -0.001],
             ]),
             Matrix::fromArray([
                 [-2.2300000000000004, 7.5, 2.87, 20.01, 3.1, 9.9],
@@ -862,7 +862,7 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [6.23, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 0.02, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, -0.001],
+                [1.1, 5.0, -5.0, 30.0, -0.005, -0.001],
             ]),
             Matrix::fromArray([
                 [5634.219287100394, 0.15384615384615385, 1.0324569211337775, 0.9704869503929601, 0.6201736729460423, 141.61],
@@ -881,7 +881,7 @@ class VectorTest extends TestCase
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             4.0,
             Vector::fromArray([
-                50625, 390625, 1500625, 1679616, 26873856, 62742241, 126247696, 4100625
+                50625.0, 390625.0, 1500625.0, 1679616.0, 26873856.0, 62742241.0, 126247696.0, 4100625.0
             ]),
         ];
     }
@@ -911,25 +911,25 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, 11.9],
+                [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
             ]),
             Matrix::fromArray([
-                [1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 0, 0, 1],
+                [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
             ]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             Vector::fromArray([0.25, 0.1, 2.0, -36.0, -1.0, -3.0, 3.3, 2.0]),
-            Vector::fromArray([0, 0, 0, 1, 0, 0, 0, 0]),
+            Vector::fromArray([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             25.0,
-            Vector::fromArray([0, 1, 0, 0, 0, 0, 0, 0]),
+            Vector::fromArray([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]),
         ];
     }
 
@@ -958,25 +958,25 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, 11.9],
+                [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
             ]),
             Matrix::fromArray([
-                [0, 1, 1, 1, 1, 1],
-                [1, 1, 1, 0, 1, 1],
-                [1, 1, 1, 1, 1, 0],
+                [0.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, 0.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 0.0],
             ]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             Vector::fromArray([0.25, 0.1, 2.0, -36.0, -1.0, -3.0, 3.3, 2.0]),
-            Vector::fromArray([1, 1, 1, 0, 1, 1, 1, 1]),
+            Vector::fromArray([1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             25.0,
-            Vector::fromArray([1, 0, 1, 1, 1, 1, 1, 1]),
+            Vector::fromArray([1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]),
         ];
     }
 
@@ -1022,25 +1022,25 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, 11.9],
+                [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
             ]),
             Matrix::fromArray([
-                [0, 1, 1, 1, 1, 1],
-                [1, 1, 1, 0, 1, 1],
-                [1, 1, 1, 0, 1, 0],
+                [0.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, 0.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, 0.0, 1.0, 0.0],
             ]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             Vector::fromArray([0.25, 0.1, 2.0, -36.0, -1.0, -3.0, 3.3, 2.0]),
-            Vector::fromArray([0, 1, 1, 0, 0, 1, 1, 1]),
+            Vector::fromArray([0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             1.0,
-            Vector::fromArray([0, 1, 1, 0, 0, 1, 1, 1]),
+            Vector::fromArray([0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]),
         ];
     }
 
@@ -1069,25 +1069,25 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, 11.9],
+                [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
             ]),
             Matrix::fromArray([
-                [1, 1, 1, 1, 1, 1],
-                [1, 1, 1, 1, 1, 1],
-                [1, 1, 1, 0, 1, 1],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0, 0.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             Vector::fromArray([0.25, 0.1, 2.0, -36.0, -1.0, -3.0, 3.3, 2.0]),
-            Vector::fromArray([0, 1, 1, 1, 0, 1, 1, 1]),
+            Vector::fromArray([0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             25.0,
-            Vector::fromArray([0, 1, 1, 0, 0, 1, 1, 1]),
+            Vector::fromArray([0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0]),
         ];
     }
 
@@ -1116,25 +1116,25 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, 11.9],
+                [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
             ]),
             Matrix::fromArray([
-                [0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             Vector::fromArray([0.25, 0.1, 2.0, -36.0, -1.0, -3.0, 3.3, 2.0]),
-            Vector::fromArray([1, 0, 0, 0, 1, 0, 0, 0]),
+            Vector::fromArray([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             25.0,
-            Vector::fromArray([1, 0, 0, 1, 1, 0, 0, 0]),
+            Vector::fromArray([1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]),
         ];
     }
 
@@ -1163,12 +1163,12 @@ class VectorTest extends TestCase
             Matrix::fromArray([
                 [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
                 [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
-                [1.1, 5.0, -5.0, 30, -0.005, 11.9],
+                [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
             ]),
             Matrix::fromArray([
-                [1, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0],
-                [0, 0, 0, 1, 0, 1],
+                [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0, 0.0, 1.0],
             ]),
 
         ];
@@ -1176,13 +1176,13 @@ class VectorTest extends TestCase
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             Vector::fromArray([0.25, 0.1, 2.0, -36.0, -1.0, -3.0, 3.3, 2.0]),
-            Vector::fromArray([1, 0, 0, 1, 1, 0, 0, 0]),
+            Vector::fromArray([1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
             25.0,
-            Vector::fromArray([1, 1, 0, 1, 1, 0, 0, 0]),
+            Vector::fromArray([1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0]),
         ];
     }
 
@@ -1254,7 +1254,7 @@ class VectorTest extends TestCase
     {
         $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);
 
-        $b = $a->pow(3);
+        $b = $a->pow(3.0);
 
         $expected = Vector::fromArray([-3375.0, 15625.0, 42875.0, -46656.0, -373248.0, 704969.0, 1191016.0, 91125.0]);
 
@@ -1473,7 +1473,7 @@ class VectorTest extends TestCase
     {
         $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);
 
-        $this->assertEquals(-72, $a->min());
+        $this->assertEquals(-72.0, $a->min());
     }
 
     /**
@@ -1483,7 +1483,7 @@ class VectorTest extends TestCase
     {
         $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);
 
-        $this->assertEquals(106, $a->max());
+        $this->assertEquals(106.0, $a->max());
     }
 
     /**
@@ -1623,9 +1623,9 @@ class VectorTest extends TestCase
     {
         $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);
 
-        $b = $a->clip(0.0, 100);
+        $b = $a->clip(0.0, 100.0);
 
-        $expected = Vector::fromArray([0.0, 25, 35, 0.0, 0.0, 89, 100.0, 45]);
+        $expected = Vector::fromArray([0.0, 25.0, 35.0, 0.0, 0.0, 89.0, 100.0, 45.0]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
     }
@@ -1639,7 +1639,7 @@ class VectorTest extends TestCase
 
         $b = $a->clipLower(60.0);
 
-        $expected = Vector::fromArray([60.0, 60.0, 60.0, 60.0, 60.0, 89, 106.0, 60.0]);
+        $expected = Vector::fromArray([60.0, 60.0, 60.0, 60.0, 60.0, 89.0, 106.0, 60.0]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
     }
@@ -1653,7 +1653,7 @@ class VectorTest extends TestCase
 
         $b = $a->clipUpper(50.0);
 
-        $expected = Vector::fromArray([-15.0, 25, 35, -36.0, -72.0, 50.0, 50.0, 45]);
+        $expected = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 50.0, 50.0, 45.0]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
     }
@@ -1667,7 +1667,7 @@ class VectorTest extends TestCase
 
         $b = $a->sign();
 
-        $expected = Vector::fromArray([-1, 1, 1, -1, -1, 1, 1, 1]);
+        $expected = Vector::fromArray([-1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
     }
@@ -1681,7 +1681,7 @@ class VectorTest extends TestCase
 
         $b = $a->negate();
 
-        $expected = Vector::fromArray([15, -25, -35, 36, 72, -89, -106, -45]);
+        $expected = Vector::fromArray([15.0, -25.0, -35.0, 36.0, 72.0, -89.0, -106.0, -45.0]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
     }

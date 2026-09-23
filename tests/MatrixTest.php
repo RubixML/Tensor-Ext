@@ -791,9 +791,9 @@ class MatrixTest extends TestCase
         $b = $a->map($sign);
 
         $expected = Matrix::fromArray([
-            [1, -1, 1],
-            [1, 1, -1],
-            [1, -1, -1],
+            [1.0, -1.0, 1.0],
+            [1.0, 1.0, -1.0],
+            [1.0, -1.0, -1.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -892,8 +892,8 @@ class MatrixTest extends TestCase
         $lu = $matrix->lu();
 
         $l = Matrix::fromArray([
-            [1.0, 0, 0],
-            [0.18181818181818182, 1.0, 0],
+            [1.0, 0.0, 0.0],
+            [0.18181818181818182, 1.0, 0.0],
             [0.9090909090909091, 0.6709677419354838, 1.0],
         ]);
 
@@ -987,9 +987,9 @@ class MatrixTest extends TestCase
         $cholesky = $matrix->cholesky();
 
         $l = Matrix::fromArray([
-            [1.4142135623730951, 0, 0],
-            [-0.7071067811865475, 1.224744871391589, 0],
-            [0, -0.8164965809277261, 1.1547005383792515],
+            [1.4142135623730951, 0.0, 0.0],
+            [-0.7071067811865475, 1.224744871391589, 0.0],
+            [0.0, -0.8164965809277261, 1.1547005383792515],
         ]);
 
         $expected = new Cholesky($l);
@@ -2094,7 +2094,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::fromArray([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
             Matrix::fromArray([
                 [0.0, 1.0, 0.0],
                 [0.0, 0.0, 1.0],
@@ -2144,9 +2144,9 @@ class MatrixTest extends TestCase
                 [20.0, -6.0, -9.0],
             ]),
             Matrix::fromArray([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
             Matrix::fromArray([
                 [0.0, 1.0, 0.0],
@@ -2161,7 +2161,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::fromArray([2, 10, -1]),
+            Vector::fromArray([2.0, 10.0, -1.0]),
             Matrix::fromArray([
                 [0.0, 1.0, 0.0],
                 [0.0, 0.0, 1.0],
@@ -2175,7 +2175,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::fromArray([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
             Matrix::fromArray([
                 [0.0, 1.0, 0.0],
                 [0.0, 0.0, 1.0],
@@ -2759,9 +2759,9 @@ class MatrixTest extends TestCase
         $b = $a->round(2);
 
         $expected = Matrix::fromArray([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
@@ -2781,9 +2781,9 @@ class MatrixTest extends TestCase
         $b = $a->floor();
 
         $expected = Matrix::fromArray([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -2803,9 +2803,9 @@ class MatrixTest extends TestCase
         $b = $a->ceil();
 
         $expected = Matrix::fromArray([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -2887,9 +2887,9 @@ class MatrixTest extends TestCase
         $b = $a->clip(0.0, INF);
 
         $expected = Matrix::fromArray([
-            [22, 0.0, 12],
-            [4, 11, 0.],
-            [20, 0.0, 0.],
+            [22.0, 0.0, 12.0],
+            [4.0, 11.0, 0.],
+            [20.0, 0.0, 0.],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -2909,9 +2909,9 @@ class MatrixTest extends TestCase
         $b = $a->clipLower(5.);
 
         $expected = Matrix::fromArray([
-            [22, 5.0, 12],
-            [5.0, 11, 5.],
-            [20, 5.0, 5.],
+            [22.0, 5.0, 12.0],
+            [5.0, 11.0, 5.],
+            [20.0, 5.0, 5.],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -2931,9 +2931,9 @@ class MatrixTest extends TestCase
         $b = $a->clipUpper(16.0);
 
         $expected = Matrix::fromArray([
-            [16.0, -17.0, 12],
-            [4, 11, -2.0],
-            [16, -6.0, -9.0],
+            [16.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [16.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -2953,9 +2953,9 @@ class MatrixTest extends TestCase
         $b = $a->sign();
 
         $expected = Matrix::fromArray([
-            [1, -1, 1],
-            [1, 1, -1],
-            [1, -1, -1],
+            [1.0, -1.0, 1.0],
+            [1.0, 1.0, -1.0],
+            [1.0, -1.0, -1.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -2975,9 +2975,9 @@ class MatrixTest extends TestCase
         $b = $a->negate();
 
         $expected = Matrix::fromArray([
-            [-22, 17, -12],
-            [-4, -11, 2],
-            [-20, 6, 9],
+            [-22.0, 17.0, -12.0],
+            [-4.0, -11.0, 2.0],
+            [-20.0, 6.0, 9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
@@ -2995,20 +2995,20 @@ class MatrixTest extends TestCase
         ]);
 
         $b = Matrix::fromArray([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
         $c = $a->augmentAbove($b);
 
         $expected = Matrix::fromArray([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -3026,20 +3026,20 @@ class MatrixTest extends TestCase
         ]);
 
         $b = Matrix::fromArray([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
         $c = $a->augmentBelow($b);
 
         $expected = Matrix::fromArray([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -3057,17 +3057,17 @@ class MatrixTest extends TestCase
         ]);
 
         $b = Matrix::fromArray([
-            [13],
-            [11],
-            [9],
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $c = $a->augmentLeft($b);
 
         $expected = Matrix::fromArray([
-            [13, 22, -17, 12],
-            [11, 4, 11, -2],
-            [9, 20, -6, -9],
+            [13.0, 22.0, -17.0, 12.0],
+            [11.0, 4.0, 11.0, -2.0],
+            [9.0, 20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -3085,17 +3085,17 @@ class MatrixTest extends TestCase
         ]);
 
         $b = Matrix::fromArray([
-            [13],
-            [11],
-            [9],
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $c = $a->augmentRight($b);
 
         $expected = Matrix::fromArray([
-            [22, -17, 12, 13],
-            [4, 11, -2, 11],
-            [20, -6, -9, 9],
+            [22.0, -17.0, 12.0, 13.0],
+            [4.0, 11.0, -2.0, 11.0],
+            [20.0, -6.0, -9.0, 9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $c->asArray());
@@ -3107,20 +3107,20 @@ class MatrixTest extends TestCase
     public function repeat() : void
     {
         $a = Matrix::fromArray([
-            [13],
-            [11],
-            [9],
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->repeat(1, 3);
 
         $expected = Matrix::fromArray([
-            [13, 13, 13, 13],
-            [11, 11, 11, 11],
-            [9, 9, 9, 9],
-            [13, 13, 13, 13],
-            [11, 11, 11, 11],
-            [9, 9, 9, 9],
+            [13.0, 13.0, 13.0, 13.0],
+            [11.0, 11.0, 11.0, 11.0],
+            [9.0, 9.0, 9.0, 9.0],
+            [13.0, 13.0, 13.0, 13.0],
+            [11.0, 11.0, 11.0, 11.0],
+            [9.0, 9.0, 9.0, 9.0],
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
