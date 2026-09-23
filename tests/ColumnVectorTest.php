@@ -79,6 +79,24 @@ class ColumnVectorTest extends TestCase
     /**
      * @test
      */
+    public function serialization() : void
+    {
+        $vector = new ColumnVector([-15, 25, 35]);
+
+        $serialized = serialize($vector);
+
+        $this->assertStringNotContainsString('TensorBuffer', $serialized);
+
+        $restored = unserialize($serialized);
+
+        $this->assertInstanceOf(ColumnVector::class, $restored);
+        $this->assertEquals([-15.0, 25.0, 35.0], $restored->asArray());
+        $this->assertSame(serialize($vector), serialize($restored));
+    }
+
+    /**
+     * @test
+     */
     public function m() : void
     {
         $vector = new ColumnVector([-15, 25, 35]);

@@ -416,6 +416,31 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function serialization() : void
+    {
+        $matrix = Matrix::fromArray([
+            [22, -17, 12],
+            [4, 11, -2],
+        ]);
+
+        $serialized = serialize($matrix);
+
+        $this->assertStringNotContainsString('TensorBuffer', $serialized);
+
+        $restored = unserialize($serialized);
+
+        $this->assertInstanceOf(Matrix::class, $restored);
+        $this->assertEquals([2, 3], $restored->shape());
+        $this->assertEquals([
+            [22, -17, 12],
+            [4, 11, -2],
+        ], $restored->asArray());
+        $this->assertSame(serialize($matrix), serialize($restored));
+    }
+
+    /**
+     * @test
+     */
     public function asVectors() : void
     {
         $matrix = Matrix::fromArray([

@@ -379,6 +379,24 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function serialization() : void
+    {
+        $vector = new Vector([-15.0, 25.0, 35.0, -36.0]);
+
+        $serialized = serialize($vector);
+
+        $this->assertStringNotContainsString('TensorBuffer', $serialized);
+
+        $restored = unserialize($serialized);
+
+        $this->assertInstanceOf(Vector::class, $restored);
+        $this->assertEquals([-15.0, 25.0, 35.0, -36.0], $restored->asArray());
+        $this->assertSame(serialize($vector), serialize($restored));
+    }
+
+    /**
+     * @test
+     */
     public function asRowMatrix() : void
     {
         $vector = new Vector([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);

@@ -121,6 +121,8 @@ PHP_METHOD(Tensor_Vector, offsetExists);
 PHP_METHOD(Tensor_Vector, offsetUnset);
 PHP_METHOD(Tensor_Vector, offsetGet);
 PHP_METHOD(Tensor_Vector, getIterator);
+PHP_METHOD(Tensor_Vector, __serialize);
+PHP_METHOD(Tensor_Vector, __unserialize);
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_zeros, 0, 1, Tensor\\Vector, 0)
 	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
@@ -567,6 +569,13 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_getiterator, 0, 0, Traversable, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_vector___serialize, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_vector___unserialize, 0, 0, 1)
+	ZEND_ARG_ARRAY_INFO(0, data, 0)
+ZEND_END_ARG_INFO()
+
 ZEPHIR_INIT_FUNCS(tensor_vector_method_entry) {
 	PHP_ME(Tensor_Vector, zeros, arginfo_tensor_vector_zeros, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Vector, ones, arginfo_tensor_vector_ones, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
@@ -686,5 +695,7 @@ PHP_ME(Tensor_Vector, transpose, arginfo_tensor_vector_transpose, ZEND_ACC_PUBLI
 	PHP_ME(Tensor_Vector, offsetUnset, arginfo_tensor_vector_offsetunset, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, offsetGet, arginfo_tensor_vector_offsetget, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, getIterator, arginfo_tensor_vector_getiterator, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, __serialize, arginfo_tensor_vector___serialize, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, __unserialize, arginfo_tensor_vector___unserialize, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };

@@ -2064,4 +2064,32 @@ class Vector implements Tensor
     {
         return new ArrayIterator(this->a->toArray());
     }
+
+    /**
+     * Return the elements of the vector as a plain PHP array so that only the
+     * values, and not the object structure, appear in the serialized form.
+     *
+     * @return list<float>
+     */
+    public function __serialize() -> array
+    {
+        return this->asArray();
+    }
+
+    /**
+     * Restore the vector from the plain array of elements produced by
+     * __serialize() by rebuilding its TensorBuffer.
+     *
+     * @param float[] data
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     */
+    public function __unserialize(const array data)
+    {
+        var rebuilt;
+
+        let rebuilt = new self(data);
+
+        let this->a = rebuilt->a;
+        let this->n = rebuilt->n;
+    }
 }

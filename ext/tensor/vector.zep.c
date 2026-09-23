@@ -6603,3 +6603,68 @@ PHP_METHOD(Tensor_Vector, getIterator)
 	RETURN_MM();
 }
 
+/**
+ * Return the elements of the vector as a plain PHP array so that only the
+ * values, and not the object structure, appear in the serialized form.
+ *
+ * @return list<float>
+ */
+PHP_METHOD(Tensor_Vector, __serialize)
+{
+	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
+	zend_long ZEPHIR_LAST_CALL_STATUS;
+	zval *this_ptr = getThis();
+	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
+	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
+
+	ZEPHIR_RETURN_CALL_METHOD(this_ptr, "asArray", NULL, 0);
+	zephir_check_call_status();
+	RETURN_MM();
+}
+
+/**
+ * Restore the vector from the plain array of elements produced by
+ * __serialize() by rebuilding its TensorBuffer.
+ *
+ * @param float[] data
+ * @throws \Tensor\Exceptions\InvalidArgumentException
+ */
+PHP_METHOD(Tensor_Vector, __unserialize)
+{
+	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
+	zend_long ZEPHIR_LAST_CALL_STATUS;
+	zval *data_param = NULL, rebuilt, _0, _1;
+	zval data;
+	zval *this_ptr = getThis();
+
+	ZVAL_UNDEF(&data);
+	ZVAL_UNDEF(&rebuilt);
+	ZVAL_UNDEF(&_0);
+	ZVAL_UNDEF(&_1);
+	static zend_string *_zephir_prop_0 = NULL;
+	static zend_string *_zephir_prop_1 = NULL;
+	if (UNEXPECTED(!_zephir_prop_0)) {
+		_zephir_prop_0 = zend_string_init("a", 1, 1);
+	}
+	if (UNEXPECTED(!_zephir_prop_1)) {
+		_zephir_prop_1 = zend_string_init("n", 1, 1);
+	}
+
+	ZEND_PARSE_PARAMETERS_START(1, 1)
+		ZEPHIR_Z_PARAM_ARRAY(data, data_param)
+	ZEND_PARSE_PARAMETERS_END();
+	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
+	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
+	zephir_fetch_params(1, 1, 0, &data_param);
+	zephir_get_arrval(&data, data_param);
+	ZEPHIR_INIT_VAR(&rebuilt);
+	object_init_ex(&rebuilt, tensor_vector_ce);
+	ZEPHIR_CALL_METHOD(NULL, &rebuilt, "__construct", NULL, 5, &data);
+	zephir_check_call_status();
+	zephir_read_property_cached(&_0, &rebuilt, _zephir_prop_0, 0, PH_NOISY_CC | PH_READONLY);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 1, &_0);
+	zephir_read_property_cached(&_1, &rebuilt, _zephir_prop_1, 0, PH_NOISY_CC | PH_READONLY);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 2, &_1);
+	ZEPHIR_MM_RESTORE();
+}
+

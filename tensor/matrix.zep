@@ -2852,7 +2852,7 @@ class Matrix implements Tensor
         var bHat, result;
 
         let bHat = b->asTensorBuffer();
-        
+
         let result = tensor_less_equal_col(this->a, bHat, this->n);
 
         return new self(result, this->m, this->n);
@@ -3088,5 +3088,35 @@ class Matrix implements Tensor
     public function getIterator() -> <\Traversable>
     {
         return new ArrayIterator(this->asVectors());
+    }
+
+    /**
+     * Return the elements of the matrix as a plain PHP array of rows so that
+     * only the values, and not the object structure, appear in the
+     * serialized form.
+     *
+     * @return array[]
+     */
+    public function __serialize() -> array
+    {
+        return this->asArray();
+    }
+
+    /**
+     * Restore the matrix from the plain array of rows produced by
+     * __serialize() by rebuilding its TensorBuffer and shape.
+     *
+     * @param float[][] data
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     */
+    public function __unserialize(const array data)
+    {
+        var rebuilt;
+
+        let rebuilt = Matrix::fromArray(data);
+
+        let this->a = rebuilt->a;
+        let this->m = rebuilt->m;
+        let this->n = rebuilt->n;
     }
 }
