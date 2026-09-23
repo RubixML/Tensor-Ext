@@ -39,7 +39,7 @@ class REFTest extends TestCase
         ]);
 
         $this->assertEquals(1, $ref->swaps());
-        $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -61,7 +61,7 @@ class REFTest extends TestCase
             [0.0, 0.0, -17.10322580645161],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -83,7 +83,7 @@ class REFTest extends TestCase
         ]);
 
         $this->assertEquals(1, $ref->swaps());
-        $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -108,7 +108,7 @@ class REFTest extends TestCase
             [0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -123,7 +123,7 @@ class REFTest extends TestCase
         $expectedA = Matrix::fromArray([[7.0]]);
 
         $this->assertEquals(0, $ref->swaps());
-        $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -145,7 +145,7 @@ class REFTest extends TestCase
         ]);
 
         $this->assertEquals(0, $ref->swaps());
-        $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -189,7 +189,7 @@ class REFTest extends TestCase
             [0.0, 0.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -211,7 +211,7 @@ class REFTest extends TestCase
 
         $ref = new REF($a, 0);
 
-        $this->assertEqualsWithDelta($a, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
         $this->assertEquals(0, $ref->swaps());
     }
 
@@ -227,7 +227,7 @@ class REFTest extends TestCase
 
         $ref = new REF($a, 2);
 
-        $this->assertEqualsWithDelta($a, $ref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
 
         $this->assertEquals(2, $ref->swaps());
     }

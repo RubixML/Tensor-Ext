@@ -120,7 +120,7 @@ class EigenTest extends TestCase
 
         $this->assertEquals([9.0], $eig->eigenvalues());
 
-        $this->assertEqualsWithDelta(Matrix::fromArray([[1.0]]), $eig->eigenvectors(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::fromArray([[1.0]])->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -170,7 +170,7 @@ class EigenTest extends TestCase
         $eig = new Eigen($eigenvalues, $eigenvectors);
 
         $this->assertEquals($eigenvalues, $eig->eigenvalues());
-        $this->assertEqualsWithDelta($eigenvectors, $eig->eigenvectors(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($eigenvectors->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
     /**

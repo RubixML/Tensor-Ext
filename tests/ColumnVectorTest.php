@@ -135,7 +135,7 @@ class ColumnVectorTest extends TestCase
             [38.5, 175, -175],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -159,7 +159,7 @@ class ColumnVectorTest extends TestCase
             [31.818181818181817, 7, -7],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -183,7 +183,7 @@ class ColumnVectorTest extends TestCase
             [36.1, 40, 30],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -207,7 +207,7 @@ class ColumnVectorTest extends TestCase
             [33.9, 30, 40],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -231,7 +231,7 @@ class ColumnVectorTest extends TestCase
             [0, 0, 0],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -255,7 +255,7 @@ class ColumnVectorTest extends TestCase
             [1, 1, 1],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -279,7 +279,7 @@ class ColumnVectorTest extends TestCase
             [1, 1, 1],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -303,7 +303,7 @@ class ColumnVectorTest extends TestCase
             [1, 1, 1],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -327,7 +327,7 @@ class ColumnVectorTest extends TestCase
             [0, 0, 0],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -351,7 +351,7 @@ class ColumnVectorTest extends TestCase
             [0, 0, 0],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -364,7 +364,7 @@ class ColumnVectorTest extends TestCase
         $b = $a->transpose();
 
         $this->assertInstanceOf(Vector::class, $b);
-        $this->assertEquals(Vector::fromArray([1.0, 2.0, 3.0]), $b);
+        $this->assertEquals(Vector::fromArray([1.0, 2.0, 3.0])->asArray(), $b->asArray());
     }
 
     /**
@@ -398,7 +398,7 @@ class ColumnVectorTest extends TestCase
             [3.0, 6.0, 9.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -436,7 +436,7 @@ class ColumnVectorTest extends TestCase
             [16.0, 1.0, 4.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -473,7 +473,7 @@ class ColumnVectorTest extends TestCase
             [0.0, 3.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**

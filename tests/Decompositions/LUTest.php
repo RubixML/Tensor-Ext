@@ -53,13 +53,15 @@ class LUTest extends TestCase
 
         $expected = new LU($l, $u, $p);
 
-        $this->assertEqualsWithDelta($expected, $lu, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->asArray(), $lu->l()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $lu->u()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($p->asArray(), $lu->p()->asArray(), self::MAX_DELTA);
 
         // And, cross-check the factors are consistent: P * A == L * U.
         $pa = $lu->p()->matmul($a);
         $luProd = $lu->l()->matmul($lu->u());
 
-        $this->assertEqualsWithDelta($pa, $luProd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($pa->asArray(), $luProd->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -80,7 +82,7 @@ class LUTest extends TestCase
         $pa = $lu->p()->matmul($a);
         $luProd = $lu->l()->matmul($lu->u());
 
-        $this->assertEqualsWithDelta($pa, $luProd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($pa->asArray(), $luProd->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -98,7 +100,9 @@ class LUTest extends TestCase
 
         $expected = new LU($l, $u, $p);
 
-        $this->assertEqualsWithDelta($expected, $lu, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->asArray(), $lu->l()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $lu->u()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($p->asArray(), $lu->p()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -130,7 +134,9 @@ class LUTest extends TestCase
 
         $expected = new LU($l, $u, $p);
 
-        $this->assertEqualsWithDelta($expected, $lu, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->asArray(), $lu->l()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $lu->u()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($p->asArray(), $lu->p()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -181,8 +187,8 @@ class LUTest extends TestCase
 
         $lu = new LU($l, $u, $p);
 
-        $this->assertEquals($l, $lu->l());
-        $this->assertEquals($u, $lu->u());
-        $this->assertEquals($p, $lu->p());
+        $this->assertEquals($l->asArray(), $lu->l()->asArray());
+        $this->assertEquals($u->asArray(), $lu->u()->asArray());
+        $this->assertEquals($p->asArray(), $lu->p()->asArray());
     }
 }

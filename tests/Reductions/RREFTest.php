@@ -38,7 +38,7 @@ class RREFTest extends TestCase
             [0.0, 0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -58,7 +58,7 @@ class RREFTest extends TestCase
             [0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -78,7 +78,7 @@ class RREFTest extends TestCase
             [0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -90,7 +90,7 @@ class RREFTest extends TestCase
 
         $rref = RREF::reduce($a);
 
-        $this->assertEqualsWithDelta(Matrix::fromArray([[1.0]]), $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::fromArray([[1.0]])->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -111,7 +111,7 @@ class RREFTest extends TestCase
             [0.0, 0.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
 
         $aOut = $rref->a()->asArray();
 
@@ -136,7 +136,7 @@ class RREFTest extends TestCase
             [0.0, 0.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -230,6 +230,6 @@ class RREFTest extends TestCase
 
         $rref = new RREF($a);
 
-        $this->assertEqualsWithDelta($a, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 }

@@ -104,7 +104,7 @@ class MatrixTest extends TestCase
             [0.0, 0.0, 0.0, 1.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -119,7 +119,7 @@ class MatrixTest extends TestCase
             [0.0, 0.0, 0.0, 0.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -136,7 +136,7 @@ class MatrixTest extends TestCase
             [1.0, 1.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -153,7 +153,7 @@ class MatrixTest extends TestCase
             [0.0, 0.0, 0.0, 5.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -170,7 +170,7 @@ class MatrixTest extends TestCase
             [5.0, 5.0, 5.0, 5.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -212,7 +212,7 @@ class MatrixTest extends TestCase
 
         $expected = Matrix::fill(0.0, 3, 3);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -354,7 +354,7 @@ class MatrixTest extends TestCase
 
         $expected = Vector::fromArray([4.0, 11.0, -2.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -372,7 +372,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([-17.0, 11.0, -6.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -390,7 +390,7 @@ class MatrixTest extends TestCase
 
         $expected = Vector::fromArray([22.0, 11.0, -9.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -457,7 +457,10 @@ class MatrixTest extends TestCase
             Vector::fromArray([20.0, -6.0, -9.0]),
         ];
 
-        $this->assertEquals($expected, $vectors);
+        $this->assertEquals(
+            array_map(static fn (Vector $vector) => $vector->asArray(), $expected),
+            array_map(static fn (Vector $vector) => $vector->asArray(), $vectors)
+        );
     }
 
     /**
@@ -479,7 +482,10 @@ class MatrixTest extends TestCase
             ColumnVector::fromArray([12.0, -2.0, -9.0]),
         ];
 
-        $this->assertEquals($expected, $vectors);
+        $this->assertEquals(
+            array_map(static fn (ColumnVector $vector) => $vector->asArray(), $expected),
+            array_map(static fn (ColumnVector $vector) => $vector->asArray(), $vectors)
+        );
     }
 
     /**
@@ -497,7 +503,7 @@ class MatrixTest extends TestCase
 
         $expected = Vector::fromArray([22.0, -17.0, 12.0, 4.0, 11.0, -2.0, 20.0, -6.0, -9.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -519,7 +525,7 @@ class MatrixTest extends TestCase
             [12.0, -2.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -541,7 +547,7 @@ class MatrixTest extends TestCase
             [0.04602036967182196, 0.03923047906450396, -0.05846850245190495],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -597,7 +603,7 @@ class MatrixTest extends TestCase
             [0.01266554551187723, -0.0031357298016957483],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -764,7 +770,7 @@ class MatrixTest extends TestCase
             [0.05, -0.16666666666666666, -0.1111111111111111],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -790,7 +796,7 @@ class MatrixTest extends TestCase
             [1, -1, -1],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -844,7 +850,8 @@ class MatrixTest extends TestCase
 
         $expected = new REF($a, 0);
 
-        $this->assertEqualsWithDelta($expected, $ref, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
+        $this->assertEquals(0, $ref->swaps());
     }
 
     /**
@@ -868,7 +875,7 @@ class MatrixTest extends TestCase
 
         $expected = new RREF($a);
 
-        $this->assertEqualsWithDelta($expected, $rref, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -904,7 +911,9 @@ class MatrixTest extends TestCase
 
         $expected = new LU($l, $u, $p);
 
-        $this->assertEqualsWithDelta($expected, $lu, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->asArray(), $lu->l()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $lu->u()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($p->asArray(), $lu->p()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -924,7 +933,7 @@ class MatrixTest extends TestCase
         $pa = $lu->p()->matmul($matrix);
         $luProd = $lu->l()->matmul($lu->u());
 
-        $this->assertEqualsWithDelta($pa, $luProd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($pa->asArray(), $luProd->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -944,7 +953,7 @@ class MatrixTest extends TestCase
         $pa = $lu->p()->matmul($matrix);
         $luProd = $lu->l()->matmul($lu->u());
 
-        $this->assertEqualsWithDelta($pa, $luProd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($pa->asArray(), $luProd->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -985,7 +994,7 @@ class MatrixTest extends TestCase
 
         $expected = new Cholesky($l);
 
-        $this->assertEqualsWithDelta($expected, $cholesky, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->asArray(), $cholesky->l()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1000,7 +1009,8 @@ class MatrixTest extends TestCase
     {
         $eig = $matrix->eig(false);
 
-        $this->assertEqualsWithDelta($expected, $eig, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvalues(), $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvectors()->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1051,7 +1061,8 @@ class MatrixTest extends TestCase
 
         $expected = new Eigen($values, $vectors);
 
-        $this->assertEqualsWithDelta($expected, $eig, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvalues(), $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvectors()->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1086,7 +1097,9 @@ class MatrixTest extends TestCase
 
         $expected = new SVD($u, $singularValues, $vT);
 
-        $this->assertEqualsWithDelta($expected, $svd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $svd->u()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($singularValues, $svd->singularValues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($vT->asArray(), $svd->vT()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1112,7 +1125,7 @@ class MatrixTest extends TestCase
             [207.0], [155.0], [113.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1132,7 +1145,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([-138.0, 120.0, -11.0]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1166,7 +1179,7 @@ class MatrixTest extends TestCase
             [0.0, 3.0, 19.0, 26.0, 27.0, 33.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1197,7 +1210,7 @@ class MatrixTest extends TestCase
             [33.0, 35.0, 37.0, 39.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1224,7 +1237,7 @@ class MatrixTest extends TestCase
             [25.0, 28.0, 31.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1239,7 +1252,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->multiply($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1320,7 +1333,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->divide($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1401,7 +1414,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->add($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1482,7 +1495,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->subtract($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1563,7 +1576,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->pow($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1630,7 +1643,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->mod($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1711,7 +1724,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->equal($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1792,7 +1805,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->notEqual($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1873,7 +1886,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->greater($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1954,7 +1967,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->greaterEqual($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -2035,7 +2048,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->less($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -2116,7 +2129,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->lessEqual($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -2204,7 +2217,7 @@ class MatrixTest extends TestCase
             [20.0, 6.0, 9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2226,7 +2239,7 @@ class MatrixTest extends TestCase
             [400.0, 36.0, 81.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2248,7 +2261,7 @@ class MatrixTest extends TestCase
             [3.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2270,7 +2283,7 @@ class MatrixTest extends TestCase
             [8103.08392757538],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2292,7 +2305,7 @@ class MatrixTest extends TestCase
             [8102.083927575384],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2314,7 +2327,7 @@ class MatrixTest extends TestCase
             [2.1972245773362196],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2336,7 +2349,7 @@ class MatrixTest extends TestCase
             [2.302585092994046],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2358,7 +2371,7 @@ class MatrixTest extends TestCase
             [0.4121184852417566],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2380,7 +2393,7 @@ class MatrixTest extends TestCase
             [0.010000166674167114],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2402,7 +2415,7 @@ class MatrixTest extends TestCase
             [-0.9111302618846769],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2424,7 +2437,7 @@ class MatrixTest extends TestCase
             [1.5607961601207294],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2446,7 +2459,7 @@ class MatrixTest extends TestCase
             [-0.45231565944180985],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2468,7 +2481,7 @@ class MatrixTest extends TestCase
             [1.460139105621001],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2490,7 +2503,7 @@ class MatrixTest extends TestCase
             [515.6620156177408],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2512,7 +2525,7 @@ class MatrixTest extends TestCase
             [0.15707963267948966],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2530,7 +2543,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([17.0, 13.0, 5.0]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2548,7 +2561,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([-4488.0, -88.0, 1080.0]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2566,7 +2579,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([-17.0, -2.0, -9.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2584,7 +2597,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([22.0, 11.0, 20.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2602,7 +2615,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([5.666666666666667, 4.333333333333333, 1.6666666666666667]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2620,7 +2633,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([12.0, 4.0, -6.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2638,13 +2651,13 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([6.200000000000001, 2.8000000000000003, -6.6]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
 
         $max = $a->quantile(1.0);
 
         $maxExpected = ColumnVector::fromArray([22.0, 11.0, 20.0]);
 
-        $this->assertEqualsWithDelta($maxExpected, $max, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($maxExpected->asArray(), $max->asArray(), self::MAX_DELTA);
 
         $single = Matrix::fromArray([
             [5.0],
@@ -2655,8 +2668,8 @@ class MatrixTest extends TestCase
         $singleExpected = ColumnVector::fromArray([5.0, 3.0, 8.0]);
 
         $this->assertEqualsWithDelta(
-            $singleExpected,
-            $single->quantile(0.5),
+            $singleExpected->asArray(),
+            $single->quantile(0.5)->asArray(),
             self::MAX_DELTA
         );
     }
@@ -2676,7 +2689,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([273.55555555555554, 28.222222222222225, 169.55555555555554]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2693,7 +2706,7 @@ class MatrixTest extends TestCase
 
         $expected = ColumnVector::fromArray([0.6666666666666666, 66.66666666666667]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2715,7 +2728,7 @@ class MatrixTest extends TestCase
             [135.2222222222222, 3.4444444444444406, 169.55555555555554],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
 
         $c = Matrix::fromArray([
             [1.0, 2.0, 3.0],
@@ -2729,7 +2742,7 @@ class MatrixTest extends TestCase
             [2.0 / 3.0, 2.0 / 3.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedC, $d, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedC->asArray(), $d->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2751,7 +2764,7 @@ class MatrixTest extends TestCase
             [20, -6, -9],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2773,7 +2786,7 @@ class MatrixTest extends TestCase
             [20, -6, -9],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2795,7 +2808,7 @@ class MatrixTest extends TestCase
             [20, -6, -9],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2879,7 +2892,7 @@ class MatrixTest extends TestCase
             [20, 0.0, 0.],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2901,7 +2914,7 @@ class MatrixTest extends TestCase
             [20, 5.0, 5.],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2923,7 +2936,7 @@ class MatrixTest extends TestCase
             [16, -6.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2945,7 +2958,7 @@ class MatrixTest extends TestCase
             [1, -1, -1],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2967,7 +2980,7 @@ class MatrixTest extends TestCase
             [-20, 6, 9],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2998,7 +3011,7 @@ class MatrixTest extends TestCase
             [20, -6, -9],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -3029,7 +3042,7 @@ class MatrixTest extends TestCase
             [-10, -1, 14],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -3057,7 +3070,7 @@ class MatrixTest extends TestCase
             [9, 20, -6, -9],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -3085,7 +3098,7 @@ class MatrixTest extends TestCase
             [20, -6, -9, 9],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -3110,7 +3123,7 @@ class MatrixTest extends TestCase
             [9, 9, 9, 9],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -3378,6 +3391,6 @@ class MatrixTest extends TestCase
             [0.0, 1.0 / 1e-9],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $a->pseudoinverse(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $a->pseudoinverse()->asArray(), self::MAX_DELTA);
     }
 }

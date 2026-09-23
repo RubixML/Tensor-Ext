@@ -39,10 +39,10 @@ class CholeskyTest extends TestCase
 
         $expected = new Cholesky($l);
 
-        $this->assertEqualsWithDelta($expected, $ch, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->l()->asArray(), $ch->l()->asArray(), self::MAX_DELTA);
 
         // Cross-check: L * L^T reconstructs A.
-        $this->assertEqualsWithDelta($a, $ch->l()->matmul($ch->lT()), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $ch->l()->matmul($ch->lT())->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -66,7 +66,7 @@ class CholeskyTest extends TestCase
 
         $expected = new Cholesky($l);
 
-        $this->assertEqualsWithDelta($expected, $ch, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->l()->asArray(), $ch->l()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -82,7 +82,7 @@ class CholeskyTest extends TestCase
 
         $expected = new Cholesky($l);
 
-        $this->assertEqualsWithDelta($expected, $ch, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->l()->asArray(), $ch->l()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -106,7 +106,7 @@ class CholeskyTest extends TestCase
 
         $expected = new Cholesky($l);
 
-        $this->assertEqualsWithDelta($expected, $ch, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->l()->asArray(), $ch->l()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -173,7 +173,7 @@ class CholeskyTest extends TestCase
 
         $ch = new Cholesky($l);
 
-        $this->assertEqualsWithDelta($l->transpose(), $ch->lT(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->transpose()->asArray(), $ch->lT()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -188,13 +188,13 @@ class CholeskyTest extends TestCase
 
         $ch = new Cholesky($l);
 
-        $this->assertEquals($l, $ch->l());
+        $this->assertEquals($l->asArray(), $ch->l()->asArray());
 
         $expectedT = Matrix::fromArray([
             [1.0, 0.5],
             [0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedT, $ch->lT(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedT->asArray(), $ch->lT()->asArray(), self::MAX_DELTA);
     }
 }

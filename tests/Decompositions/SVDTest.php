@@ -38,11 +38,11 @@ class SVDTest extends TestCase
         $this->assertEqualsWithDelta(8.929610580306822, $svd->singularValues()[2], self::MAX_DELTA);
 
         // The decomposition must reconstruct the original matrix.
-        $this->assertEqualsWithDelta($a, $this->reconstruct($svd, 3, 3), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 3, 3)->asArray(), self::MAX_DELTA);
 
         // Both U and V must be orthogonal matrices.
-        $this->assertEqualsWithDelta(Matrix::identity(3), $svd->u()->transpose()->matmul($svd->u()), self::MAX_DELTA);
-        $this->assertEqualsWithDelta(Matrix::identity(3), $svd->vT()->matmul($svd->vT()->transpose()), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(3)->asArray(), $svd->u()->transpose()->matmul($svd->u())->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(3)->asArray(), $svd->vT()->matmul($svd->vT()->transpose())->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -59,10 +59,10 @@ class SVDTest extends TestCase
 
         $this->assertCount(2, $svd->singularValues());
 
-        $this->assertEqualsWithDelta($a, $this->reconstruct($svd, 2, 2), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 2, 2)->asArray(), self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta(Matrix::identity(2), $svd->u()->transpose()->matmul($svd->u()), self::MAX_DELTA);
-        $this->assertEqualsWithDelta(Matrix::identity(2), $svd->vT()->matmul($svd->vT()->transpose()), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(2)->asArray(), $svd->u()->transpose()->matmul($svd->u())->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(2)->asArray(), $svd->vT()->matmul($svd->vT()->transpose())->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -84,10 +84,10 @@ class SVDTest extends TestCase
         $this->assertSame([4, 4], $svd->u()->shape());
         $this->assertSame([2, 2], $svd->vT()->shape());
 
-        $this->assertEqualsWithDelta($a, $this->reconstruct($svd, 4, 2), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 4, 2)->asArray(), self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta(Matrix::identity(4), $svd->u()->transpose()->matmul($svd->u()), self::MAX_DELTA);
-        $this->assertEqualsWithDelta(Matrix::identity(2), $svd->vT()->matmul($svd->vT()->transpose()), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(4)->asArray(), $svd->u()->transpose()->matmul($svd->u())->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(2)->asArray(), $svd->vT()->matmul($svd->vT()->transpose())->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -107,10 +107,10 @@ class SVDTest extends TestCase
         $this->assertSame([2, 2], $svd->u()->shape());
         $this->assertSame([3, 3], $svd->vT()->shape());
 
-        $this->assertEqualsWithDelta($a, $this->reconstruct($svd, 2, 3), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 2, 3)->asArray(), self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta(Matrix::identity(2), $svd->u()->transpose()->matmul($svd->u()), self::MAX_DELTA);
-        $this->assertEqualsWithDelta(Matrix::identity(3), $svd->vT()->matmul($svd->vT()->transpose()), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(2)->asArray(), $svd->u()->transpose()->matmul($svd->u())->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(3)->asArray(), $svd->vT()->matmul($svd->vT()->transpose())->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -124,7 +124,7 @@ class SVDTest extends TestCase
 
         $this->assertEqualsWithDelta([9.0], $svd->singularValues(), self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta($a, $this->reconstruct($svd, 1, 1), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 1, 1)->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -144,10 +144,10 @@ class SVDTest extends TestCase
         $this->assertEqualsWithDelta(sqrt(10.0), $svd->singularValues()[0], self::MAX_DELTA);
         $this->assertEqualsWithDelta(0.0, $svd->singularValues()[1], self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta($a, $this->reconstruct($svd, 2, 2), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 2, 2)->asArray(), self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta(Matrix::identity(2), $svd->u()->transpose()->matmul($svd->u()), self::MAX_DELTA);
-        $this->assertEqualsWithDelta(Matrix::identity(2), $svd->vT()->matmul($svd->vT()->transpose()), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(2)->asArray(), $svd->u()->transpose()->matmul($svd->u())->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::identity(2)->asArray(), $svd->vT()->matmul($svd->vT()->transpose())->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -169,7 +169,7 @@ class SVDTest extends TestCase
         $this->assertEqualsWithDelta(1e-9, $svd->singularValues()[1], self::MAX_DELTA);
         $this->assertEqualsWithDelta(0.0, $svd->singularValues()[2], self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta($a, $this->reconstruct($svd, 3, 3), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 3, 3)->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -191,12 +191,12 @@ class SVDTest extends TestCase
 
         $svd = new SVD($u, $singularValues, $vT);
 
-        $this->assertEqualsWithDelta($u, $svd->u(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $svd->u()->asArray(), self::MAX_DELTA);
         $this->assertEquals($singularValues, $svd->singularValues());
-        $this->assertEqualsWithDelta($vT, $svd->vT(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($vT->asArray(), $svd->vT()->asArray(), self::MAX_DELTA);
 
         // v is the transpose of vT.
-        $this->assertEqualsWithDelta($vT->transpose(), $svd->v(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($vT->transpose()->asArray(), $svd->v()->asArray(), self::MAX_DELTA);
 
         // The singular value matrix is an m by n matrix with the singular values on the diagonal.
         $this->assertSame([2, 2], $svd->s()->shape());
@@ -206,7 +206,7 @@ class SVDTest extends TestCase
             [0.0, 3.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedS, $svd->s(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedS->asArray(), $svd->s()->asArray(), self::MAX_DELTA);
     }
 
     /**
