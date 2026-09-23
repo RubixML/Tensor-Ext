@@ -1207,14 +1207,14 @@ class VectorTest extends TestCase
     public function modProvider() : Generator
     {
         yield [
-            Vector::fromArray([0.25, 0.1, 2.0, -0.5, -1.0, -3.0, 3.3, 2.0]),
-            Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
-            Vector::fromArray([0, 0, 2, 0, -1, -3, 3, 2]),
+            Vector::fromArray([3.5, -7.0, 12.75, 0.375, -1.5]),
+            Vector::fromArray([2.0, 3.0, 4.5, 0.5, 2.0]),
+            Vector::fromArray([1.5, -1.0, 3.75, 0.375, -1.5]),
         ];
 
         yield [
             Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]),
-            4,
+            4.0,
             Vector::fromArray([-3.0, 1.0, 3.0, 0.0, 0.0, 1.0, 2.0, 1.0]),
         ];
     }

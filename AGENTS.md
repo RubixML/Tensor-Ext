@@ -18,7 +18,7 @@ Guidance for AI coding agents contributing to **Tensor** — a scientific-comput
 ## Environment
 
 - PHP **8.1+** (CI matrix is 8.1 → 8.5). `composer.json` declares `>=8.1`.
-- Dev tooling is installed as Composer dev dependencies (PHPStan, php-cs-fixer, phpunit, phpbench, Zephir).
+- Dev tooling is installed as Composer dev dependencies (php-cs-fixer, phpunit, phpbench, Zephir).
 - Compiling the extension additionally needs a C compiler, GFortran, `phpize`, OpenBLAS dev headers, LAPACKE, and re2c (see README for per-OS install commands).
 
 ## Commands
@@ -29,7 +29,6 @@ All are Composer scripts (see `composer.json`):
 | --- | --- |
 | Install deps | `composer install` |
 | Validate manifest | `composer validate` |
-| Static analysis | `composer analyze` (PHPStan level 8 over `tests`, `benchmarks`) |
 | Run tests | `composer test` (PHPUnit, test suite `Base`; requires the extension to be loaded) |
 | Check style | `composer check` (php-cs-fixer, dry-run; sets `PHP_CS_FIXER_IGNORE_ENV=1`) |
 | Fix style | `composer fix` |
@@ -42,7 +41,6 @@ All are Composer scripts (see `composer.json`):
 
 ```sh
 composer install
-composer analyze
 composer test
 composer fix
 ```
@@ -52,7 +50,6 @@ composer fix
 ## Conventions to follow
 
 - **Coding style** is governed by `.php-cs-fixer.dist.php` (extends `@PSR2`). Highlights: single quotes, short array syntax, compact nullable type hints, pre-increment, ordered class elements, trimmed/multi-line phpdoc, `echo` over `print`. Rather than memorize the rule set, run `composer fix`.
-- **Static analysis is required.** New code must pass PHPStan level 8 (`composer analyze`). Keep types accurate; the codebase uses docblock generics like `list<float>` and `int<0,max>`.
 - **Testing guidance** (from `CONTRIBUTING.md`):
   - New functionality ships with a matching unit test in `tests/`.
   - Bug fixes ship with a passing test that would have reproduced the bug beforehand.

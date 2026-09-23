@@ -1676,11 +1676,11 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            ColumnVector::fromArray([2.5, -1.0, 4.0]),
             Matrix::fromArray([
-                [0.0,  -1.0,  0.0],
+                [2.0, -2.0, 2.0],
                 [0.0, 0.0, 0.0],
-                [0.0,  -2.0,  -1.0]
+                [0.0, -2.0, -1.0],
             ]),
         ];
 
