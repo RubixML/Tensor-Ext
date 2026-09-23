@@ -228,6 +228,32 @@ class TensorBufferTest extends TestCase
     }
 
     /**
+     * Regression test: mapping a decorator with an array callable
+     * [instance, 'method'] over a multi-element buffer must not segfault.
+     *
+     * @test
+     */
+    public function mapWithInstanceArrayCallable() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, -2.0, -3.0, 4.0]));
+
+        $helper = new class() {
+            public float $slope = 0.5;
+
+            public function activate(float $value) : float
+            {
+                return $value > 0.0 ? $value : $value * $this->slope;
+            }
+        };
+
+        $mapped = $decorator->map([$helper, 'activate']);
+
+        $this->assertInstanceOf(TensorBuffer::class, $mapped);
+        $this->assertNotSame($decorator->asBuffer(), $mapped->asBuffer());
+        $this->assertEqualsWithDelta([1.0, -1.0, -1.5, 4.0], $mapped->toArray(), self::MAX_DELTA);
+    }
+
+    /**
      * @test
      */
     public function sum() : void

@@ -36,6 +36,7 @@ class TensorBuffer
 
         if unlikely rows < 1 {
             var zero = tensor_buffer_from_array([]);
+
             return new self(<Buffer> zero);
         }
 
@@ -130,15 +131,7 @@ class TensorBuffer
      */
     public function map(const var callback) -> <TensorBuffer>
     {
-        var value;
-
-        array b = [];
-
-        var a = this->buffer->toArray();
-
-        for value in a {
-            let b[] = {callback}(value);
-        }
+        var b = array_map(callback, this->buffer->toArray());
 
         var buffer = tensor_buffer_from_array(b);
 
@@ -229,6 +222,7 @@ class TensorBuffer
 
             if likely !invalid {
                 let a = length - 1;
+                
                 let acc = stride;
 
                 while a > 0 {
@@ -237,6 +231,7 @@ class TensorBuffer
 
                         if product > limit {
                             let invalid = true;
+
                             break;
                         }
                     }
@@ -246,6 +241,7 @@ class TensorBuffer
                     if a > 0 {
                         if acc > (limit >> 1) {
                             let invalid = true;
+
                             break;
                         }
 

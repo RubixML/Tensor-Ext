@@ -529,6 +529,71 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * Regression test: passing an array callable [instance, 'method'] to
+     * Matrix::map() must not segfault. The previous Zephir dynamic
+     * user-callback dispatch inside TensorBuffer::map() was triggered only
+     * for arrays holding a non-static instance and crashed on the second
+     * and later elements.
+     *
+     * @test
+     */
+    public function mapWithInstanceArrayCallable() : void
+    {
+        $helper = new class() {
+            public float $slope = 0.1;
+
+            public function activate(float $v) : float
+            {
+                return $v > 0.0 ? $v : $v * $this->slope;
+            }
+        };
+
+        $a = Matrix::fromArray([
+            [1.0, -2.0],
+            [-3.0, 4.0],
+        ]);
+
+        $b = $a->map([$helper, 'activate']);
+
+        $expected = Matrix::fromArray([
+            [1.0, -0.2],
+            [-0.3, 4.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A static array callable [Class::class, 'method'] must also work on
+     * Matrix::map() over a multi-element matrix.
+     *
+     * @test
+     */
+    public function mapWithStaticArrayCallable() : void
+    {
+        $a = Matrix::fromArray([
+            [7.0, -2.5],
+            [-3.0, 4.25],
+        ]);
+
+        $helper = new class() {
+            public static function square(float $v) : float
+            {
+                return $v * $v;
+            }
+        };
+
+        $b = $a->map([get_class($helper), 'square']);
+
+        $expected = Matrix::fromArray([
+            [49.0, 6.25],
+            [9.0, 18.0625],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
      * @test
      */
     public function inverse() : void
