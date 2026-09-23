@@ -533,6 +533,9 @@ class VectorTest extends TestCase
         $this->assertEqualsWithDelta(331.54999999999995, $c, self::MAX_DELTA);
     }
 
+    /**
+     * @test
+     */
     public function matmul() : void
     {
         $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
