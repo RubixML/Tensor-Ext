@@ -1,12 +1,7 @@
 # Change Log
 
 - 4.0.0
-    - Performance: the linear algebra operations (REF, RREF, Cholesky, LU, eigendecomposition, SVD), `rank()`, `symmetric()`, and the vector `outer()` product now read their input from, and return their output into, `TensorBuffer`s directly instead of round-tripping through PHP arrays, eliminating the intermediate array copies
-    - Breaking: removed the `Vector::build()`, `Vector::quick()`, `Vector::fromTensorBuffer()`, `Matrix::build()`, `Matrix::quick()`, `Matrix::fromTensorBuffer()`, and `ColumnVector::build()`, `ColumnVector::quick()`, and `ColumnVector::fromTensorBuffer()` factory methods. Build a `Vector` / `ColumnVector` with `Vector::fromArray(...)` / `ColumnVector::fromArray(...)` (or `new Vector(...)` / `new ColumnVector(...)` from a `TensorBuffer`), or a `Matrix` with `Matrix::fromArray(...)` (or `new Matrix(...)` from a `TensorBuffer`)
-    - Breaking: `Vector::__construct()` no longer accepts a `validate` argument or a PHP array; it now takes a `TensorBuffer` only. To build from an array use the new `Vector::fromArray(array $a, bool $validate = true)` static factory (inherited by `ColumnVector`)
-    - Added `Vector::fromArray(array $a, bool $validate = true)` (inherited by `ColumnVector`) mirroring `Matrix::fromArray(...)`
-    - Breaking: removed the `Matrix::fromTensorBuffers()` factory method in favor of the new `TensorBuffer::fromBuffers()` factory, which concatenates an array of `TensorBuffer`s into a single contiguous buffer
-
+    
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension
     - Implemented the Moore-Penrose pseudoinverse in the extension via SVD

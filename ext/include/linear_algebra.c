@@ -1198,6 +1198,12 @@ void tensor_is_symmetric(zval * return_value, zval * a, zval * n)
         return;
     }
 
+    if (na < 2) {
+        RETVAL_TRUE;
+
+        return;
+    }
+
     for (i = 0; i < na - 1; ++i) {
         for (j = i + 1; j < na; ++j) {
             if (va[i * na + j] != va[j * na + i]) {

@@ -685,6 +685,18 @@ class MatrixTest extends TestCase
             ]),
             true,
         ];
+
+        yield [
+            Matrix::fromArray([]),
+            true,
+        ];
+
+        yield [
+            Matrix::fromArray([
+                [5.0],
+            ]),
+            true,
+        ];
     }
 
     /**
