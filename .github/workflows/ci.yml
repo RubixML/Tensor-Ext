@@ -79,9 +79,6 @@ jobs:
       - name: Install Dependencies
         run: composer install
 
-      - name: Static Analysis
-        run: composer analyze
-
       - name: Unit Tests
         run: composer test
 

@@ -17,7 +17,7 @@ Guidance for AI coding agents contributing to **Tensor** — a scientific-comput
 
 ## Environment
 
-- PHP **8.1+** (CI matrix is 8.1 → 8.5). `composer.json` declares `>=1.0`.
+- PHP **8.1+** (CI matrix is 8.1 → 8.5). `composer.json` declares `>=8.1`.
 - Dev tooling is installed as Composer dev dependencies (PHPStan, php-cs-fixer, phpunit, phpbench, Zephir).
 - Compiling the extension additionally needs a C compiler, GFortran, `phpize`, OpenBLAS dev headers, LAPACKE, and re2c (see README for per-OS install commands).
 

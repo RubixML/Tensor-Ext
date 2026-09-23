@@ -3,12 +3,9 @@ extern zend_class_entry *tensor_tensorbuffer_ce;
 
 ZEPHIR_INIT_CLASS(Tensor_TensorBuffer);
 
-PHP_METHOD(Tensor_TensorBuffer, __construct);
 PHP_METHOD(Tensor_TensorBuffer, fromBuffers);
-PHP_METHOD(Tensor_TensorBuffer, asBuffer);
-PHP_METHOD(Tensor_TensorBuffer, count);
+PHP_METHOD(Tensor_TensorBuffer, __construct);
 PHP_METHOD(Tensor_TensorBuffer, type);
-PHP_METHOD(Tensor_TensorBuffer, toArray);
 PHP_METHOD(Tensor_TensorBuffer, get);
 PHP_METHOD(Tensor_TensorBuffer, set);
 PHP_METHOD(Tensor_TensorBuffer, sort);
@@ -24,25 +21,19 @@ PHP_METHOD(Tensor_TensorBuffer, sliceStrided);
 PHP_METHOD(Tensor_TensorBuffer, concat);
 PHP_METHOD(Tensor_TensorBuffer, split);
 PHP_METHOD(Tensor_TensorBuffer, repeat);
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_tensorbuffer___construct, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, buffer, Tensor\\Buffer, 0)
-ZEND_END_ARG_INFO()
+PHP_METHOD(Tensor_TensorBuffer, asBuffer);
+PHP_METHOD(Tensor_TensorBuffer, count);
+PHP_METHOD(Tensor_TensorBuffer, toArray);
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_tensorbuffer_frombuffers, 0, 1, Tensor\\TensorBuffer, 0)
 	ZEND_ARG_ARRAY_INFO(0, buffers, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_tensorbuffer_asbuffer, 0, 0, Tensor\\Buffer, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_tensorbuffer_count, 0, 0, IS_LONG, 0)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_tensorbuffer___construct, 0, 0, 1)
+	ZEND_ARG_OBJ_INFO(0, buffer, Tensor\\Buffer, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_tensorbuffer_type, 0, 0, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_tensorbuffer_toarray, 0, 0, IS_ARRAY, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_tensorbuffer_get, 0, 0, 1)
@@ -105,13 +96,19 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_tensorbuffer_repeat, 0, 1,
 	ZEND_ARG_TYPE_INFO(0, times, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_tensorbuffer_asbuffer, 0, 0, Tensor\\Buffer, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_tensorbuffer_count, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_tensorbuffer_toarray, 0, 0, IS_ARRAY, 0)
+ZEND_END_ARG_INFO()
+
 ZEPHIR_INIT_FUNCS(tensor_tensorbuffer_method_entry) {
-	PHP_ME(Tensor_TensorBuffer, __construct, arginfo_tensor_tensorbuffer___construct, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
 	PHP_ME(Tensor_TensorBuffer, fromBuffers, arginfo_tensor_tensorbuffer_frombuffers, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Tensor_TensorBuffer, asBuffer, arginfo_tensor_tensorbuffer_asbuffer, ZEND_ACC_PUBLIC)
-	PHP_ME(Tensor_TensorBuffer, count, arginfo_tensor_tensorbuffer_count, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_TensorBuffer, __construct, arginfo_tensor_tensorbuffer___construct, ZEND_ACC_PUBLIC|ZEND_ACC_CTOR)
 	PHP_ME(Tensor_TensorBuffer, type, arginfo_tensor_tensorbuffer_type, ZEND_ACC_PUBLIC)
-	PHP_ME(Tensor_TensorBuffer, toArray, arginfo_tensor_tensorbuffer_toarray, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_TensorBuffer, get, arginfo_tensor_tensorbuffer_get, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_TensorBuffer, set, arginfo_tensor_tensorbuffer_set, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_TensorBuffer, sort, arginfo_tensor_tensorbuffer_sort, ZEND_ACC_PUBLIC)
@@ -127,5 +124,8 @@ ZEPHIR_INIT_FUNCS(tensor_tensorbuffer_method_entry) {
 	PHP_ME(Tensor_TensorBuffer, concat, arginfo_tensor_tensorbuffer_concat, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_TensorBuffer, split, arginfo_tensor_tensorbuffer_split, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_TensorBuffer, repeat, arginfo_tensor_tensorbuffer_repeat, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_TensorBuffer, asBuffer, arginfo_tensor_tensorbuffer_asbuffer, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_TensorBuffer, count, arginfo_tensor_tensorbuffer_count, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_TensorBuffer, toArray, arginfo_tensor_tensorbuffer_toarray, ZEND_ACC_PUBLIC)
 	PHP_FE_END
 };

@@ -14,12 +14,21 @@ Interface methods are implemented by Vectors with scalar-level semantics — red
 
 ## Constructors & Factories
 
-### `__construct(array $a)`
+### `__construct(\Tensor\TensorBuffer $a)`
 
-Instantiate a vector directly from an array of elements.
+Instantiate a vector from a `TensorBuffer` holding its elements.
 
-- **Parameters:** `$a` — the 1-dimensional element array `(int|float)[]`
-- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$a` is not an array or a `TensorBuffer`
+- **Parameters:** `$a` — the `TensorBuffer` of elements
+
+### `Vector::fromArray(array $a, bool $validate = true) : Vector`
+
+Build a vector from a flat PHP array of numeric elements, casting each value to a float.
+
+- **Parameters:**
+  - `$a` — `list<int|float>`, a flat array of numeric elements
+  - `$validate` — whether to reject nested arrays (default `true`)
+- **Returns:** `Vector` (or `ColumnVector` when called on `Tensor\ColumnVector`)
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$a` is not a flat array of numeric elements (i.e. contains a nested array, when `$validate` is `true`)
 
 ### `Vector::zeros(int $n) : Vector`
 

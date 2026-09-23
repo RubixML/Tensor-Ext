@@ -352,7 +352,7 @@ class MatrixTest extends TestCase
 
         $b = $a->rowAsVector(1);
 
-        $expected = new Vector([4, 11, -2]);
+        $expected = Vector::fromArray([4, 11, -2]);
 
         $this->assertEquals($expected, $b);
     }
@@ -370,7 +370,7 @@ class MatrixTest extends TestCase
 
         $b = $a->columnAsVector(1);
 
-        $expected = new ColumnVector([-17, 11, -6]);
+        $expected = ColumnVector::fromArray([-17, 11, -6]);
 
         $this->assertEquals($expected, $b);
     }
@@ -388,7 +388,7 @@ class MatrixTest extends TestCase
 
         $b = $a->diagonalAsVector();
 
-        $expected = new Vector([22, 11, -9]);
+        $expected = Vector::fromArray([22, 11, -9]);
 
         $this->assertEquals($expected, $b);
     }
@@ -452,9 +452,9 @@ class MatrixTest extends TestCase
         $vectors = $matrix->asVectors();
 
         $expected = [
-            new Vector([22, -17, 12]),
-            new Vector([4, 11, -2]),
-            new Vector([20, -6, -9]),
+            Vector::fromArray([22, -17, 12]),
+            Vector::fromArray([4, 11, -2]),
+            Vector::fromArray([20, -6, -9]),
         ];
 
         $this->assertEquals($expected, $vectors);
@@ -474,9 +474,9 @@ class MatrixTest extends TestCase
         $vectors = $matrix->asColumnVectors();
 
         $expected = [
-            new ColumnVector([22, 4, 20]),
-            new ColumnVector([-17, 11, -6]),
-            new ColumnVector([12, -2, -9]),
+            ColumnVector::fromArray([22, 4, 20]),
+            ColumnVector::fromArray([-17, 11, -6]),
+            ColumnVector::fromArray([12, -2, -9]),
         ];
 
         $this->assertEquals($expected, $vectors);
@@ -495,7 +495,7 @@ class MatrixTest extends TestCase
 
         $b = $a->flatten();
 
-        $expected = new Vector([22, -17, 12, 4, 11, -2, 20, -6, -9]);
+        $expected = Vector::fromArray([22, -17, 12, 4, 11, -2, 20, -6, -9]);
 
         $this->assertEquals($expected, $b);
     }
@@ -818,7 +818,7 @@ class MatrixTest extends TestCase
         $this->assertEqualsWithDelta(-8.0, $a->reduce($subtract, 2.0), self::MAX_DELTA);
 
         // Must match Vector::reduce() for the same data and callback.
-        $v = new Vector([1.0, 2.0, 3.0, 4.0]);
+        $v = Vector::fromArray([1.0, 2.0, 3.0, 4.0]);
 
         $this->assertEqualsWithDelta($v->reduce($subtract), $a->reduce($subtract), self::MAX_DELTA);
     }
@@ -1126,11 +1126,11 @@ class MatrixTest extends TestCase
             [20.0, -6.0, -9.0],
         ]);
 
-        $b = new Vector([2, 10, -1]);
+        $b = Vector::fromArray([2, 10, -1]);
 
         $c = $a->dot($b);
 
-        $expected = new ColumnVector([-138, 120, -11]);
+        $expected = ColumnVector::fromArray([-138, 120, -11]);
 
         $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
     }
@@ -1271,7 +1271,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [44, -170, -12],
                 [8, 110, 2],
@@ -1285,7 +1285,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [55.0, -42.5, 30.],
                 [-4, -11, 2],
@@ -1352,7 +1352,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [11, -1.7, -12],
                 [2, 1.1, 2],
@@ -1366,7 +1366,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [8.8, -6.8, 4.8],
                 [-4, -11, 2],
@@ -1433,7 +1433,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [24, -7, 11],
                 [6, 21, -3],
@@ -1447,7 +1447,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [24.5, -14.5, 14.5],
                 [3, 10, -3],
@@ -1514,7 +1514,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [20, -27, 13],
                 [2, 1, -1],
@@ -1528,7 +1528,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [19.5, -19.5, 9.5],
                 [5, 12, -1],
@@ -1595,7 +1595,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [484, 2015993900449, 0.08333333333333333],
                 [16, 25937424601, -0.5],
@@ -1662,7 +1662,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [0, -7, 0],
                 [0, 1, 0],
@@ -1676,7 +1676,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [0,  -1,  0],
                 [0, 0, 0],
@@ -1743,7 +1743,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [0, 0, 0],
                 [0, 0, 0],
@@ -1757,7 +1757,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [0, 0, 0],
                 [0, 0, 0],
@@ -1824,7 +1824,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [1, 1, 1],
                 [1, 1, 1],
@@ -1838,7 +1838,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [1, 1, 1],
                 [1, 1, 1],
@@ -1905,7 +1905,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [1, 0, 1],
                 [1, 1, 0],
@@ -1919,7 +1919,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [1, 0, 1],
                 [1, 1, 0],
@@ -1986,7 +1986,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [1, 0, 1],
                 [1, 1, 0],
@@ -2000,7 +2000,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [1, 0, 1],
                 [1, 1, 0],
@@ -2067,7 +2067,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [0, 1, 0],
                 [0, 0, 1],
@@ -2081,7 +2081,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [0, 1, 0],
                 [0, 0, 1],
@@ -2148,7 +2148,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new Vector([2, 10, -1]),
+            Vector::fromArray([2, 10, -1]),
             Matrix::fromArray([
                 [0, 1, 0],
                 [0, 0, 1],
@@ -2162,7 +2162,7 @@ class MatrixTest extends TestCase
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            new ColumnVector([2.5, -1, 4.8]),
+            ColumnVector::fromArray([2.5, -1, 4.8]),
             Matrix::fromArray([
                 [0, 1, 0],
                 [0, 0, 1],
@@ -2528,7 +2528,7 @@ class MatrixTest extends TestCase
 
         $b = $a->sum();
 
-        $expected = new ColumnVector([17, 13, 5]);
+        $expected = ColumnVector::fromArray([17, 13, 5]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }
@@ -2546,7 +2546,7 @@ class MatrixTest extends TestCase
 
         $b = $a->product();
 
-        $expected = new ColumnVector([-4488.0, -88.0, 1080.0]);
+        $expected = ColumnVector::fromArray([-4488.0, -88.0, 1080.0]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }
@@ -2564,7 +2564,7 @@ class MatrixTest extends TestCase
 
         $b = $a->min();
 
-        $expected = new ColumnVector([-17, -2, -9]);
+        $expected = ColumnVector::fromArray([-17, -2, -9]);
 
         $this->assertEquals($expected, $b);
     }
@@ -2582,7 +2582,7 @@ class MatrixTest extends TestCase
 
         $b = $a->max();
 
-        $expected = new ColumnVector([22, 11, 20]);
+        $expected = ColumnVector::fromArray([22, 11, 20]);
 
         $this->assertEquals($expected, $b);
     }
@@ -2600,7 +2600,7 @@ class MatrixTest extends TestCase
 
         $b = $a->mean();
 
-        $expected = new ColumnVector([5.666666666666667, 4.333333333333333, 1.6666666666666667]);
+        $expected = ColumnVector::fromArray([5.666666666666667, 4.333333333333333, 1.6666666666666667]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }
@@ -2618,7 +2618,7 @@ class MatrixTest extends TestCase
 
         $b = $a->median();
 
-        $expected = new ColumnVector([12, 4, -6]);
+        $expected = ColumnVector::fromArray([12, 4, -6]);
 
         $this->assertEquals($expected, $b);
     }
@@ -2636,13 +2636,13 @@ class MatrixTest extends TestCase
 
         $b = $a->quantile(0.4);
 
-        $expected = new ColumnVector([6.200000000000001, 2.8000000000000003, -6.6]);
+        $expected = ColumnVector::fromArray([6.200000000000001, 2.8000000000000003, -6.6]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
 
         $max = $a->quantile(1.0);
 
-        $maxExpected = new ColumnVector([22.0, 11.0, 20.0]);
+        $maxExpected = ColumnVector::fromArray([22.0, 11.0, 20.0]);
 
         $this->assertEqualsWithDelta($maxExpected, $max, self::MAX_DELTA);
 
@@ -2652,7 +2652,7 @@ class MatrixTest extends TestCase
             [8.0],
         ]);
 
-        $singleExpected = new ColumnVector([5.0, 3.0, 8.0]);
+        $singleExpected = ColumnVector::fromArray([5.0, 3.0, 8.0]);
 
         $this->assertEqualsWithDelta(
             $singleExpected,
@@ -2674,7 +2674,7 @@ class MatrixTest extends TestCase
 
         $b = $a->variance();
 
-        $expected = new ColumnVector([273.55555555555554, 28.222222222222225, 169.55555555555554]);
+        $expected = ColumnVector::fromArray([273.55555555555554, 28.222222222222225, 169.55555555555554]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }
@@ -2691,7 +2691,7 @@ class MatrixTest extends TestCase
 
         $b = $a->variance();
 
-        $expected = new ColumnVector([0.6666666666666666, 66.66666666666667]);
+        $expected = ColumnVector::fromArray([0.6666666666666666, 66.66666666666667]);
 
         $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
     }
@@ -3183,7 +3183,7 @@ class MatrixTest extends TestCase
         Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
-        ])->dot(new Vector([1.0, 2.0]));
+        ])->dot(Vector::fromArray([1.0, 2.0]));
     }
 
     /**

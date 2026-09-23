@@ -8,6 +8,8 @@ use Tensor\Exceptions\InvalidArgumentException;
  * A decorator that wraps the kernel Buffer class and provides additional
  * operations such as sorting and slicing.
  *
+ * @internal
+ *
  * @category    Scientific Computing
  * @package     Rubix/Tensor
  * @author      Andrew DalPino
@@ -20,14 +22,6 @@ class TensorBuffer
      * @var \Tensor\Buffer
      */
     protected buffer;
-
-    /**
-     * @param \Tensor\Buffer buffer
-     */
-    public function __construct(<Buffer> buffer)
-    {
-        let this->buffer = buffer;
-    }
 
     /**
      * Build a buffer by concatenating an array of buffers into a single
@@ -55,23 +49,11 @@ class TensorBuffer
     }
 
     /**
-     * Return the underlying buffer.
-     *
-     * @return \Tensor\Buffer
+     * @param \Tensor\Buffer buffer
      */
-    public function asBuffer() -> <Buffer>
+    public function __construct(<Buffer> buffer)
     {
-        return this->buffer;
-    }
-
-    /**
-     * Return the number of elements in the buffer.
-     *
-     * @return int
-     */
-    public function count() -> int
-    {
-        return this->buffer->count();
+        let this->buffer = buffer;
     }
 
     /**
@@ -82,16 +64,6 @@ class TensorBuffer
     public function type() -> int
     {
         return this->buffer->type();
-    }
-
-    /**
-     * Return the buffer as a PHP array.
-     *
-     * @return list<float>
-     */
-    public function toArray() -> array
-    {
-        return this->buffer->toArray();
     }
 
     /**
@@ -323,5 +295,35 @@ class TensorBuffer
         var b = tensor_buffer_repeat(this->buffer, times);
 
         return new TensorBuffer(<Buffer> b);
+    }
+
+     /**
+     * Return the underlying buffer.
+     *
+     * @return \Tensor\Buffer
+     */
+    public function asBuffer() -> <Buffer>
+    {
+        return this->buffer;
+    }
+
+    /**
+     * Return the number of elements in the buffer.
+     *
+     * @return int
+     */
+    public function count() -> int
+    {
+        return this->buffer->count();
+    }
+
+    /**
+     * Return the buffer as a PHP array.
+     *
+     * @return list<float>
+     */
+    public function toArray() -> array
+    {
+        return this->buffer->toArray();
     }
 }

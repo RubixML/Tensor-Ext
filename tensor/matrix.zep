@@ -44,61 +44,6 @@ class Matrix implements Tensor
     protected n;
 
     /**
-     * Build a new matrix from a PHP array of rows, each row being a PHP array
-     * of numeric elements.
-     *
-     * @param array[] a
-     * @param bool validate
-     * @throws \Tensor\Exceptions\InvalidArgumentException
-     * @return self
-     */
-    public static function fromArray(const array a, const bool validate = true) -> <Matrix>
-    {
-        int rows = count(a);
-
-        if unlikely rows < 1 {
-            var zero = tensor_buffer_from_array([]);
-            return new self(new TensorBuffer(<Buffer> zero), 0, 0);
-        }
-
-        var rowA, valueA;
-
-        var firstRow, n;
-
-        let firstRow = current(a);
-
-        if unlikely !is_array(firstRow) {
-            throw new InvalidArgumentException("Matrix requires an"
-                . " array of arrays.");
-        }
-
-        let n = count(firstRow);
-
-        array flat = [];
-
-        for rowA in a {
-            if unlikely validate && !is_array(rowA) {
-                throw new InvalidArgumentException("Matrix requires an"
-                    . " array of arrays.");
-            }
-
-            if unlikely validate && count(rowA) !== n {
-                throw new InvalidArgumentException("The number of"
-                    . " columns must be equal for all rows, "
-                    .  strval(n) . " needed but " . count(rowA) . " given.");
-            }
-
-            for valueA in rowA {
-                let flat[] = (float) valueA;
-            }
-        }
-
-        var buffer = tensor_buffer_from_array(flat);
-
-        return new self(new TensorBuffer(<Buffer> buffer), rows, n);
-    }
-
-    /**
      * Return an identity matrix with dimensionality n x n.
      *
      * @param int n
@@ -403,6 +348,62 @@ class Matrix implements Tensor
     }
 
     /**
+     * Build a new matrix from a PHP array of rows, each row being a PHP array
+     * of numeric elements.
+     *
+     * @param array[] a
+     * @param bool validate
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
+     */
+    public static function fromArray(const array a, const bool validate = true) -> <Matrix>
+    {
+        int rows = count(a);
+
+        if unlikely rows < 1 {
+            var buffer = tensor_buffer_from_array([]);
+
+            return new self(new TensorBuffer(<Buffer> buffer), 0, 0);
+        }
+
+        var rowA, valueA;
+
+        var firstRow, n;
+
+        let firstRow = current(a);
+
+        if unlikely !is_array(firstRow) {
+            throw new InvalidArgumentException("Matrix requires an"
+                . " array of arrays.");
+        }
+
+        let n = count(firstRow);
+
+        array flat = [];
+
+        for rowA in a {
+            if unlikely validate && !is_array(rowA) {
+                throw new InvalidArgumentException("Matrix requires an"
+                    . " array of arrays.");
+            }
+
+            if unlikely validate && count(rowA) !== n {
+                throw new InvalidArgumentException("The number of"
+                    . " columns must be equal for all rows, "
+                    .  strval(n) . " needed but " . count(rowA) . " given.");
+            }
+
+            for valueA in rowA {
+                let flat[] = (float) valueA;
+            }
+        }
+
+        var buffer = tensor_buffer_from_array(flat);
+
+        return new self(new TensorBuffer(<Buffer> buffer), rows, n);
+    }
+
+    /**
      * Construct a matrix from a single TensorBuffer holding the elements in
      * row-major order together with the target dimensionality.
      *
@@ -412,6 +413,11 @@ class Matrix implements Tensor
      */
     public function __construct(<TensorBuffer> a, const int m, const int n)
     {
+        if unlikely m < 0 || n < 0 {
+            throw new InvalidArgumentException("Matrix dimensions must be"
+                . " non-negative.");
+        }
+
         let this->a = a;
         let this->m = m;
         let this->n = n;
@@ -528,67 +534,11 @@ class Matrix implements Tensor
     }
 
     /**
-     * Return the elements of the matrix as a vector taken in row-major order.
-     *
-     * @return \Tensor\Vector
-     */
-    public function asVector() -> <Vector>
-    {
-        return new Vector(this->a);
-    }
-
-    /**
-     * Return the underlying TensorBuffer of the matrix.
-     *
-     * @return \Tensor\TensorBuffer
-     */
-    public function asTensorBuffer() -> <TensorBuffer>
-    {
-        return this->a;
-    }
-
-    /**
-     * Return the matrix as an array of arrays.
-     *
-     * @return array[]
-     */
-    public function asArray() -> array
-    {
-        var rowBuffer;
-
-        array b = [];
-
-        if unlikely this->n < 1 {
-            return [];
-        }
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = rowBuffer->toArray();
-        }
-
-        return b;
-    }
-
-    /**
-     * Return each row of the matrix as a TensorBuffer.
-     *
-     * @return \Tensor\TensorBuffer[]
-     */
-    public function asRowBuffers() -> array
-    {
-        if unlikely this->n < 1 {
-            return [];
-        }
-
-        return this->a->split(this->n);
-    }
-
-    /**
      * Return the rows of the matrix as an array of Vector objects.
      *
      * @return \Tensor\Vector[]
      */
-    public function asRowVectors() -> array
+    public function asVectors() -> array
     {
         var rowBuffer;
 
@@ -600,28 +550,6 @@ class Matrix implements Tensor
 
         for rowBuffer in this->a->split(this->n) {
             let b[] = new Vector(rowBuffer);
-        }
-
-        return b;
-    }
-
-    /**
-     * Return each column of the matrix as a TensorBuffer.
-     *
-     * @return \Tensor\TensorBuffer[]
-     */
-    public function asColumnBuffers() -> array
-    {
-        var i;
-
-        array b = [];
-
-        if unlikely this->n < 1 {
-            return [];
-        }
-
-        for i in range(0, this->n - 1) {
-            let b[] = this->a->sliceStrided(i, this->m, this->n);
         }
 
         return b;
@@ -650,16 +578,6 @@ class Matrix implements Tensor
     }
 
     /**
-     * Return the rows of the matrix as an array of Vector objects.
-     *
-     * @return \Tensor\Vector[]
-     */
-    public function asVectors() -> array
-    {
-        return this->asRowVectors();
-    }
-    
-    /**
      * Return the elements of the matrix as a vector taken in row-major order.
      *
      * @return \Tensor\Vector
@@ -667,6 +585,81 @@ class Matrix implements Tensor
     public function flatten() -> <Vector>
     {
         return new Vector(this->a);
+    }
+
+
+    /**
+     * Return the matrix as an array of arrays.
+     *
+     * @return array[]
+     */
+    public function asArray() -> array
+    {
+        var rowBuffer;
+
+        array b = [];
+
+        if unlikely this->n < 1 {
+            return [];
+        }
+
+        for rowBuffer in this->a->split(this->n) {
+            let b[] = rowBuffer->toArray();
+        }
+
+        return b;
+    }
+
+    /**
+     * Return the underlying TensorBuffer of the matrix.
+     *
+     * @internal
+     *
+     * @return \Tensor\TensorBuffer
+     */
+    public function asTensorBuffer() -> <TensorBuffer>
+    {
+        return this->a;
+    }
+
+    /**
+     * Return each row of the matrix as a TensorBuffer.
+     *
+     * @internal
+     *
+     * @return \Tensor\TensorBuffer[]
+     */
+    public function asRowBuffers() -> array
+    {
+        if unlikely this->n < 1 {
+            return [];
+        }
+
+        return this->a->split(this->n);
+    }
+
+    /**
+     * Return each column of the matrix as a TensorBuffer.
+     *
+     * @internal
+     *
+     * @return \Tensor\TensorBuffer[]
+     */
+    public function asColumnBuffers() -> array
+    {
+        var i;
+
+        array b = [];
+
+        if unlikely this->n < 1 {
+            return [];
+        }
+
+        for i in range(0, this->n - 1) {
+            let b[] = this->a->sliceStrided(i, this->m, this->n);
+        }
+
+        return b;
     }
 
     /**
@@ -1411,8 +1404,7 @@ class Matrix implements Tensor
      */
     public function reciprocal() -> <Matrix>
     {
-        return self::ones(this->m, this->n)
-            ->divideMatrix(this);
+        return self::ones(this->m, this->n)->divideMatrix(this);
     }
 
     /**
@@ -1587,7 +1579,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->sum();
         }
 
-        return new ColumnVector(b);
+        return ColumnVector::fromArray(b, false);
     }
 
     /**
@@ -1605,7 +1597,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->product();
         }
 
-        return new ColumnVector(b);
+        return ColumnVector::fromArray(b, false);
     }
 
     /**
@@ -1623,7 +1615,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->min();
         }
 
-        return new ColumnVector(b);
+        return ColumnVector::fromArray(b, false);
     }
 
     /**
@@ -1641,7 +1633,7 @@ class Matrix implements Tensor
             let b[] = rowBuffer->max();
         }
 
-        return new ColumnVector(b);
+        return ColumnVector::fromArray(b, false);
     }
 
     /**
@@ -1662,6 +1654,7 @@ class Matrix implements Tensor
     public function median() -> <ColumnVector>
     {
         var rowBuffer, median;
+
         array b = [];
 
         int mid = (int) intdiv(this->n, 2);
@@ -1680,7 +1673,7 @@ class Matrix implements Tensor
             let b[] = median;
         }
 
-        return new ColumnVector(b);
+        return ColumnVector::fromArray(b, false);
     }
 
     /**
@@ -1698,6 +1691,7 @@ class Matrix implements Tensor
         }
 
         float t;
+
         var rowBuffer;
         
         array b = [];
@@ -1722,7 +1716,7 @@ class Matrix implements Tensor
             let b[] = t + remainder * (rowBuffer->get(xHat) - t);
         }
 
-        return new ColumnVector(b);
+        return ColumnVector::fromArray(b, false);
     }
 
     /**
@@ -1777,8 +1771,7 @@ class Matrix implements Tensor
 
         var b = this->subtractColumnVector(mean);
 
-        return b->matmul(b->transpose())
-            ->divideScalar(this->n);
+        return b->matmul(b->transpose())->divideScalar(this->n);
     }
 
     /**
@@ -3099,24 +3092,28 @@ class Matrix implements Tensor
      */
     public function __serialize() -> array
     {
-        return this->asArray();
+        return [
+            "data": this->asArray(),
+            "m": this->m,
+            "n": this->n
+        ];
     }
 
     /**
      * Restore the matrix from the plain array of rows produced by
      * __serialize() by rebuilding its TensorBuffer and shape.
      *
-     * @param float[][] data
+     * @param array<array<float>> data
      * @throws \Tensor\Exceptions\InvalidArgumentException
      */
     public function __unserialize(const array data)
     {
         var rebuilt;
 
-        let rebuilt = Matrix::fromArray(data);
+        let rebuilt = Matrix::fromArray(data["data"], false);
 
-        let this->a = rebuilt->a;
-        let this->m = rebuilt->m;
-        let this->n = rebuilt->n;
+        let this->a = rebuilt->asTensorBuffer();
+        let this->m = data["m"];
+        let this->n = data["n"];
     }
 }

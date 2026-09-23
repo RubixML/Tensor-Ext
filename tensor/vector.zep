@@ -28,7 +28,7 @@ class Vector implements Tensor
      *
      * @var int
      */
-        protected n;
+    protected n;
 
     /**
      * Build a vector of zeros with n elements.
@@ -75,7 +75,7 @@ class Vector implements Tensor
                 . " greater than 0, " . strval(n) . " given.");
         }
 
-        return new static(array_fill(0, n, value));
+        return static::fromArray(array_fill(0, n, value), false);
     }
 
     /**
@@ -100,7 +100,7 @@ class Vector implements Tensor
             let a[] = rand() / max;
         }
 
-        return new static(a);
+        return static::fromArray(a, false);
     }
 
     /**
@@ -137,7 +137,7 @@ class Vector implements Tensor
             array_pop(a);
         }
 
-        return new static(a);
+        return static::fromArray(a, false);
     }
 
     /**
@@ -185,7 +185,7 @@ class Vector implements Tensor
             let a[] = k - 1.0;
         }
 
-        return new static(a);
+        return static::fromArray(a, false);
     }
 
     /**
@@ -210,7 +210,7 @@ class Vector implements Tensor
             let a[] = rand(-max, max) / max;
         }
 
-        return new static(a);
+        return static::fromArray(a, false);
     }
 
     /**
@@ -223,7 +223,7 @@ class Vector implements Tensor
      */
     public static function range(const float start, const float end, const float interval = 1.0) -> <Vector>
     {
-        return new static(range(start, end, interval));
+        return static::fromArray(range(start, end, interval), false);
     }
 
     /**
@@ -258,30 +258,46 @@ class Vector implements Tensor
 
         let a[] = max;
 
-        return new self(a);
+        return self::fromArray(a, false);
     }
 
     /**
-     * Construct a new vector from a PHP array of elements or an existing
-     * TensorBuffer.
+     * Build a new vector from a flat PHP array of numeric elements.
      *
-     * @param float[] a
+     * @param array a
+     * @param bool validate
      * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
      */
-    public function __construct(var a)
+    public static function fromArray(const array a, const bool validate = true) -> <Vector>
     {
-        var buffer;
+        var valueA;
 
-        if typeof a == "array" {
-            let buffer = tensor_buffer_from_array(a);
+        array flat = [];
 
-            let a = new TensorBuffer(<Buffer> buffer);
-        } elseif !(a instanceof TensorBuffer) {
-            throw new InvalidArgumentException("Vector requires"
-                . " an array or TensorBuffer object.");
+        for valueA in (array) a {
+            if unlikely validate && is_array(valueA) {
+                throw new InvalidArgumentException("Vector requires a"
+                    . " flat array of numeric elements.");
+            }
+
+            let flat[] = (float) valueA;
         }
 
-        let this->a = <TensorBuffer> a;
+        var buffer = tensor_buffer_from_array(flat);
+
+        return new static(new TensorBuffer(<Buffer> buffer));
+    }
+
+    /**
+     * Construct a new vector from a TensorBuffer holding its elements.
+     *
+     * @param \Tensor\TensorBuffer a
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     */
+    public function __construct(<TensorBuffer> a)
+    {
+        let this->a = a;
         let this->n = this->a->count();
     }
 
@@ -420,7 +436,7 @@ class Vector implements Tensor
      */
     public function map(const var callback) -> <Vector>
     {
-        return new static(array_map(callback, this->a->toArray()));
+        return static::fromArray(array_map(callback, this->a->toArray()), false);
     }
 
     /**
@@ -2015,7 +2031,7 @@ class Vector implements Tensor
     }
 
     /**
-     * Does a given column exist in the matrix.
+     * Does a given element exist in the vector.
      *
      * @param mixed index
      * @return bool
@@ -2039,7 +2055,7 @@ class Vector implements Tensor
     }
 
     /**
-     * Return a row from the matrix at the given index.
+     * Return an element from the vector at the given index.
      *
      * @param mixed index
      * @throws \Tensor\Exceptions\InvalidArgumentException
@@ -2056,7 +2072,7 @@ class Vector implements Tensor
     }
 
     /**
-     * Get an iterator for the rows in the matrix.
+     * Get an iterator for the items in the vector.
      *
      * @return \ArrayIterator
      */
@@ -2073,7 +2089,10 @@ class Vector implements Tensor
      */
     public function __serialize() -> array
     {
-        return this->asArray();
+        return [
+            "data": this->asArray(),
+            "n": this->n
+        ];
     }
 
     /**
@@ -2087,9 +2106,9 @@ class Vector implements Tensor
     {
         var rebuilt;
 
-        let rebuilt = new self(data);
+        let rebuilt = self::fromArray(data["data"], false);
 
         let this->a = rebuilt->a;
-        let this->n = rebuilt->n;
+        let this->n = data["n"];
     }
 }

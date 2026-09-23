@@ -82,7 +82,7 @@ PHP_METHOD(Tensor_ColumnVector, transpose)
 
 	object_init_ex(return_value, tensor_vector_ce);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 3, PH_NOISY_CC | PH_READONLY);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 5, &_0);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 14, &_0);
 	zephir_check_call_status();
 	RETURN_MM();
 }

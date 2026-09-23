@@ -33,7 +33,7 @@ class ColumnVectorTest extends TestCase
      */
     public function build() : void
     {
-        $vector = new ColumnVector([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15, 25, 35]);
 
         $this->assertInstanceOf(ColumnVector::class, $vector);
         $this->assertInstanceOf(Tensor::class, $vector);
@@ -51,7 +51,7 @@ class ColumnVectorTest extends TestCase
      */
     public function shape() : void
     {
-        $vector = new ColumnVector([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15, 25, 35]);
 
         $this->assertEquals([3], $vector->shape());
     }
@@ -61,7 +61,7 @@ class ColumnVectorTest extends TestCase
      */
     public function shapeString() : void
     {
-        $vector = new ColumnVector([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15, 25, 35]);
 
         $this->assertEquals('3', $vector->shapeString());
     }
@@ -71,7 +71,7 @@ class ColumnVectorTest extends TestCase
      */
     public function size() : void
     {
-        $vector = new ColumnVector([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15, 25, 35]);
 
         $this->assertEquals(3, $vector->size());
     }
@@ -81,7 +81,7 @@ class ColumnVectorTest extends TestCase
      */
     public function serialization() : void
     {
-        $vector = new ColumnVector([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15, 25, 35]);
 
         $serialized = serialize($vector);
 
@@ -99,7 +99,7 @@ class ColumnVectorTest extends TestCase
      */
     public function m() : void
     {
-        $vector = new ColumnVector([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15, 25, 35]);
 
         $this->assertEquals(3, $vector->m());
     }
@@ -109,7 +109,7 @@ class ColumnVectorTest extends TestCase
      */
     public function n() : void
     {
-        $vector = new ColumnVector([-15, 25, 35]);
+        $vector = ColumnVector::fromArray([-15, 25, 35]);
 
         $this->assertEquals(1, $vector->n());
     }
@@ -119,7 +119,7 @@ class ColumnVectorTest extends TestCase
      */
     public function multiply() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -143,7 +143,7 @@ class ColumnVectorTest extends TestCase
      */
     public function divide() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -167,7 +167,7 @@ class ColumnVectorTest extends TestCase
      */
     public function add() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -191,7 +191,7 @@ class ColumnVectorTest extends TestCase
      */
     public function subtract() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -215,7 +215,7 @@ class ColumnVectorTest extends TestCase
      */
     public function equal() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -239,7 +239,7 @@ class ColumnVectorTest extends TestCase
      */
     public function notEqual() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -263,7 +263,7 @@ class ColumnVectorTest extends TestCase
      */
     public function greater() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -287,7 +287,7 @@ class ColumnVectorTest extends TestCase
      */
     public function greaterEqual() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -311,7 +311,7 @@ class ColumnVectorTest extends TestCase
      */
     public function less() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -335,7 +335,7 @@ class ColumnVectorTest extends TestCase
      */
     public function lessEqual() : void
     {
-        $a = new ColumnVector([-15, 25, 35]);
+        $a = ColumnVector::fromArray([-15, 25, 35]);
 
         $b = Matrix::fromArray([
             [6.23, -1, 0.03],
@@ -359,12 +359,12 @@ class ColumnVectorTest extends TestCase
      */
     public function transposeReturnsVector() : void
     {
-        $a = new ColumnVector([1.0, 2.0, 3.0]);
+        $a = ColumnVector::fromArray([1.0, 2.0, 3.0]);
 
         $b = $a->transpose();
 
         $this->assertInstanceOf(Vector::class, $b);
-        $this->assertEquals(new Vector([1.0, 2.0, 3.0]), $b);
+        $this->assertEquals(Vector::fromArray([1.0, 2.0, 3.0]), $b);
     }
 
     /**
@@ -372,7 +372,7 @@ class ColumnVectorTest extends TestCase
      */
     public function sizes() : void
     {
-        $a = new ColumnVector([1.0, 2.0, 3.0]);
+        $a = ColumnVector::fromArray([1.0, 2.0, 3.0]);
 
         $this->assertEquals(3, $a->m());
         $this->assertEquals(1, $a->n());
@@ -384,7 +384,7 @@ class ColumnVectorTest extends TestCase
      */
     public function matmul() : void
     {
-        $a = new ColumnVector([1.0, 2.0, 3.0]);
+        $a = ColumnVector::fromArray([1.0, 2.0, 3.0]);
 
         $b = Matrix::fromArray([
             [1.0, 2.0, 3.0],
@@ -408,7 +408,7 @@ class ColumnVectorTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        (new ColumnVector([1.0, 2.0, 3.0]))->matmul(Matrix::fromArray([
+        (ColumnVector::fromArray([1.0, 2.0, 3.0]))->matmul(Matrix::fromArray([
             [1.0, 2.0, 3.0, 4.0],
             [5.0, 6.0, 7.0, 8.0],
             [9.0, 10.0, 11.0, 12.0],
@@ -420,7 +420,7 @@ class ColumnVectorTest extends TestCase
      */
     public function powMatrix() : void
     {
-        $a = new ColumnVector([2.0, 3.0, 4.0]);
+        $a = ColumnVector::fromArray([2.0, 3.0, 4.0]);
 
         $b = Matrix::fromArray([
             [1.0, 2.0, 3.0],
@@ -446,7 +446,7 @@ class ColumnVectorTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        (new ColumnVector([1.0, 2.0, 3.0]))->powMatrix(Matrix::fromArray([
+        (ColumnVector::fromArray([1.0, 2.0, 3.0]))->powMatrix(Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]));
@@ -457,7 +457,7 @@ class ColumnVectorTest extends TestCase
      */
     public function modMatrix() : void
     {
-        $a = new ColumnVector([10.0, 12.0, 15.0]);
+        $a = ColumnVector::fromArray([10.0, 12.0, 15.0]);
 
         $b = Matrix::fromArray([
             [3.0, 4.0, 5.0],
@@ -483,7 +483,7 @@ class ColumnVectorTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        (new ColumnVector([1.0, 2.0, 3.0]))->modMatrix(Matrix::fromArray([
+        (ColumnVector::fromArray([1.0, 2.0, 3.0]))->modMatrix(Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]));
@@ -496,7 +496,7 @@ class ColumnVectorTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        (new ColumnVector([1.0, 2.0, 3.0]))->multiplyMatrix(Matrix::fromArray([
+        (ColumnVector::fromArray([1.0, 2.0, 3.0]))->multiplyMatrix(Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]));
@@ -509,7 +509,7 @@ class ColumnVectorTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        (new ColumnVector([1.0, 2.0, 3.0]))->divideMatrix(Matrix::fromArray([
+        (ColumnVector::fromArray([1.0, 2.0, 3.0]))->divideMatrix(Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]));

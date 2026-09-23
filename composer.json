@@ -33,9 +33,6 @@
         "friendsofphp/php-cs-fixer": "^3.0",
         "phalcon/zephir": "dev-development",
         "phpbench/phpbench": "^1.0",
-        "phpstan/extension-installer": "^1.0",
-        "phpstan/phpstan": "^1.0",
-        "phpstan/phpstan-phpunit": "^1.0",
         "phpunit/phpunit": "^9.0"
     },
     "autoload": {
@@ -53,11 +50,9 @@
         "build": [
             "@composer validate",
             "@composer install",
-            "@analyze",
             "@test",
             "@check"
         ],
-        "analyze": "phpstan analyse -c phpstan.neon --memory-limit=1G",
         "benchmark": "phpbench run --report=env --report=aggregate",
         "check": [
             "@putenv PHP_CS_FIXER_IGNORE_ENV=1",

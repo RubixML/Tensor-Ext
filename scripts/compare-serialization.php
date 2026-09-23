@@ -161,8 +161,8 @@ $representations = [
     'array (baseline)' => fn () => $elements,
     'Buffer::fromArray()' => fn () => Tensor\Buffer::fromArray($elements),
     'new TensorBuffer()' => fn () => new Tensor\TensorBuffer(Tensor\Buffer::fromArray($elements)),
-    'new Vector()' => fn () => new Tensor\Vector($elements),
-    'new ColumnVector()' => fn () => new Tensor\ColumnVector($elements),
+    'Vector::fromArray()' => fn () => Tensor\Vector::fromArray($elements),
+    'ColumnVector::fromArray()' => fn () => Tensor\ColumnVector::fromArray($elements),
     'Matrix::fromArray() 2x2' => fn () => Tensor\Matrix::fromArray($matrixRows),
 ];
 
