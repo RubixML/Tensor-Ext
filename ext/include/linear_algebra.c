@@ -65,7 +65,6 @@ void tensor_matmul(zval * return_value, zval * a, zval * b, zval * m, zval * p, 
  */
 void tensor_dot(zval * return_value, zval * a, zval * b)
 {
-	zend_long i;
 	zend_long na = 0, nb = 0;
 	int ok_a = 0, ok_b = 0;
 
@@ -82,13 +81,7 @@ void tensor_dot(zval * return_value, zval * a, zval * b)
 		return;
 	}
 
-	double sigma = 0.0;
-
-	for (i = 0; i < na; ++i) {
-		sigma += va[i] * vb[i];
-	}
-
-	RETVAL_DOUBLE(sigma);
+	RETVAL_DOUBLE(cblas_ddot((blasint) na, va, 1, vb, 1));
 }
 
 /**
