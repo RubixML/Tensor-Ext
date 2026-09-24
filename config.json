@@ -20,10 +20,6 @@
     "initializers": {
         "module": [
             {
-                "include": "cblas.h",
-                "code": "openblas_set_num_threads(1)"
-            },
-            {
                 "code": "extern zend_class_entry *tensor_buffer_ce; extern zend_class_entry *zephir_buffer_ce; tensor_buffer_ce = zephir_buffer_ce;"
             }
         ]
