@@ -35,6 +35,7 @@ if test "$PHP_TENSOR_EXT" = "yes"; then
 	tensor/tensorbuffer.zep.c include/arithmetic.c
 	include/buffer.c
 	include/comparison.c
+	include/reductions.c
 	include/unary.c
 	include/linear_algebra.c
 	include/signal_processing.c

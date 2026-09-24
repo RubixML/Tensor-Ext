@@ -27,6 +27,7 @@
 #include "include/linear_algebra.h"
 #include "include/signal_processing.h"
 #include "include/unary.h"
+#include "include/reductions.h"
 #include "include/arithmetic.h"
 #include "include/comparison.h"
 

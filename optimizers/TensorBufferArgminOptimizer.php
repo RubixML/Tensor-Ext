@@ -51,7 +51,7 @@ class TensorBufferArgminOptimizer extends OptimizerAbstract
         }
 
         $context->headersManager->add(
-            'include/buffer',
+            'include/reductions',
             HeadersManager::POSITION_LAST
         );
 

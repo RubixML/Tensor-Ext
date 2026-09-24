@@ -32,12 +32,6 @@ void tensor_buffer_from_array(zval * ret, zval * arr);
 
 void tensor_buffer_sort(zval * return_value, zval * obj, zval * ascending);
 void tensor_buffer_slice(zval * return_value, zval * obj, zval * offset, zval * length);
-void tensor_buffer_sum(zval * return_value, zval * obj);
-void tensor_buffer_product(zval * return_value, zval * obj);
-void tensor_buffer_min(zval * return_value, zval * obj);
-void tensor_buffer_max(zval * return_value, zval * obj);
-void tensor_buffer_argmin(zval * return_value, zval * obj);
-void tensor_buffer_argmax(zval * return_value, zval * obj);
 void tensor_buffer_slice_strided(zval * return_value, zval * obj, zval * offset, zval * length, zval * stride);
 void tensor_buffer_concat(zval * return_value, zval * obj, zval * others);
 void tensor_buffer_split(zval * return_value, zval * obj, zval * chunk_length);
