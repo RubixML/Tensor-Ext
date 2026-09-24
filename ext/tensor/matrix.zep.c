@@ -2428,7 +2428,7 @@ PHP_METHOD(Tensor_Matrix, dot)
 	zval _4$$3, _6$$3, _7$$3;
 	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
 	zend_long ZEPHIR_LAST_CALL_STATUS;
-	zval *b, b_sub, _0, _1, _8, _9, _10, _2$$3, _3$$3, _5$$3;
+	zval *b, b_sub, _0, _1, _8, _9, _10, _11, _12, _2$$3, _3$$3, _5$$3;
 	zval *this_ptr = getThis();
 
 	ZVAL_UNDEF(&b_sub);
@@ -2437,6 +2437,8 @@ PHP_METHOD(Tensor_Matrix, dot)
 	ZVAL_UNDEF(&_8);
 	ZVAL_UNDEF(&_9);
 	ZVAL_UNDEF(&_10);
+	ZVAL_UNDEF(&_11);
+	ZVAL_UNDEF(&_12);
 	ZVAL_UNDEF(&_2$$3);
 	ZVAL_UNDEF(&_3$$3);
 	ZVAL_UNDEF(&_5$$3);
@@ -2444,8 +2446,16 @@ PHP_METHOD(Tensor_Matrix, dot)
 	ZVAL_UNDEF(&_6$$3);
 	ZVAL_UNDEF(&_7$$3);
 	static zend_string *_zephir_prop_0 = NULL;
+	static zend_string *_zephir_prop_1 = NULL;
+	static zend_string *_zephir_prop_2 = NULL;
 	if (UNEXPECTED(!_zephir_prop_0)) {
 		_zephir_prop_0 = zend_string_init("n", 1, 1);
+	}
+	if (UNEXPECTED(!_zephir_prop_1)) {
+		_zephir_prop_1 = zend_string_init("a", 1, 1);
+	}
+	if (UNEXPECTED(!_zephir_prop_2)) {
+		_zephir_prop_2 = zend_string_init("m", 1, 1);
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
@@ -2474,12 +2484,15 @@ PHP_METHOD(Tensor_Matrix, dot)
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
-	ZEPHIR_CALL_METHOD(&_9, b, "asColumnMatrix", NULL, 0);
+	object_init_ex(return_value, tensor_columnvector_ce);
+	ZEPHIR_INIT_VAR(&_8);
+	zephir_read_property_cached(&_9, this_ptr, _zephir_prop_1, 14, PH_NOISY_CC | PH_READONLY);
+	ZEPHIR_CALL_METHOD(&_10, b, "asTensorBuffer", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&_8, this_ptr, "matmul", NULL, 0, &_9);
-	zephir_check_call_status();
-	ZVAL_LONG(&_10, 0);
-	ZEPHIR_RETURN_CALL_METHOD(&_8, "columnAsVector", NULL, 0, &_10);
+	zephir_read_property_cached(&_11, this_ptr, _zephir_prop_2, 15, PH_NOISY_CC | PH_READONLY);
+	zephir_read_property_cached(&_12, this_ptr, _zephir_prop_0, 16, PH_NOISY_CC | PH_READONLY);
+	tensor_matrix_dot(&_8, &_9, &_10, &_11, &_12);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 13, &_8);
 	zephir_check_call_status();
 	RETURN_MM();
 }

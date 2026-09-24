@@ -52,7 +52,14 @@ class ColumnVector extends Vector
      */
     public function matmul(const <Matrix> b) -> <Matrix>
     {
-        return this->asColumnMatrix()->matmul(b);
+        if unlikely b->m() !== 1 {
+            throw new DimensionalityMismatch("Matrix A requires"
+                . " 1 rows but Matrix B has " . (string) b->m() . ".");
+        }
+
+        var product = tensor_outer(this->a, b->asTensorBuffer(), this->m(), b->n());
+
+        return new Matrix(product, this->m(), b->n());
     }
 
     /**

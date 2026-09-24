@@ -58,6 +58,48 @@ void tensor_matmul(zval * return_value, zval * a, zval * b, zval * m, zval * p, 
 }
 
 /**
+ * Matrix-vector product i.e. the dot product of matrix A and vector B.
+ *
+ * @param return_value
+ * @param a
+ * @param b
+ * @param m
+ * @param p
+ */
+void tensor_matrix_dot(zval * return_value, zval * a, zval * b, zval * m, zval * p)
+{
+    zend_long ma = zephir_get_intval(m);
+    zend_long pc = zephir_get_intval(p);
+    zend_long na = 0, nb = 0;
+    int ok_a = 0, ok_b = 0;
+
+    double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+    double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+
+    if (UNEXPECTED(!ok_a || !ok_b)) {
+        return;
+    }
+
+    if (UNEXPECTED(na != ma * pc || nb != pc)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffers must match the given dimensions."));
+        return;
+    }
+
+    zval c;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma, &c) == FAILURE)) {
+        return;
+    }
+
+    double * vc = zephir_buffer_doubles(&c);
+
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, (blasint) ma, (blasint) pc, 1.0, va, (blasint) pc, vb, 1, 0.0, vc, 1);
+
+    zval_ptr_dtor(&c);
+}
+
+/**
  * Dot product between vectors A and B.
  * 
  * @param return_value

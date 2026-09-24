@@ -1398,13 +1398,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_multiply_row(bHat, aHat, this->n);
+        let result = tensor_multiply_row(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1424,13 +1422,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_divide_row_reverse(bHat, aHat, this->n);
+        let result = tensor_divide_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1450,13 +1446,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_add_row(bHat, aHat, this->n);
+        let result = tensor_add_row(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1476,13 +1470,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_subtract_row_reverse(bHat, aHat, this->n);
+        let result = tensor_subtract_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1502,13 +1494,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_pow_row_reverse(bHat, aHat, this->n);
+        let result = tensor_pow_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1528,13 +1518,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_mod_row_reverse(bHat, aHat, this->n);
+        let result = tensor_mod_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1554,13 +1542,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_equal_row(bHat, aHat, this->n);
+        let result = tensor_equal_row(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1580,13 +1566,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_not_equal_row(bHat, aHat, this->n);
+        let result = tensor_not_equal_row(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1606,13 +1590,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_greater_row_reverse(bHat, aHat, this->n);
+        let result = tensor_greater_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1632,13 +1614,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_greater_equal_row_reverse(bHat, aHat, this->n);
+        let result = tensor_greater_equal_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1658,13 +1638,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_less_row_reverse(bHat, aHat, this->n);
+        let result = tensor_less_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }
@@ -1684,13 +1662,11 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var aHat, bHat, result;
-
-        let aHat = this->asTensorBuffer();
+        var bHat, result;
 
         let bHat = b->asTensorBuffer();
 
-        let result = tensor_less_equal_row_reverse(bHat, aHat, this->n);
+        let result = tensor_less_equal_row_reverse(bHat, this->a, this->n);
 
         return new Matrix(result, b->m(), b->n());
     }

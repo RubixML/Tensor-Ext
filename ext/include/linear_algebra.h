@@ -4,6 +4,7 @@
 #include <Zend/zend.h>
 
 void tensor_matmul(zval * return_value, zval * a, zval * b, zval * m, zval * p, zval * n);
+void tensor_matrix_dot(zval * return_value, zval * a, zval * b, zval * m, zval * p);
 void tensor_dot(zval * return_value, zval * a, zval * b);
 
 void tensor_inverse(zval * return_value, zval * a, zval * n);

@@ -857,7 +857,7 @@ class Matrix implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return this->matmul(b->asColumnMatrix())->columnAsVector(0);
+        return new ColumnVector(tensor_matrix_dot(this->a, b->asTensorBuffer(), this->m, this->n));
     }
 
     /**
