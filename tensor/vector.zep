@@ -1226,21 +1226,14 @@ class Vector implements Tensor
      */
     public function median() -> float
     {
-        var median;
-
-        int mid = (int) intdiv(this->n, 2);
-
-        var a = this->a->toArray();
-
-        sort(a);
-
-        if this->n % 2 === 1 {
-            let median = a[mid];
-        } else {
-            let median = (a[mid - 1] + a[mid]) / 2.0;
+        if unlikely this->n < 1 {
+            throw new InvalidArgumentException("Cannot compute"
+                . " the median of an empty vector.");
         }
 
-        return median;
+        var result = tensor_median(this->a, this->n);
+
+        return (float) result->get(0);
     }
 
     /**
@@ -1257,23 +1250,14 @@ class Vector implements Tensor
                 . " between 0 and 1, " . strval(q) . " given.");
         }
 
-        var a = this->a->toArray();
-
-        sort(a);
-
-        float x = q * (this->n - 1) + 1;
-
-        int xHat = (int) x;
-
-        if xHat >= this->n {
-            return (float) a[this->n - 1];
+        if unlikely this->n < 1 {
+            throw new InvalidArgumentException("Cannot compute"
+                . " the quantile of an empty vector.");
         }
 
-        float remainder = x - xHat;
+        var result = tensor_quantile(this->a, this->n, q);
 
-        float t = (float) a[xHat - 1];
-
-        return t + remainder * (a[xHat] - t);
+        return (float) result->get(0);
     }
 
     /**

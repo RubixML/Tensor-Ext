@@ -76,7 +76,7 @@ Do **not** hand-edit the generated C in `ext/` (files like `*.dep`, `*.lo`, `*.o
 An installed TEnsor extension will override any new changes. To run the tests against the locally compiled extension, load the built shared object. For example:
 
 ```sh
-php -n -d extension=$PWD/ext/modules/tensor.so extension=iconv -d extension=mbstring -d extension=tokenizer -d extension=dom -d extension=xml -d extension=ctype vendor/bin/phpunit ...
+php -n -d extension=$PWD/ext/modules/tensor_ext.so extension=iconv -d extension=mbstring -d extension=tokenizer -d extension=dom -d extension=xml -d extension=ctype -d extension=xmlwriter vendor/bin/phpunit ...
 ```
 
 If a system-installed `tensor` extension is already enabled, you can rely on it instead of building locally.

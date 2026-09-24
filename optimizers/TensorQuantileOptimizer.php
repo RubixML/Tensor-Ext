@@ -9,7 +9,7 @@ use Zephir\HeadersManager;
 use Zephir\Exception\CompilerException;
 use Zephir\Optimizers\OptimizerAbstract;
 
-class TensorMatrixQuantileOptimizer extends OptimizerAbstract
+class TensorQuantileOptimizer extends OptimizerAbstract
 {
     /**
      * @param mixed[] $expression
@@ -26,7 +26,7 @@ class TensorMatrixQuantileOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 3) {
             throw new CompilerException(
-                'Tensor matrix quantile accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
+                'Tensor quantile accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorMatrixQuantileOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_matrix_quantile($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
+            "tensor_quantile($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
         );
 
         return new CompiledExpression(

@@ -1864,6 +1864,18 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function medianEmptyVectorThrows() : void
+    {
+        $a = Vector::fromArray([], false);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $a->median();
+    }
+
+    /**
+     * @test
+     */
     public function quantile() : void
     {
         $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);
@@ -1877,6 +1889,18 @@ class VectorTest extends TestCase
         $this->assertEqualsWithDelta(5.0, $single->quantile(0.0), self::MAX_DELTA);
         $this->assertEqualsWithDelta(5.0, $single->quantile(0.5), self::MAX_DELTA);
         $this->assertEqualsWithDelta(5.0, $single->quantile(1.0), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function quantileEmptyVectorThrows() : void
+    {
+        $a = Vector::fromArray([], false);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $a->quantile(0.5);
     }
 
     /**

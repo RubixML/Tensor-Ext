@@ -9,7 +9,7 @@ use Zephir\HeadersManager;
 use Zephir\Exception\CompilerException;
 use Zephir\Optimizers\OptimizerAbstract;
 
-class TensorMatrixMedianOptimizer extends OptimizerAbstract
+class TensorMedianOptimizer extends OptimizerAbstract
 {
     /**
      * @param mixed[] $expression
@@ -26,7 +26,7 @@ class TensorMatrixMedianOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 2) {
             throw new CompilerException(
-                'Tensor matrix median accepts exactly two arguments, ' . count($expression['parameters']) . 'given.',
+                'Tensor median accepts exactly two arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorMatrixMedianOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_matrix_median($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
+            "tensor_median($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
         );
 
         return new CompiledExpression(

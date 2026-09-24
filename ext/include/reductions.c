@@ -393,14 +393,15 @@ void tensor_reduce_argmax(zval * return_value, zval * obj, zval * groups, zval *
 }
 
 /**
- * Return the median of each row of a matrix as a column buffer. The matrix
- * buffer itself is never modified; the rows are copied once and sorted.
+ * Return the median of each row of a matrix as a column buffer, or of a
+ * vector as a single element. The buffer itself is never modified; the rows
+ * are copied once and sorted. A Vector is simply a 1 x n matrix.
  *
  * @param return_value
  * @param obj
  * @param n
  */
-void tensor_matrix_median(zval * return_value, zval * obj, zval * n)
+void tensor_median(zval * return_value, zval * obj, zval * n)
 {
 	double * va = NULL;
 	zend_long m = 0, n_hat = 0;
@@ -449,15 +450,16 @@ void tensor_matrix_median(zval * return_value, zval * obj, zval * n)
 }
 
 /**
- * Return the q'th quantile of each row of a matrix as a column buffer. The
- * matrix buffer itself is never modified; the rows are copied once and sorted.
+ * Return the q'th quantile of each row of a matrix as a column buffer, or of
+ * a vector as a single element. The buffer itself is never modified; the rows
+ * are copied once and sorted. A Vector is simply a 1 x n matrix.
  *
  * @param return_value
  * @param obj
  * @param n
  * @param q
  */
-void tensor_matrix_quantile(zval * return_value, zval * obj, zval * n, zval * q)
+void tensor_quantile(zval * return_value, zval * obj, zval * n, zval * q)
 {
 	double * va = NULL;
 	zend_long m = 0, n_hat = 0;

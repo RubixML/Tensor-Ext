@@ -257,7 +257,7 @@ PHP_METHOD(Tensor_Matrix, diagonal)
 	zephir_fetch_params(1, 1, 0, &elements_param);
 	zephir_get_arrval(&elements, elements_param);
 	n = zephir_fast_count_int(&elements);
-	ZEPHIR_CALL_FUNCTION(&_0, "array_values", NULL, 26, &elements);
+	ZEPHIR_CALL_FUNCTION(&_0, "array_values", NULL, 24, &elements);
 	zephir_check_call_status();
 	ZEPHIR_CPY_WRT(&elements, &_0);
 	ZEPHIR_INIT_VAR(&a);
@@ -942,7 +942,7 @@ PHP_METHOD(Tensor_Matrix, fromArray)
 		zephir_check_call_status();
 		RETURN_MM();
 	}
-	ZEPHIR_CALL_FUNCTION(&aList, "array_values", NULL, 26, &a);
+	ZEPHIR_CALL_FUNCTION(&aList, "array_values", NULL, 24, &a);
 	zephir_check_call_status();
 	zephir_memory_observe(&firstRow);
 	zephir_array_fetch_long(&firstRow, &aList, 0, PH_NOISY, "tensor/matrix.zep", 377);
@@ -1983,7 +1983,7 @@ PHP_METHOD(Tensor_Matrix, transpose)
 	zephir_memory_observe(&col);
 	zephir_array_fetch_long(&col, &cols, 0, PH_NOISY, "tensor/matrix.zep", 713);
 	ZVAL_LONG(&_3, 1);
-	ZEPHIR_CALL_FUNCTION(&_4, "array_slice", NULL, 27, &cols, &_3);
+	ZEPHIR_CALL_FUNCTION(&_4, "array_slice", NULL, 25, &cols, &_3);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_2, &col, "concat", NULL, 0, &_4);
 	zephir_check_call_status();
@@ -2057,7 +2057,7 @@ PHP_METHOD(Tensor_Matrix, inverse)
 		object_init_ex(&_5$$4, tensor_exceptions_runtimeexception_ce);
 		ZEPHIR_INIT_VAR(&_6$$4);
 		ZEPHIR_CONCAT_SS(&_6$$4, "Failed to compute the inverse", " of a singular matrix.");
-		ZEPHIR_CALL_METHOD(NULL, &_5$$4, "__construct", NULL, 28, &_6$$4);
+		ZEPHIR_CALL_METHOD(NULL, &_5$$4, "__construct", NULL, 26, &_6$$4);
 		zephir_check_call_status();
 		zephir_throw_exception_debug(&_5$$4, "tensor/matrix.zep", 735);
 		ZEPHIR_MM_RESTORE();
@@ -2072,7 +2072,7 @@ PHP_METHOD(Tensor_Matrix, inverse)
 		object_init_ex(&_9$$5, tensor_exceptions_runtimeexception_ce);
 		ZEPHIR_INIT_VAR(&_10$$5);
 		ZEPHIR_CONCAT_SS(&_10$$5, "Failed to compute the inverse", " of a singular matrix.");
-		ZEPHIR_CALL_METHOD(NULL, &_9$$5, "__construct", NULL, 28, &_10$$5);
+		ZEPHIR_CALL_METHOD(NULL, &_9$$5, "__construct", NULL, 26, &_10$$5);
 		zephir_check_call_status();
 		zephir_throw_exception_debug(&_9$$5, "tensor/matrix.zep", 742);
 		ZEPHIR_MM_RESTORE();
@@ -2132,7 +2132,7 @@ PHP_METHOD(Tensor_Matrix, pseudoinverse)
 		object_init_ex(&_3$$3, tensor_exceptions_runtimeexception_ce);
 		ZEPHIR_INIT_VAR(&_4$$3);
 		ZEPHIR_CONCAT_SS(&_4$$3, "Failed to compute the pseudoinverse", " of the matrix.");
-		ZEPHIR_CALL_METHOD(NULL, &_3$$3, "__construct", NULL, 28, &_4$$3);
+		ZEPHIR_CALL_METHOD(NULL, &_3$$3, "__construct", NULL, 26, &_4$$3);
 		zephir_check_call_status();
 		zephir_throw_exception_debug(&_3$$3, "tensor/matrix.zep", 759);
 		ZEPHIR_MM_RESTORE();
@@ -2284,7 +2284,7 @@ PHP_METHOD(Tensor_Matrix, fullRank)
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_1, this_ptr, "shape", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_FUNCTION(&_2, "min", NULL, 29, &_1);
+	ZEPHIR_CALL_FUNCTION(&_2, "min", NULL, 27, &_1);
 	zephir_check_call_status();
 	RETURN_MM_BOOL(ZEPHIR_IS_IDENTICAL(&_0, &_2));
 }
@@ -2598,13 +2598,13 @@ PHP_METHOD(Tensor_Matrix, convolve)
 	zephir_read_property_cached(&_18, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_LONG(&_19, ((zephir_get_numberval(&_18) + stride) - 1));
 	ZVAL_LONG(&_20, stride);
-	ZEPHIR_CALL_FUNCTION(&_21, "intdiv", NULL, 18, &_19, &_20);
+	ZEPHIR_CALL_FUNCTION(&_21, "intdiv", NULL, 28, &_19, &_20);
 	zephir_check_call_status();
 	outM = zephir_get_intval(&_21);
 	zephir_read_property_cached(&_19, this_ptr, _zephir_prop_1, 16, PH_NOISY_CC | PH_READONLY);
 	ZVAL_LONG(&_20, ((zephir_get_numberval(&_19) + stride) - 1));
 	ZVAL_LONG(&_22, stride);
-	ZEPHIR_CALL_FUNCTION(&_23, "intdiv", NULL, 18, &_20, &_22);
+	ZEPHIR_CALL_FUNCTION(&_23, "intdiv", NULL, 28, &_20, &_22);
 	zephir_check_call_status();
 	outN = zephir_get_intval(&_23);
 	object_init_ex(return_value, tensor_matrix_ce);
@@ -4694,7 +4694,7 @@ PHP_METHOD(Tensor_Matrix, median)
 	ZEPHIR_INIT_VAR(&_0);
 	zephir_read_property_cached(&_1, this_ptr, _zephir_prop_0, 14, PH_NOISY_CC | PH_READONLY);
 	zephir_read_property_cached(&_2, this_ptr, _zephir_prop_1, 16, PH_NOISY_CC | PH_READONLY);
-	tensor_matrix_median(&_0, &_1, &_2);
+	tensor_median(&_0, &_1, &_2);
 	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 13, &_0);
 	zephir_check_call_status();
 	RETURN_MM();
@@ -4763,7 +4763,7 @@ PHP_METHOD(Tensor_Matrix, quantile)
 	zephir_read_property_cached(&_6, this_ptr, _zephir_prop_0, 14, PH_NOISY_CC | PH_READONLY);
 	zephir_read_property_cached(&_7, this_ptr, _zephir_prop_1, 16, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_8, q);
-	tensor_matrix_quantile(&_5, &_6, &_7, &_8);
+	tensor_quantile(&_5, &_6, &_7, &_8);
 	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 13, &_5);
 	zephir_check_call_status();
 	RETURN_MM();
@@ -9685,7 +9685,7 @@ PHP_METHOD(Tensor_Matrix, getIterator)
 	object_init_ex(return_value, spl_ce_ArrayIterator);
 	ZEPHIR_CALL_METHOD(&_0, this_ptr, "asVectors", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 20, &_0);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 18, &_0);
 	zephir_check_call_status();
 	RETURN_MM();
 }

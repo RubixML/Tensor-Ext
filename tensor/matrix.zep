@@ -1647,7 +1647,7 @@ class Matrix implements Tensor
      */
     public function median() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_matrix_median(this->a, this->n));
+        return new ColumnVector(tensor_median(this->a, this->n));
     }
 
     /**
@@ -1664,7 +1664,7 @@ class Matrix implements Tensor
                 . " 0 and 1, " . strval(q) . " given.");
         }
 
-        return new ColumnVector(tensor_matrix_quantile(this->a, this->n, q));
+        return new ColumnVector(tensor_quantile(this->a, this->n, q));
     }
 
     /**
