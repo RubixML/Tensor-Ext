@@ -605,19 +605,11 @@ class Matrix implements Tensor
      */
     public function asArray() -> array
     {
-        var rowBuffer;
-
-        array b = [];
-
         if unlikely this->n < 1 {
             return [];
         }
 
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = rowBuffer->toArray();
-        }
-
-        return b;
+        return tensor_matrix_to_array(this->a, this->n);
     }
 
     /**
@@ -1585,15 +1577,7 @@ class Matrix implements Tensor
      */
     public function sum() -> <ColumnVector>
     {
-        var rowBuffer;
-
-        array b = [];
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = tensor_buffer_sum(rowBuffer);
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_sum(this->a, this->n));
     }
 
     /**
@@ -1603,15 +1587,7 @@ class Matrix implements Tensor
      */
     public function product() -> <ColumnVector>
     {
-        var rowBuffer;
-
-        array b = [];
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = tensor_buffer_product(rowBuffer);
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_product(this->a, this->n));
     }
 
     /**
@@ -1621,15 +1597,7 @@ class Matrix implements Tensor
      */
     public function min() -> <ColumnVector>
     {
-        var rowBuffer;
-
-        array b = [];
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = tensor_buffer_min(rowBuffer);
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_min(this->a, this->n));
     }
 
     /**
@@ -1639,15 +1607,7 @@ class Matrix implements Tensor
      */
     public function max() -> <ColumnVector>
     {
-        var rowBuffer;
-
-        array b = [];
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = tensor_buffer_max(rowBuffer);
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_max(this->a, this->n));
     }
 
     /**
@@ -1657,15 +1617,7 @@ class Matrix implements Tensor
      */
     public function argmin() -> <ColumnVector>
     {
-        var rowBuffer;
-
-        array b = [];
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = tensor_buffer_argmin(rowBuffer);
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_argmin(this->a, this->n));
     }
 
     /**
@@ -1675,15 +1627,7 @@ class Matrix implements Tensor
      */
     public function argmax() -> <ColumnVector>
     {
-        var rowBuffer;
-
-        array b = [];
-
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = tensor_buffer_argmax(rowBuffer);
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_argmax(this->a, this->n));
     }
 
     /**
@@ -1703,27 +1647,7 @@ class Matrix implements Tensor
      */
     public function median() -> <ColumnVector>
     {
-        var rowBuffer, median;
-
-        array b = [];
-
-        int mid = (int) intdiv(this->n, 2);
-
-        bool odd = this->n % 2 === 1;
-
-        for rowBuffer in this->a->split(this->n) {
-            rowBuffer->sort();
-
-            if odd {
-                let median = rowBuffer->get(mid);
-            } else {
-                let median = (rowBuffer->get(mid - 1) + rowBuffer->get(mid)) / 2.0;
-            }
-
-            let b[] = median;
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_median(this->a, this->n));
     }
 
     /**
@@ -1740,33 +1664,7 @@ class Matrix implements Tensor
                 . " 0 and 1, " . strval(q) . " given.");
         }
 
-        float t;
-
-        var rowBuffer;
-        
-        array b = [];
-
-        float x = q * (this->n - 1) + 1;
-
-        int xHat = (int) x;
-    
-        float remainder = x - xHat;
-
-        for rowBuffer in this->a->split(this->n) {
-            rowBuffer->sort();
-
-            if xHat >= this->n {
-                let b[] = (float) rowBuffer->get(this->n - 1);
-
-                continue;
-            }
-
-            let t = (float) rowBuffer->get(xHat - 1);
-
-            let b[] = t + remainder * (rowBuffer->get(xHat) - t);
-        }
-
-        return ColumnVector::fromArray(b, false);
+        return new ColumnVector(tensor_matrix_quantile(this->a, this->n, q));
     }
 
     /**
@@ -1832,38 +1730,12 @@ class Matrix implements Tensor
      */
     public function round(const int precision = 0) -> <Matrix>
     {
-        if precision === 0 {
-            return new self(
-                tensor_round(this->a, 0), this->m, this->n
-            );
-        }
-
         if unlikely precision < 0 {
             throw new InvalidArgumentException("Decimal precision cannot"
                 . " be less than 0, ". strval(precision) . " given.");
         }
 
-        var rowA, valueA;
-
-        int i;
-
-        array b = [];
-
-        for rowA in this->a->split(this->n) {
-            let i = 0;
-
-            while i < this->n {
-                let valueA = rowA->get(i);
-
-                rowA->set(i, round(valueA, precision));
-
-                let i++;
-            }
-
-            let b[] = rowA;
-        }
-
-        return new self(TensorBuffer::fromBuffers(b), this->m, this->n);
+        return new self(tensor_round(this->a, precision), this->m, this->n);
     }
 
     /**
@@ -2067,27 +1939,22 @@ class Matrix implements Tensor
      */
     public function repeat(const int m, const int n) -> <Matrix>
     {
-        var rowA;
-
-        array bigRows = [];
-
-        if n > 0 {
-            for rowA in this->a->split(this->n) {
-                let bigRows[] = rowA->repeat(n + 1);
-            }
+        if unlikely n < 1 {
+            return self::fromArray([], false);
         }
 
-        if count(bigRows) > 0 {
-            var flat = bigRows[0];
-
-            let flat = flat->concat(array_slice(bigRows, 1));
-
-            let flat = flat->repeat(m + 1);
-
-            return new self(flat, this->m * (m + 1), this->n * (n + 1));
+        if unlikely this->n < 1 {
+            throw new InvalidArgumentException("Chunk length must be"
+                . " greater than 0, 0 given.");
         }
 
-        return self::fromArray([], false);
+        if unlikely this->m < 1 {
+            return self::fromArray([], false);
+        }
+
+        var result = tensor_matrix_repeat(this->a, this->n, m, n);
+
+        return new self(result, this->m * (m + 1), this->n * (n + 1));
     }
 
     /**

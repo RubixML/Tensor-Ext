@@ -2883,6 +2883,44 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function roundFractions() : void
+    {
+        $a = Matrix::fromArray([
+            [1.2345, 2.675, -0.125],
+            [0.125, 1.005, 12.345],
+            [-12.345, 2.5, -2.5],
+        ]);
+
+        $b = $a->round(2);
+
+        $expected = Matrix::fromArray([
+            [round(1.2345, 2), round(2.675, 2), round(-0.125, 2)],
+            [round(0.125, 2), round(1.005, 2), round(12.345, 2)],
+            [round(-12.345, 2), round(2.5, 2), round(-2.5, 2)],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function roundNegativePrecisionThrows() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $a->round(-1);
+    }
+
+    /**
+     * @test
+     */
     public function floor() : void
     {
         $a = Matrix::fromArray([

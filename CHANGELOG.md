@@ -1,8 +1,5 @@
 # Change Log
 
-- 4.0.1
-    - Fixed a segfault in `Matrix::map()` / `TensorBuffer::map()` when the callback was an array callable of the form `[instance, 'method']` on an operation with more than one element. `map()` now dispatches the callback through PHP's native `array_map()` (matching `Vector::map()`) instead of the Zephir dynamic user-callback loop that mis-resolved instance methods after the first element was cached
-
 - 4.0.0
     
 - 3.1.0
