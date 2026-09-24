@@ -9,7 +9,7 @@ use Zephir\HeadersManager;
 use Zephir\Exception\CompilerException;
 use Zephir\Optimizers\OptimizerAbstract;
 
-class TensorMatrixMaxOptimizer extends OptimizerAbstract
+class TensorReduceProductOptimizer extends OptimizerAbstract
 {
     /**
      * @param mixed[] $expression
@@ -24,9 +24,9 @@ class TensorMatrixMaxOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 2) {
+        if (count($expression['parameters']) !== 3) {
             throw new CompilerException(
-                'Tensor matrix max accepts exactly two arguments, ' . count($expression['parameters']) . 'given.',
+                'Tensor reduce product accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorMatrixMaxOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_matrix_max($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
+            "tensor_reduce_product($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
         );
 
         return new CompiledExpression(

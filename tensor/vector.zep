@@ -1124,7 +1124,9 @@ class Vector implements Tensor
      */
     public function sum() -> float
     {
-        return tensor_buffer_sum(this->a);
+        var result = tensor_reduce_sum(this->a, 1, this->n);
+
+        return (double) result->get(0);
     }
 
     /**
@@ -1134,7 +1136,9 @@ class Vector implements Tensor
      */
     public function product() -> float
     {
-        return tensor_buffer_product(this->a);
+        var result = tensor_reduce_product(this->a, 1, this->n);
+
+        return (double) result->get(0);
     }
 
     /**
@@ -1144,7 +1148,14 @@ class Vector implements Tensor
      */
     public function min() -> float
     {
-        return tensor_buffer_min(this->a);
+        if unlikely this->n < 1 {
+            throw new InvalidArgumentException("Cannot compute"
+                . " the minimum of an empty vector.");
+        }
+
+        var result = tensor_reduce_min(this->a, 1, this->n);
+
+        return (double) result->get(0);
     }
 
     /**
@@ -1154,7 +1165,14 @@ class Vector implements Tensor
      */
     public function max() -> float
     {
-        return tensor_buffer_max(this->a);
+        if unlikely this->n < 1 {
+            throw new InvalidArgumentException("Cannot compute"
+                . " the maximum of an empty vector.");
+        }
+
+        var result = tensor_reduce_max(this->a, 1, this->n);
+
+        return (double) result->get(0);
     }
 
     /**
@@ -1164,7 +1182,14 @@ class Vector implements Tensor
      */
     public function argmin() -> int
     {
-        return tensor_buffer_argmin(this->a);
+        if unlikely this->n < 1 {
+            throw new InvalidArgumentException("Cannot compute"
+                . " the argmin of an empty vector.");
+        }
+
+        var result = tensor_reduce_argmin(this->a, 1, this->n);
+
+        return (int) result->get(0);
     }
 
     /**
@@ -1174,7 +1199,14 @@ class Vector implements Tensor
      */
     public function argmax() -> int
     {
-        return tensor_buffer_argmax(this->a);
+        if unlikely this->n < 1 {
+            throw new InvalidArgumentException("Cannot compute"
+                . " the argmax of an empty vector.");
+        }
+
+        var result = tensor_reduce_argmax(this->a, 1, this->n);
+
+        return (int) result->get(0);
     }
 
     /**

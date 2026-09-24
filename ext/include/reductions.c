@@ -54,53 +54,72 @@ static int tensor_resolve_underlying_buffer(zval * obj, zval * buf)
 	return 1;
 }
 
-static double tensor_buffer_sum_values(const uint8_t kind, const void * data, const zend_long len)
+/* The tensor_reduce_* operations reduce a flat buffer viewed as `groups`
+ * contiguous chunks of `length` elements, mirroring TensorBuffer::split(). A
+ * single group (groups == 1) reduces the whole buffer to a scalar, which is
+ * exactly the Vector and ColumnVector case, while multiple groups yield the
+ * per-row Matrix case. `mode` selects the reduction applied to each chunk. */
+
+typedef enum {
+	TENSOR_REDUCE_SUM = 0,
+	TENSOR_REDUCE_PRODUCT,
+	TENSOR_REDUCE_MIN,
+	TENSOR_REDUCE_MAX,
+	TENSOR_REDUCE_ARGMIN,
+	TENSOR_REDUCE_ARGMAX
+} tensor_reduce_mode;
+
+/* Reduce a single contiguous run of `len` elements down to a scalar. For the
+ * sum and product modes a zero-length run yields the identity, mirroring the
+ * previous whole-buffer behaviour on empty buffers. The arg- modes write the
+ * index of the extreme into `*index`; the min/max- modes do too, which is
+ * ignored by their callers. */
+static double tensor_group_reduce(const uint8_t kind, const void * data, const zend_long len, const int mode, zend_long * index)
 {
-	double acc = 0.0;
 	zend_long i;
+	zend_long best_index = 0;
 
-	if (kind == ZEPHIR_BUFFER_LONG) {
-		const zend_long * ptr = (const zend_long *) data;
+	if (mode == TENSOR_REDUCE_SUM) {
+		double acc = 0.0;
 
-		for (i = 0; i < len; ++i) {
-			acc += (double) ptr[i];
+		if (kind == ZEPHIR_BUFFER_LONG) {
+			const zend_long * ptr = (const zend_long *) data;
+
+			for (i = 0; i < len; ++i) {
+				acc += (double) ptr[i];
+			}
+		} else {
+			const double * ptr = (const double *) data;
+
+			for (i = 0; i < len; ++i) {
+				acc += ptr[i];
+			}
 		}
-	} else {
-		const double * ptr = (const double *) data;
 
-		for (i = 0; i < len; ++i) {
-			acc += ptr[i];
-		}
+		return acc;
 	}
 
-	return acc;
-}
+	if (mode == TENSOR_REDUCE_PRODUCT) {
+		double acc = 1.0;
 
-static double tensor_buffer_product_values(const uint8_t kind, const void * data, const zend_long len)
-{
-	double acc = 1.0;
-	zend_long i;
+		if (kind == ZEPHIR_BUFFER_LONG) {
+			const zend_long * ptr = (const zend_long *) data;
 
-	if (kind == ZEPHIR_BUFFER_LONG) {
-		const zend_long * ptr = (const zend_long *) data;
+			for (i = 0; i < len; ++i) {
+				acc *= (double) ptr[i];
+			}
+		} else {
+			const double * ptr = (const double *) data;
 
-		for (i = 0; i < len; ++i) {
-			acc *= (double) ptr[i];
+			for (i = 0; i < len; ++i) {
+				acc *= ptr[i];
+			}
 		}
-	} else {
-		const double * ptr = (const double *) data;
 
-		for (i = 0; i < len; ++i) {
-			acc *= ptr[i];
-		}
+		return acc;
 	}
 
-	return acc;
-}
-
-static void tensor_buffer_extreme(const uint8_t kind, const void * data, const zend_long len, const int find_min, double * value, zend_long * index)
-{
-	zend_long i;
+	int find_min = mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_ARGMIN;
 
 	if (kind == ZEPHIR_BUFFER_LONG) {
 		const zend_long * ptr = (const zend_long *) data;
@@ -109,13 +128,15 @@ static void tensor_buffer_extreme(const uint8_t kind, const void * data, const z
 		for (i = 1; i < len; ++i) {
 			if (find_min ? ptr[i] < best : ptr[i] > best) {
 				best = ptr[i];
-				*index = i;
+				best_index = i;
 			}
 		}
 
-		if (value != NULL) {
-			*value = (double) best;
+		if (index != NULL) {
+			*index = best_index;
 		}
+
+		return (double) best;
 	} else {
 		const double * ptr = (const double *) data;
 		double best = ptr[0];
@@ -123,259 +144,116 @@ static void tensor_buffer_extreme(const uint8_t kind, const void * data, const z
 		for (i = 1; i < len; ++i) {
 			if (find_min ? ptr[i] < best : ptr[i] > best) {
 				best = ptr[i];
-				*index = i;
+				best_index = i;
 			}
 		}
 
-		if (value != NULL) {
-			*value = best;
+		if (index != NULL) {
+			*index = best_index;
+		}
+
+		return best;
+	}
+}
+
+/* Shared implementation backing all tensor_reduce_* operations. Unwraps the
+ * underlying buffer and validates it against a `groups` x `length` logical
+ * shape before writing one reduced value per group into a new TensorBuffer. */
+static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_zval, zval * length_zval, int mode)
+{
+	zval buffer;
+	uint8_t kind;
+	zend_long total = 0, groupsHat = 0, lengthHat = 0, i;
+
+	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
+		return;
+	}
+
+	kind = zephir_buffer_kind(&buffer);
+	total = zephir_buffer_len(&buffer);
+
+	if (UNEXPECTED(kind == 0)) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	groupsHat = zephir_get_intval(groups_zval);
+	lengthHat = zephir_get_intval(length_zval);
+
+	if (UNEXPECTED(groupsHat < 1)) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Number of groups must be greater than 0."));
+		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	if (UNEXPECTED(lengthHat < 0)) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Group length must be non-negative."));
+		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	if (lengthHat > 0) {
+		if (UNEXPECTED(total % lengthHat != 0 || groupsHat != total / lengthHat)) {
+			zephir_throw_exception_string(spl_ce_LengthException,
+				SL("Matrix and row dimensions must agree."));
+			zval_ptr_dtor(&buffer);
+			return;
+		}
+	} else if (UNEXPECTED(total != 0)) {
+		zephir_throw_exception_string(spl_ce_LengthException,
+			SL("Group length must not be zero for a non-empty buffer."));
+		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	/* Extrema need at least one element in every group. */
+	if (UNEXPECTED(lengthHat == 0 && (mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_MAX
+		|| mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX))) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Cannot compute the reduction of an empty group."));
+		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	zval c;
+
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, groupsHat, &c) == FAILURE)) {
+		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	double * vc = zephir_buffer_doubles(&c);
+
+	if (kind == ZEPHIR_BUFFER_LONG) {
+		const zend_long * ptr = zephir_buffer_longs(&buffer);
+
+		for (i = 0; i < groupsHat; ++i) {
+			zend_long index = 0;
+			double value = tensor_group_reduce(kind, ptr + i * lengthHat, lengthHat, mode, &index);
+
+			vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
+				? (double) index : value;
+		}
+	} else {
+		const double * ptr = zephir_buffer_doubles(&buffer);
+
+		for (i = 0; i < groupsHat; ++i) {
+			zend_long index = 0;
+			double value = tensor_group_reduce(kind, ptr + i * lengthHat, lengthHat, mode, &index);
+
+			vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
+				? (double) index : value;
 		}
 	}
-}
-
-/**
- * Return the sum of the elements of a Buffer.
- *
- * @param return_value
- * @param obj
- */
-void tensor_buffer_sum(zval * return_value, zval * obj)
-{
-	zval buffer;
-	uint8_t kind;
-	zend_long len;
-
-	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
-		return;
-	}
-
-	kind = zephir_buffer_kind(&buffer);
-	len = zephir_buffer_len(&buffer);
-
-	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer object."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (len == 0) {
-		RETVAL_DOUBLE(0.0);
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	RETVAL_DOUBLE(tensor_buffer_sum_values(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len));
-	zval_ptr_dtor(&buffer);
-}
-
-/**
- * Return the product of the elements of a Buffer.
- *
- * @param return_value
- * @param obj
- */
-void tensor_buffer_product(zval * return_value, zval * obj)
-{
-	zval buffer;
-	uint8_t kind;
-	zend_long len;
-
-	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
-		return;
-	}
-
-	kind = zephir_buffer_kind(&buffer);
-	len = zephir_buffer_len(&buffer);
-
-	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer object."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (len == 0) {
-		RETVAL_DOUBLE(1.0);
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	RETVAL_DOUBLE(tensor_buffer_product_values(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len));
-	zval_ptr_dtor(&buffer);
-}
-
-/**
- * Return the minimum element of a Buffer.
- *
- * @param return_value
- * @param obj
- */
-void tensor_buffer_min(zval * return_value, zval * obj)
-{
-	zval buffer;
-	uint8_t kind;
-	zend_long len;
-	double value = 0.0;
-	zend_long index = 0;
-
-	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
-		return;
-	}
-
-	kind = zephir_buffer_kind(&buffer);
-	len = zephir_buffer_len(&buffer);
-
-	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer object."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (UNEXPECTED(len == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Cannot compute the minimum of an empty buffer."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 1, &value, &index);
 
 	zval_ptr_dtor(&buffer);
-
-	RETVAL_DOUBLE(value);
+	zval_ptr_dtor(&c);
 }
 
-/**
- * Return the maximum element of a Buffer.
- *
- * @param return_value
- * @param obj
- */
-void tensor_buffer_max(zval * return_value, zval * obj)
-{
-	zval buffer;
-	uint8_t kind;
-	zend_long len;
-	double value = 0.0;
-	zend_long index = 0;
-
-	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
-		return;
-	}
-
-	kind = zephir_buffer_kind(&buffer);
-	len = zephir_buffer_len(&buffer);
-
-	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer object."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (UNEXPECTED(len == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Cannot compute the maximum of an empty buffer."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 0, &value, &index);
-
-	zval_ptr_dtor(&buffer);
-
-	RETVAL_DOUBLE(value);
-}
-
-/**
- * Return the index of the minimum element of a Buffer.
- *
- * @param return_value
- * @param obj
- */
-void tensor_buffer_argmin(zval * return_value, zval * obj)
-{
-	zval buffer;
-	uint8_t kind;
-	zend_long len;
-	zend_long index = 0;
-
-	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
-		return;
-	}
-
-	kind = zephir_buffer_kind(&buffer);
-	len = zephir_buffer_len(&buffer);
-
-	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer object."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (UNEXPECTED(len == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Cannot compute the argmin of an empty buffer."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 1, NULL, &index);
-
-	zval_ptr_dtor(&buffer);
-
-	RETVAL_LONG(index);
-}
-
-/**
- * Return the index of the maximum element of a Buffer.
- *
- * @param return_value
- * @param obj
- */
-void tensor_buffer_argmax(zval * return_value, zval * obj)
-{
-	zval buffer;
-	uint8_t kind;
-	zend_long len;
-	zend_long index = 0;
-
-	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
-		return;
-	}
-
-	kind = zephir_buffer_kind(&buffer);
-	len = zephir_buffer_len(&buffer);
-
-	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer object."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (UNEXPECTED(len == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Cannot compute the argmax of an empty buffer."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 0, NULL, &index);
-
-	zval_ptr_dtor(&buffer);
-
-	RETVAL_LONG(index);
-}
 
 /**
  * Row-wise operations work directly on the flat row-major buffer that backs a
@@ -427,250 +305,89 @@ static int tensor_matrix_double_cmp(const void * a, const void * b)
 }
 
 /**
- * Return the sum of each row of a matrix as a column buffer.
+ * Return the sum of each group of the buffer as a TensorBuffer. A single
+ * group covers the whole-buffer (Vector / ColumnVector) case.
  *
  * @param return_value
  * @param obj
- * @param n
+ * @param groups
+ * @param length
  */
-void tensor_matrix_sum(zval * return_value, zval * obj, zval * n)
+void tensor_reduce_sum(zval * return_value, zval * obj, zval * groups, zval * length)
 {
-	double * va = NULL;
-	zend_long m = 0, n_hat = 0;
-	zend_long i, j;
-
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
-		return;
-	}
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < m; ++i) {
-		const double * row = va + i * n_hat;
-		double acc = 0.0;
-
-		for (j = 0; j < n_hat; ++j) {
-			acc += row[j];
-		}
-
-		vc[i] = acc;
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_reduce_apply(return_value, obj, groups, length, TENSOR_REDUCE_SUM);
 }
 
 /**
- * Return the product of the elements of each row of a matrix as a column
- * buffer.
+ * Return the product of each group of the buffer as a TensorBuffer. A single
+ * group covers the whole-buffer (Vector / ColumnVector) case.
  *
  * @param return_value
  * @param obj
- * @param n
+ * @param groups
+ * @param length
  */
-void tensor_matrix_product(zval * return_value, zval * obj, zval * n)
+void tensor_reduce_product(zval * return_value, zval * obj, zval * groups, zval * length)
 {
-	double * va = NULL;
-	zend_long m = 0, n_hat = 0;
-	zend_long i, j;
-
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
-		return;
-	}
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < m; ++i) {
-		const double * row = va + i * n_hat;
-		double acc = 1.0;
-
-		for (j = 0; j < n_hat; ++j) {
-			acc *= row[j];
-		}
-
-		vc[i] = acc;
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_reduce_apply(return_value, obj, groups, length, TENSOR_REDUCE_PRODUCT);
 }
 
 /**
- * Return the minimum of each row of a matrix as a column buffer.
+ * Return the minimum of each group of the buffer as a TensorBuffer. A single
+ * group covers the whole-buffer (Vector / ColumnVector) case.
  *
  * @param return_value
  * @param obj
- * @param n
+ * @param groups
+ * @param length
  */
-void tensor_matrix_min(zval * return_value, zval * obj, zval * n)
+void tensor_reduce_min(zval * return_value, zval * obj, zval * groups, zval * length)
 {
-	double * va = NULL;
-	zend_long m = 0, n_hat = 0;
-	zend_long i, j;
-
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
-		return;
-	}
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < m; ++i) {
-		const double * row = va + i * n_hat;
-		double best = row[0];
-
-		for (j = 1; j < n_hat; ++j) {
-			if (row[j] < best) {
-				best = row[j];
-			}
-		}
-
-		vc[i] = best;
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_reduce_apply(return_value, obj, groups, length, TENSOR_REDUCE_MIN);
 }
 
 /**
- * Return the maximum of each row of a matrix as a column buffer.
+ * Return the maximum of each group of the buffer as a TensorBuffer. A single
+ * group covers the whole-buffer (Vector / ColumnVector) case.
  *
  * @param return_value
  * @param obj
- * @param n
+ * @param groups
+ * @param length
  */
-void tensor_matrix_max(zval * return_value, zval * obj, zval * n)
+void tensor_reduce_max(zval * return_value, zval * obj, zval * groups, zval * length)
 {
-	double * va = NULL;
-	zend_long m = 0, n_hat = 0;
-	zend_long i, j;
-
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
-		return;
-	}
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < m; ++i) {
-		const double * row = va + i * n_hat;
-		double best = row[0];
-
-		for (j = 1; j < n_hat; ++j) {
-			if (row[j] > best) {
-				best = row[j];
-			}
-		}
-
-		vc[i] = best;
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_reduce_apply(return_value, obj, groups, length, TENSOR_REDUCE_MAX);
 }
 
 /**
- * Return the index of the minimum of each row of a matrix as a column buffer.
+ * Return the index of the minimum of each group of the buffer as a
+ * TensorBuffer. A single group covers the whole-buffer (Vector /
+ * ColumnVector) case.
  *
  * @param return_value
  * @param obj
- * @param n
+ * @param groups
+ * @param length
  */
-void tensor_matrix_argmin(zval * return_value, zval * obj, zval * n)
+void tensor_reduce_argmin(zval * return_value, zval * obj, zval * groups, zval * length)
 {
-	double * va = NULL;
-	zend_long m = 0, n_hat = 0;
-	zend_long i, j;
-
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
-		return;
-	}
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < m; ++i) {
-		const double * row = va + i * n_hat;
-		double best = row[0];
-		zend_long index = 0;
-
-		for (j = 1; j < n_hat; ++j) {
-			if (row[j] < best) {
-				best = row[j];
-				index = j;
-			}
-		}
-
-		vc[i] = (double) index;
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_reduce_apply(return_value, obj, groups, length, TENSOR_REDUCE_ARGMIN);
 }
 
 /**
- * Return the index of the maximum of each row of a matrix as a column buffer.
+ * Return the index of the maximum of each group of the buffer as a
+ * TensorBuffer. A single group covers the whole-buffer (Vector /
+ * ColumnVector) case.
  *
  * @param return_value
  * @param obj
- * @param n
+ * @param groups
+ * @param length
  */
-void tensor_matrix_argmax(zval * return_value, zval * obj, zval * n)
+void tensor_reduce_argmax(zval * return_value, zval * obj, zval * groups, zval * length)
 {
-	double * va = NULL;
-	zend_long m = 0, n_hat = 0;
-	zend_long i, j;
-
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
-		return;
-	}
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < m; ++i) {
-		const double * row = va + i * n_hat;
-		double best = row[0];
-		zend_long index = 0;
-
-		for (j = 1; j < n_hat; ++j) {
-			if (row[j] > best) {
-				best = row[j];
-				index = j;
-			}
-		}
-
-		vc[i] = (double) index;
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_reduce_apply(return_value, obj, groups, length, TENSOR_REDUCE_ARGMAX);
 }
 
 /**

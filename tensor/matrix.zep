@@ -1577,7 +1577,7 @@ class Matrix implements Tensor
      */
     public function sum() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_matrix_sum(this->a, this->n));
+        return new ColumnVector(tensor_reduce_sum(this->a, this->m, this->n));
     }
 
     /**
@@ -1587,7 +1587,7 @@ class Matrix implements Tensor
      */
     public function product() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_matrix_product(this->a, this->n));
+        return new ColumnVector(tensor_reduce_product(this->a, this->m, this->n));
     }
 
     /**
@@ -1597,7 +1597,7 @@ class Matrix implements Tensor
      */
     public function min() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_matrix_min(this->a, this->n));
+        return new ColumnVector(tensor_reduce_min(this->a, this->m, this->n));
     }
 
     /**
@@ -1607,7 +1607,7 @@ class Matrix implements Tensor
      */
     public function max() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_matrix_max(this->a, this->n));
+        return new ColumnVector(tensor_reduce_max(this->a, this->m, this->n));
     }
 
     /**
@@ -1617,7 +1617,7 @@ class Matrix implements Tensor
      */
     public function argmin() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_matrix_argmin(this->a, this->n));
+        return new ColumnVector(tensor_reduce_argmin(this->a, this->m, this->n));
     }
 
     /**
@@ -1627,7 +1627,7 @@ class Matrix implements Tensor
      */
     public function argmax() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_matrix_argmax(this->a, this->n));
+        return new ColumnVector(tensor_reduce_argmax(this->a, this->m, this->n));
     }
 
     /**
