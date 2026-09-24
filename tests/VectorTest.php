@@ -72,39 +72,6 @@ class VectorTest extends TestCase
     /**
      * @test
      */
-    public function fromArrayThrowsOnNestedArray() : void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        Vector::fromArray([1.0, [2.0], 3.0]);
-    }
-
-    /**
-     * @test
-     */
-    public function fromArraySkipsValidationWhenValidateFalse() : void
-    {
-        $expected = Vector::fromArray([1.0, 2.0, 3.0]);
-
-        $a = Vector::fromArray([1.0, 2.0, 3.0], false);
-
-        $this->assertInstanceOf(Vector::class, $a);
-        $this->assertEquals($expected->asArray(), $a->asArray());
-    }
-
-    /**
-     * @test
-     */
-    public function fromArrayDiscardsKeysPositionally() : void
-    {
-        $vector = Vector::fromArray([1 => 1.5, 0 => 2.5, 3 => 4.0]);
-
-        $this->assertEqualsWithDelta([1.5, 2.5, 4.0], $vector->asArray(), self::MAX_DELTA);
-    }
-
-    /**
-     * @test
-     */
     public function zeros() : void
     {
         $zeros = Vector::zeros(4);

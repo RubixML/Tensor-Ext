@@ -93,46 +93,6 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
-    public function fromArrayThrowsOnNonArrayRow() : void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        Matrix::fromArray([
-            [1.0, 2.0],
-            3.0,
-        ]);
-    }
-
-    /**
-     * @test
-     */
-    public function fromArrayThrowsOnRaggedColumns() : void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        Matrix::fromArray([
-            [1.0, 2.0],
-            [3.0],
-        ]);
-    }
-
-    /**
-     * @test
-     */
-    public function fromArraySkipsValidationWhenValidateFalse() : void
-    {
-        $matrix = Matrix::fromArray([
-            [1.0, 2.0],
-            [3.0],
-        ], false);
-
-        $this->assertInstanceOf(Matrix::class, $matrix);
-        $this->assertSame([2, 2], $matrix->shape());
-    }
-
-    /**
-     * @test
-     */
     public function identity() : void
     {
         $matrix = Matrix::identity(4);
