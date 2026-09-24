@@ -15,28 +15,6 @@ use Tensor\Exceptions\DimensionalityMismatch;
 class ColumnVector extends Vector
 {
     /**
-     * Factory method to build a new vector from an array.
-     *
-     * @param (int|float)[] a
-     * @return self
-     */
-    public static function build(const array a = [])
-    {
-        return new self(a, true);
-    }
- 
-    /**
-     * Build a vector foregoing any validation for quicker instantiation.
-     *
-     * @param (int|float)[] a
-     * @return self
-     */
-    public static function quick(const array a = [])
-    {
-        return new self(a, false);
-    }
-
-    /**
      * Return the number of rows in the vector.
      *
      * @return int
@@ -63,7 +41,7 @@ class ColumnVector extends Vector
      */
     public function transpose()
     {
-        return Vector::quick(this->a);
+        return new Vector(this->a);
     }
 
     /**
@@ -74,7 +52,14 @@ class ColumnVector extends Vector
      */
     public function matmul(const <Matrix> b) -> <Matrix>
     {
-        return this->asColumnMatrix()->matmul(b);
+        if unlikely b->m() !== 1 {
+            throw new DimensionalityMismatch("Matrix A requires"
+                . " 1 rows but Matrix B has " . (string) b->m() . ".");
+        }
+
+        var product = tensor_outer(this->a, b->asTensorBuffer(), this->m(), b->n());
+
+        return new Matrix(product, this->m(), b->n());
     }
 
     /**
@@ -92,24 +77,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_multiply_col(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA * valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -127,24 +101,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_divide_col_reverse(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA / valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -162,24 +125,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_add_col(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA + valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -197,24 +149,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_subtract_col_reverse(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA - valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -232,24 +173,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_pow_col_reverse(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = pow(valueA, valueB);
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
  
     /**
@@ -267,24 +197,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_mod_col_reverse(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA % valueB;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -302,24 +221,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_equal_col(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA == valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -337,24 +245,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_not_equal_col(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA != valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -372,24 +269,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_greater_col_reverse(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA > valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -407,24 +293,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_greater_equal_col_reverse(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA >= valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -442,24 +317,13 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
 
-        array c = [];
-        array rowC = [];
+        let bHat = b->asTensorBuffer();
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
+        let result = tensor_less_col_reverse(bHat, this->a, b->n());
 
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA < valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -477,23 +341,12 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var i, rowB, valueB, valueA;
+        var bHat, result;
+
+        let bHat = b->asTensorBuffer();
         
-        array c = [];
-        array rowC = [];
+        let result = tensor_less_equal_col_reverse(bHat, this->a, b->n());
 
-        for i, rowB in b->asArray() {
-            let valueA = this->a[i];
-
-            let rowC = [];
-
-            for valueB in rowB {
-                let rowC[] = valueA <= valueB ? 1 : 0;
-            }
-
-            let c[] = rowC;
-        }
-
-        return Matrix::quick(c);
+        return new Matrix(result, b->m(), b->n());
     }
 }

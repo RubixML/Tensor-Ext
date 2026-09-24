@@ -3,7 +3,11 @@
 #endif
 
 #include <php.h>
+#include <ext/spl/spl_exceptions.h>
 #include "kernel/operators.h"
+#include "php_ext.h"
+#include "kernel/buffer.h"
+#include "include/buffer.h"
 
 /**
  * 1D convolution between a vector A and B (kernel) with a given stride.
@@ -15,50 +19,48 @@
  */
 void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
 {
-    unsigned int i, j;
-    unsigned int jmin, jmax;
-    double sigma;
-    zval c;
+	zend_long i, j;
+	zend_long jmin, jmax;
+	double sigma;
+	zend_long na = 0, nb = 0;
+	int ok_a = 0, ok_b = 0;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
+	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
 
-    unsigned int s = zephir_get_intval(stride);
+	if (UNEXPECTED(!ok_a || !ok_b)) {
+		return;
+	}
 
-    unsigned int na = zend_array_count(aa);
-    unsigned int nb = zend_array_count(ab);
-    unsigned int nc = na + nb - 1;
+	zend_long s = zephir_get_intval(stride);
 
-    double * va = emalloc(na * sizeof(double));
-    double * vb = emalloc(nb * sizeof(double));
+	zend_long nc = na + nb - 1;
+	zend_long nout = (nc + s - 1) / s;
 
-    for (i = 0; i < na; ++i) {
-        va[i] = zephir_get_doubleval(zend_hash_index_find(aa, i));
-    }
+	zval c;
 
-    for (i = 0; i < nb; ++i) {
-        vb[i] = zephir_get_doubleval(zend_hash_index_find(ab, i));
-    }
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, nout, &c) == FAILURE)) {
+		return;
+	}
 
-    array_init_size(&c, (nc + s - 1) / s);
+	double * vc = zephir_buffer_doubles(&c);
 
-    for (i = 0; i < nc; i += s) {
-        jmin = i >= nb - 1 ? i - (nb - 1) : 0;
-        jmax = i < na ? i : na - 1;
+	zend_long idx = 0;
 
-        sigma = 0.0;
+	for (i = 0; i < nc; i += s) {
+		jmin = i >= nb - 1 ? i - (nb - 1) : 0;
+		jmax = i < na ? i : na - 1;
 
-        for (j = jmin; j <= jmax; ++j) {
-            sigma += va[j] * vb[i - j];
-        }
+		sigma = 0.0;
 
-        add_next_index_double(&c, sigma);
-    }
+		for (j = jmin; j <= jmax; ++j) {
+			sigma += va[j] * vb[i - j];
+		}
 
-    RETVAL_ARR(Z_ARR(c));
+		vc[idx++] = sigma;
+	}
 
-    efree(va);
-    efree(vb);
+	zval_ptr_dtor(&c);
 }
 
 /**
@@ -68,79 +70,77 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
  * @param a
  * @param b
  * @param stride
+ * @param ma
+ * @param na
+ * @param mb
+ * @param nb
  */
-void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride)
+void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, zval * ma, zval * na, zval * mb, zval * nb)
 {
-    unsigned int i, j, k, l;
-    int x, y;
+    zend_long i, j, k, l;
+    zend_long x, y;
     double sigma;
-    zval * row;
-    zval rowC, c;
+    zend_long nbufa = 0, nbufb = 0;
+    int ok_a = 0, ok_b = 0;
 
-    zend_array * aa = Z_ARR_P(a);
-    zend_array * ab = Z_ARR_P(b);
+    zend_long s = zephir_get_intval(stride);
+    zend_long ma_ = zephir_get_intval(ma);
+    zend_long na_ = zephir_get_intval(na);
+    zend_long mb_ = zephir_get_intval(mb);
+    zend_long nb_ = zephir_get_intval(nb);
 
-    unsigned int s = zephir_get_intval(stride);
+    double * va = tensor_tensorbuffer_doubles(a, &nbufa, &ok_a);
+    double * vb = tensor_tensorbuffer_doubles(b, &nbufb, &ok_b);
 
-    unsigned int ma = zend_array_count(aa);
-    unsigned int na = zend_array_count(Z_ARR_P(zend_hash_index_find(aa, 0)));
-    unsigned int mb = zend_array_count(ab);
-    unsigned int nb = zend_array_count(Z_ARR_P(zend_hash_index_find(ab, 0)));
-
-    double * va = emalloc(ma * na * sizeof(double));
-    double * vb = emalloc(mb * nb * sizeof(double));
-
-    for (i = 0; i < ma; ++i) {
-        row = zend_hash_index_find(aa, i);
-
-        for (j = 0; j < na; ++j) {
-            va[i * na + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
+    if (UNEXPECTED(!ok_a || !ok_b)) {
+        return;
     }
 
-    for (i = 0; i < mb; ++i) {
-        row = zend_hash_index_find(ab, i);
-
-        for (j = 0; j < nb; ++j) {
-            vb[i * nb + j] = zephir_get_doubleval(zend_hash_index_find(Z_ARR_P(row), j));
-        }
+    if (UNEXPECTED(nbufa != ma_ * na_ || nbufb != mb_ * nb_)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Input buffers must match the given dimensions."));
+        return;
     }
 
-    unsigned int p = mb / 2;
-    unsigned int q = nb / 2;
+    zend_long p = mb_ / 2;
+    zend_long q = nb_ / 2;
 
-    array_init_size(&c, (ma + s - 1) / s);
+    zend_long om = (ma_ + s - 1) / s;
+    zend_long on = (na_ + s - 1) / s;
 
-    for (i = 0; i < ma; i += s) {
-        array_init_size(&rowC, (na + s - 1) / s);
+    zval c;
 
-        for (j = 0; j < na; j += s) {   
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, om * on, &c) == FAILURE)) {
+        return;
+    }
+
+    double * vc = zephir_buffer_doubles(&c);
+
+    zend_long idx = 0;
+
+    for (i = 0; i < ma_; i += s) {
+        for (j = 0; j < na_; j += s) {
             sigma = 0.0;
 
-            for (k = 0; k < mb; ++k) {
+            for (k = 0; k < mb_; ++k) {
                 x = i + p - k;
 
-                if (x < 0 || x >= ma) {
+                if (x < 0 || x >= ma_) {
                     continue;
                 }
 
-                for (l = 0; l < nb; ++l) {
+                for (l = 0; l < nb_; ++l) {
                     y = j + q - l;
 
-                    if (y >= 0 && y < na) {
-                        sigma += va[x * na + y] * vb[k * nb + l];
+                    if (y >= 0 && y < na_) {
+                        sigma += va[x * na_ + y] * vb[k * nb_ + l];
                     }
                 }
             }
 
-            add_next_index_double(&rowC, sigma);
+            vc[idx++] = sigma;
         }
-
-        add_next_index_zval(&c, &rowC);
     }
 
-    RETVAL_ARR(Z_ARR(c));
-
-    efree(va);
-    efree(vb);
+    zval_ptr_dtor(&c);
 }

@@ -7,7 +7,7 @@ use Tensor\Vector;
 /**
  * @Groups({"Random"})
  */
-class GaussianMVectorBench
+class GaussianVectorBench
 {
     /**
      * @Subject
@@ -16,6 +16,6 @@ class GaussianMVectorBench
      */
     public function gaussian() : void
     {
-        Vector::gaussian(100000);
+        Vector::gaussian(250000);
     }
 }

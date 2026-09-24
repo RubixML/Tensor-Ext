@@ -24,7 +24,7 @@ class RREFTest extends TestCase
     public function reduceDiagonalIsIdentity() : void
     {
         // A non-singular diagonal matrix reduces to the identity.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 0.0, 0.0],
             [0.0, 2.0, 0.0],
             [0.0, 0.0, 3.0],
@@ -32,13 +32,13 @@ class RREFTest extends TestCase
 
         $rref = RREF::reduce($a);
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [1.0, 0.0, 0.0],
             [0.0, 1.0, 0.0],
             [0.0, 0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -46,19 +46,19 @@ class RREFTest extends TestCase
      */
     public function reduce2x2() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
 
         $rref = RREF::reduce($a);
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [1.0, 0.0],
             [0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -66,19 +66,19 @@ class RREFTest extends TestCase
      */
     public function reduceDiagonal2x2() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, 0.0],
             [0.0, 3.0],
         ]);
 
         $rref = RREF::reduce($a);
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [1.0, 0.0],
             [0.0, 1.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -86,11 +86,11 @@ class RREFTest extends TestCase
      */
     public function reduce1x1() : void
     {
-        $a = Matrix::quick([[7.0]]);
+        $a = Matrix::fromArray([[7.0]]);
 
         $rref = RREF::reduce($a);
 
-        $this->assertEqualsWithDelta(Matrix::quick([[1.0]]), $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(Matrix::fromArray([[1.0]])->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -99,19 +99,19 @@ class RREFTest extends TestCase
     public function reduceSingular2x2() : void
     {
         // A rank-1 matrix has a zero row and one free variable.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [2.0, 4.0],
         ]);
 
         $rref = RREF::reduce($a);
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [1.0, 2.0],
             [0.0, 0.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
 
         $aOut = $rref->a()->asArray();
 
@@ -124,19 +124,19 @@ class RREFTest extends TestCase
     public function reduceZeroRow() : void
     {
         // A leading zero row is swapped down; the result has a zero row.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [0.0, 0.0],
             [1.0, 2.0],
         ]);
 
         $rref = RREF::reduce($a);
 
-        $expectedA = Matrix::quick([
+        $expectedA = Matrix::fromArray([
             [1.0, 2.0],
             [0.0, 0.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedA, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -144,7 +144,7 @@ class RREFTest extends TestCase
      */
     public function rankMatchesNumberNonZeroRows() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [2.0, 4.0, 6.0],
             [4.0, 8.0, 12.0],
@@ -185,7 +185,7 @@ class RREFTest extends TestCase
         // RREF must contain exactly three non-zero rows, the fourth being zero.
         // Before the float-tolerance fix, floating-point residual of ~1e-16
         // on the diagonal would cause RREF to report a fourth non-zero row.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, 1.0, 0.0, 1.0],
             [1.0, 2.0, 1.0, 0.0],
             [0.0, 1.0, 2.0, 1.0],
@@ -222,7 +222,7 @@ class RREFTest extends TestCase
      */
     public function accessorsReturnMatrices() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 0.0, 0.0],
             [0.0, 1.0, 0.0],
             [0.0, 0.0, 1.0],
@@ -230,6 +230,6 @@ class RREFTest extends TestCase
 
         $rref = new RREF($a);
 
-        $this->assertEqualsWithDelta($a, $rref->a(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 }

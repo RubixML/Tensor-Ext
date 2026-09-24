@@ -24,9 +24,9 @@ class TensorMatmulOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 2) {
+        if (count($expression['parameters']) !== 5) {
             throw new CompilerException(
-                'Dot accepts exactly two arguments, ' . count($expression['parameters']) . 'given.',
+                'Matmul accepts exactly five arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorMatmulOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_matmul($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
+            "tensor_matmul($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]}, {$resolvedParams[3]}, {$resolvedParams[4]});"
         );
 
         return new CompiledExpression(

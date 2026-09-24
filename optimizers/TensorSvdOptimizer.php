@@ -24,9 +24,9 @@ class TensorSvdOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 1) {
+        if (count($expression['parameters']) !== 3) {
             throw new CompilerException(
-                'SVD accepts exactly one argument, ' . count($expression['parameters']) . 'given.',
+                'SVD accepts exactly three arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorSvdOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_svd($symbol, {$resolvedParams[0]});"
+            "tensor_svd($symbol, {$resolvedParams[0]}, {$resolvedParams[1]}, {$resolvedParams[2]});"
         );
 
         return new CompiledExpression(

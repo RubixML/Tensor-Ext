@@ -44,6 +44,18 @@ ZEPHIR_DOC_METHOD(Tensor_Special, min);
  */
 ZEPHIR_DOC_METHOD(Tensor_Special, max);
 /**
+ * Return the index (or per-row indices) of the minimum of the tensor.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Special, argmin);
+/**
+ * Return the index (or per-row indices) of the maximum of the tensor.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Special, argmax);
+/**
  * Clip the tensor to be between the given minimum and maximum.
  *
  * @param float min

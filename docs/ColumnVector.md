@@ -16,6 +16,7 @@ This page documents only the methods **defined on `ColumnVector`** and how they 
 - Element-wise operations against a `Matrix` broadcast **down the rows** of the matrix (each matrix row is scaled by one vector element), whereas a `Vector` broadcasts **across the columns**.
 - `transpose()` rotates the column vector into a horizontal `Vector`.
 - All inherited factory/operators operate on `static`, so they return `ColumnVector` instances where applicable.
+- `ColumnVector::fromArray(array $a, bool $validate = true)` is inherited from `Vector` and returns a `ColumnVector` instance directly.
 
 ## Dimensionality
 

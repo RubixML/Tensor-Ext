@@ -11,13 +11,16 @@
 #include "kernel/globals.h"
 
 #define PHP_TENSOR_EXT_NAME        "tensor"
-#define PHP_TENSOR_EXT_VERSION     "3.1.1"
+#define PHP_TENSOR_EXT_VERSION     "4.0.0"
 #define PHP_TENSOR_EXT_EXTNAME     "tensor_ext"
 #define PHP_TENSOR_EXT_AUTHOR      "The Rubix ML Community"
 #define PHP_TENSOR_EXT_ZEPVERSION  "1.5.0-$Id$"
 #define PHP_TENSOR_EXT_DESCRIPTION "Scientific computing for the PHP language."
 
 
+
+#define ZEPHIR_BUFFER_ENABLED 1
+#define ZEPHIR_BUFFER_NAMESPACE "Tensor"
 
 
 

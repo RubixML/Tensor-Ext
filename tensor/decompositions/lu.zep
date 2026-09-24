@@ -52,7 +52,7 @@ class Lu
                 . " square, " . $a->shapeString() . " given.");
         }
 
-        var result = tensor_lu(a->asArray());
+        var result = tensor_lu(a->asTensorBuffer(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to decompose matrix.");
@@ -62,9 +62,9 @@ class Lu
 
         let lup = (array) result;
 
-        var l = Matrix::quick(lup[0]);
-        var u = Matrix::quick(lup[1]);
-        var p = Matrix::quick(lup[2]);
+        var l = new Matrix(lup[0], a->n(), a->n());
+        var u = new Matrix(lup[1], a->n(), a->n());
+        var p = new Matrix(lup[2], a->n(), a->n());
 
         return new self(l, u, p);
     }
