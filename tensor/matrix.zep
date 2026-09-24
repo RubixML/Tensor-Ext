@@ -702,19 +702,13 @@ class Matrix implements Tensor
      */
     public function transpose() -> <Matrix>
     {
-        var col;
-
-        var cols = this->asColumnBuffers();
-
-        if unlikely count(cols) < 1 {
+        if unlikely this->n < 1 {
             return self::fromArray([], false);
         }
 
-        let col = cols[0];
+        var result = tensor_matrix_transpose(this->a, this->m, this->n);
 
-        let col = col->concat(array_slice(cols, 1));
-
-        return new self(col, this->n, this->m);
+        return new self(result, this->n, this->m);
     }
 
     /**
