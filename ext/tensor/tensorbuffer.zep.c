@@ -103,7 +103,7 @@ PHP_METHOD(Tensor_TensorBuffer, fromBuffers)
 	zephir_memory_observe(&_3);
 	zephir_array_fetch_long(&_3, &buffers, 0, PH_NOISY, "tensor/tensorbuffer.zep", 47);
 	ZVAL_LONG(&_4, 1);
-	ZEPHIR_CALL_FUNCTION(&_5, "array_slice", NULL, 29, &buffers, &_4);
+	ZEPHIR_CALL_FUNCTION(&_5, "array_slice", NULL, 28, &buffers, &_4);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&b, &_3, "concat", NULL, 0, &_5);
 	zephir_check_call_status();

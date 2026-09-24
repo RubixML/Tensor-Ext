@@ -368,9 +368,13 @@ class Matrix implements Tensor
 
         var rowA, valueA;
 
-        var firstRow, n;
+        var firstRow, n, aList;
 
-        let firstRow = current(a);
+        int i;
+
+        let aList = array_values(a);
+
+        let firstRow = aList[0];
 
         if unlikely !is_array(firstRow) {
             throw new InvalidArgumentException("Matrix requires an"
@@ -381,7 +385,11 @@ class Matrix implements Tensor
 
         array flat = [];
 
-        for rowA in a {
+        let i = 0;
+
+        while i < rows {
+            let rowA = aList[i];
+
             if unlikely validate && !is_array(rowA) {
                 throw new InvalidArgumentException("Matrix requires an"
                     . " array of arrays.");
@@ -396,6 +404,8 @@ class Matrix implements Tensor
             for valueA in rowA {
                 let flat[] = valueA;
             }
+
+            let i++;
         }
 
         var buffer = tensor_buffer_from_array(flat);
