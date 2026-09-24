@@ -651,7 +651,6 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
      */
     public function pseudoinverse() : void
     {
@@ -1076,7 +1075,6 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
      * @dataProvider eigProvider
      *
      * @param Matrix $matrix
@@ -1116,7 +1114,6 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
      */
     public function eigSymmetric() : void
     {
@@ -1144,7 +1141,6 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
      */
     public function svd() : void
     {

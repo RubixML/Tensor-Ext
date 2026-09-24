@@ -519,7 +519,9 @@ void tensor_mod_col_reverse(zval * return_value, zval * a, zval * b, zval * n)
 /* Binary operation applied to every element of a matrix using a shared
  * row vector. The matrix is wrapped up in `a` (m * n doubles in row-major
  * order) and the row vector in `b` (n doubles) so that element (i, j) of the
- * result is op(a[i * n + j], b[j]). */
+ * result is op(a[i * n + j], b[j]). `reverse` swaps the operands so that the
+ * same value function can serve both the matrix and the row vector as the
+ * left-hand side. */
 
 typedef double (*tensor_row_op)(double x, double y);
 
@@ -553,7 +555,7 @@ static double tensor_row_mod_value(double x, double y)
 	return fmod(x, y);
 }
 
-static void tensor_row_apply(zval * return_value, zval * a, zval * b, zval * n_zval, tensor_row_op fn)
+static void tensor_row_apply(zval * return_value, zval * a, zval * b, zval * n_zval, tensor_row_op fn, int reverse)
 {
 	zend_long nHat = 0, m = 0, total = 0, nb = 0;
 	int ok_a = 0, ok_b = 0;
@@ -587,7 +589,9 @@ static void tensor_row_apply(zval * return_value, zval * a, zval * b, zval * n_z
 
 	for (i = 0; i < m; ++i) {
 		for (j = 0; j < nHat; ++j) {
-			vc[i * nHat + j] = fn(va[i * nHat + j], vb[j]);
+			vc[i * nHat + j] = reverse
+				? fn(vb[j], va[i * nHat + j])
+				: fn(va[i * nHat + j], vb[j]);
 		}
 	}
 
@@ -596,30 +600,50 @@ static void tensor_row_apply(zval * return_value, zval * a, zval * b, zval * n_z
 
 void tensor_multiply_row(zval * return_value, zval * a, zval * b, zval * n)
 {
-	tensor_row_apply(return_value, a, b, n, tensor_row_multiply_value);
+	tensor_row_apply(return_value, a, b, n, tensor_row_multiply_value, 0);
 }
 
 void tensor_add_row(zval * return_value, zval * a, zval * b, zval * n)
 {
-	tensor_row_apply(return_value, a, b, n, tensor_row_add_value);
+	tensor_row_apply(return_value, a, b, n, tensor_row_add_value, 0);
 }
 
 void tensor_divide_row(zval * return_value, zval * a, zval * b, zval * n)
 {
-	tensor_row_apply(return_value, a, b, n, tensor_row_divide_value);
+	tensor_row_apply(return_value, a, b, n, tensor_row_divide_value, 0);
+}
+
+void tensor_divide_row_reverse(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_divide_value, 1);
 }
 
 void tensor_subtract_row(zval * return_value, zval * a, zval * b, zval * n)
 {
-	tensor_row_apply(return_value, a, b, n, tensor_row_subtract_value);
+	tensor_row_apply(return_value, a, b, n, tensor_row_subtract_value, 0);
+}
+
+void tensor_subtract_row_reverse(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_subtract_value, 1);
 }
 
 void tensor_pow_row(zval * return_value, zval * a, zval * b, zval * n)
 {
-	tensor_row_apply(return_value, a, b, n, tensor_row_pow_value);
+	tensor_row_apply(return_value, a, b, n, tensor_row_pow_value, 0);
+}
+
+void tensor_pow_row_reverse(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_pow_value, 1);
 }
 
 void tensor_mod_row(zval * return_value, zval * a, zval * b, zval * n)
 {
-	tensor_row_apply(return_value, a, b, n, tensor_row_mod_value);
+	tensor_row_apply(return_value, a, b, n, tensor_row_mod_value, 0);
+}
+
+void tensor_mod_row_reverse(zval * return_value, zval * a, zval * b, zval * n)
+{
+	tensor_row_apply(return_value, a, b, n, tensor_row_mod_value, 1);
 }

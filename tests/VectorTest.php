@@ -1002,6 +1002,294 @@ class VectorTest extends TestCase
 
     /**
      * @test
+     */
+    public function multiplyMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->multiplyMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [16.0, -6.5, 0.087, -0.2, -1.3, 23.8],
+            [0.04, 13.065, 2.9, 400.0, 0.13, -11.9],
+            [4.4, 32.5, -14.5, 600.0, -0.013, 141.61],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function divideMatrix() : void
+    {
+        $a = Vector::fromArray([10.0, 20.0, 30.0]);
+
+        $b = Matrix::fromArray([
+            [2.0, 4.0, 5.0],
+            [5.0, 10.0, 3.0],
+            [3.0, 2.0, 1.0],
+        ]);
+
+        $c = $a->divideMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [5.0, 5.0, 6.0],
+            [2.0, 2.0, 10.0],
+            [3.3333333333333335, 10.0, 30.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function addMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 2.01, 1.0, 20.0, 0.05, -1.0],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->addMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [8.0, 5.5, 2.93, 19.99, 2.1, 13.9],
+            [4.01, 8.51, 3.9, 40.0, 2.65, 10.9],
+            [5.1, 11.5, -2.1, 50.0, 2.595, 23.8],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function subtractMatrix() : void
+    {
+        $a = Vector::fromArray([10.0, 20.0, 30.0]);
+
+        $b = Matrix::fromArray([
+            [4.0, 15.0, 12.0],
+            [4.0, 15.0, 12.0],
+            [4.0, 15.0, 12.0],
+        ]);
+
+        $c = $a->subtractMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [6.0, 5.0, 18.0],
+            [6.0, 5.0, 18.0],
+            [6.0, 5.0, 18.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function powMatrix() : void
+    {
+        $a = Vector::fromArray([2.0, 10.0, 2.0]);
+
+        $b = Matrix::fromArray([
+            [1.0, 1.0, 1.5],
+            [2.0, 0.0, 1.0],
+            [3.0, 2.0, 0.5],
+        ]);
+
+        $c = $a->powMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [2.0, 10.0, 2.8284271247461903],
+            [4.0, 1.0, 2.0],
+            [8.0, 100.0, 1.4142135623730951],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function modMatrix() : void
+    {
+        $a = Vector::fromArray([1.0, 20.0, 7.5]);
+
+        $b = Matrix::fromArray([
+            [0.5, 5.0, 3.0],
+            [0.5, 10.0, 3.0],
+            [0.5, 7.5, 3.0],
+        ]);
+
+        $c = $a->modMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [0.0, 0.0, 1.5],
+            [0.0, 0.0, 1.5],
+            [0.0, 5.0, 1.5],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function equalMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 6.5, 2.9, 20.0, 2.6, 11.9],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->equalMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function notEqualMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 6.5, 2.9, 20.0, 2.6, 11.9],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->notEqualMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [0.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function greaterMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 6.5, 2.9, 20.0, 0.05, -1.0],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->greaterMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [0.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 0.0, 0.0, 0.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 0.0, 1.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function greaterEqualMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 6.5, 2.9, 20.0, 0.05, -1.0],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->greaterEqualMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 0.0, 1.0, 1.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function lessMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 6.5, 2.9, 20.0, 0.05, -1.0],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->lessMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function lessEqualMatrix() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = Matrix::fromArray([
+            [4.0, -1.0, 0.03, -0.01, -0.5, 2.0],
+            [0.01, 6.5, 2.9, 20.0, 0.05, -1.0],
+            [1.1, 5.0, -5.0, 30.0, -0.005, 11.9],
+        ]);
+
+        $c = $a->lessEqualMatrix($b);
+
+        $expected = Matrix::fromArray([
+            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 1.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 0.0, 1.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
      * @dataProvider greaterProvider
      *
      * @param Vector $a

@@ -1413,16 +1413,16 @@ class Vector implements Tensor
                 . (string) this->n . " columns but Matrix B has "
                 . (string) b->n() . ".");
         }
- 
-        var rowB;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_multiply(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        var aHat, bHat, result;
+
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_multiply_row(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1440,15 +1440,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_divide(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_divide_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1466,15 +1466,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_add(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_add_row(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1492,15 +1492,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_subtract(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_subtract_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1518,15 +1518,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_pow(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_pow_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1544,15 +1544,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_mod(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_mod_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1570,15 +1570,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_equal(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_equal_row(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1596,15 +1596,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_not_equal(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_not_equal_row(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1622,15 +1622,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_greater(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_greater_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1648,15 +1648,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_greater_equal(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_greater_equal_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1674,15 +1674,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_less(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_less_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
@@ -1700,15 +1700,15 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var rowB;
+        var aHat, bHat, result;
 
-        array c = [];
- 
-        for rowB in b->asRowBuffers() {
-            let c[] = tensor_less_equal(this->a, rowB);
-        }
- 
-        return new Matrix(TensorBuffer::fromBuffers(c), b->m(), b->n());
+        let aHat = this->asTensorBuffer();
+
+        let bHat = b->asTensorBuffer();
+
+        let result = tensor_less_equal_row_reverse(bHat, aHat, this->n);
+
+        return new Matrix(result, b->m(), b->n());
     }
 
     /**
