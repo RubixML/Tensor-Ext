@@ -281,7 +281,7 @@ class Vector implements Tensor
                     . " flat array of numeric elements.");
             }
 
-            let flat[] = (float) valueA;
+            let flat[] = valueA;
         }
 
         var buffer = tensor_buffer_from_array(flat);

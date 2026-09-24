@@ -394,7 +394,7 @@ class Matrix implements Tensor
             }
 
             for valueA in rowA {
-                let flat[] = (float) valueA;
+                let flat[] = valueA;
             }
         }
 
