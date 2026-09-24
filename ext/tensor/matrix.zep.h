@@ -85,6 +85,8 @@ PHP_METHOD(Tensor_Matrix, sum);
 PHP_METHOD(Tensor_Matrix, product);
 PHP_METHOD(Tensor_Matrix, min);
 PHP_METHOD(Tensor_Matrix, max);
+PHP_METHOD(Tensor_Matrix, argmin);
+PHP_METHOD(Tensor_Matrix, argmax);
 PHP_METHOD(Tensor_Matrix, mean);
 PHP_METHOD(Tensor_Matrix, median);
 PHP_METHOD(Tensor_Matrix, quantile);
@@ -450,6 +452,12 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_min, 0, 0, Tensor\\
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_max, 0, 0, Tensor\\ColumnVector, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_argmin, 0, 0, Tensor\\ColumnVector, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_argmax, 0, 0, Tensor\\ColumnVector, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_mean, 0, 0, Tensor\\ColumnVector, 0)
@@ -827,6 +835,8 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, product, arginfo_tensor_matrix_product, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, min, arginfo_tensor_matrix_min, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, max, arginfo_tensor_matrix_max, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, argmin, arginfo_tensor_matrix_argmin, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, argmax, arginfo_tensor_matrix_argmax, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, mean, arginfo_tensor_matrix_mean, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, median, arginfo_tensor_matrix_median, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, quantile, arginfo_tensor_matrix_quantile, ZEND_ACC_PUBLIC)

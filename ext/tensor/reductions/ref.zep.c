@@ -108,14 +108,14 @@ PHP_METHOD(Tensor_Reductions_Ref, reduce)
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_7, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, &b, "__construct", NULL, 15, &_5, &_6, &_7);
+	ZEPHIR_CALL_METHOD(NULL, &b, "__construct", NULL, 14, &_5, &_6, &_7);
 	zephir_check_call_status();
 	zephir_memory_observe(&_8);
 	zephir_array_fetch_long(&_8, &ref, 1, PH_NOISY, "tensor/reductions/ref.zep", 52);
 	swaps = zephir_get_intval(&_8);
 	object_init_ex(return_value, tensor_reductions_ref_ce);
 	ZVAL_LONG(&_9, swaps);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 31, &b, &_9);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 30, &b, &_9);
 	zephir_check_call_status();
 	RETURN_MM();
 }

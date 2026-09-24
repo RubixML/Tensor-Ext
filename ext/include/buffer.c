@@ -45,14 +45,32 @@ int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
 }
 
 /**
- * Build a `Tensor\Buffer` object from a PHP array of values, casting every
- * element to a double (see include/buffer.h).
+ * Allocate a new `Tensor\TensorBuffer` decorator wrapping a `Tensor\Buffer`
+ * built from a PHP array of values, casting every element to a double (see
+ * include/buffer.h).
  */
 void tensor_buffer_from_array(zval * ret, zval * arr)
 {
-	if (UNEXPECTED(zephir_buffer_create_from_array(ret, arr, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
+	zval buffer;
+
+	if (UNEXPECTED(zephir_buffer_create_from_array(&buffer, arr, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
 		ZVAL_NULL(ret);
+		return;
 	}
+
+	object_init_ex(ret, tensor_tensorbuffer_ce);
+
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "buffer", sizeof("buffer") - 1, &buffer);
+
+	if (UNEXPECTED(EG(exception))) {
+		zval_ptr_dtor(ret);
+		ZVAL_UNDEF(ret);
+		zval_ptr_dtor(&buffer);
+		ZVAL_UNDEF(&buffer);
+		return;
+	}
+
+	zval_ptr_dtor(&buffer);
 }
 
 /**
@@ -116,6 +134,47 @@ cleanup:
 	zval_ptr_dtor(&rv);
 
 	return NULL;
+}
+
+/**
+ * Resolve the underlying raw buffer for the reduction operations, accepting
+ * either a `TensorBuffer` decorator (returns a reference to its wrapped
+ * buffer) or a raw `Buffer` object as-is (returns a reference to it). The
+ * caller owns the reference written to `buf` and must release it with
+ * `zval_ptr_dtor()`.
+ *
+ * @return 1 on success, 0 on failure (throwing).
+ */
+static int tensor_resolve_underlying_buffer(zval * obj, zval * buf)
+{
+	if (Z_TYPE_P(obj) == IS_OBJECT && Z_OBJCE_P(obj) == tensor_tensorbuffer_ce) {
+		zval rv;
+		zval *prop;
+
+		ZVAL_UNDEF(&rv);
+
+		prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "buffer", sizeof("buffer") - 1, 1, &rv);
+
+		if (prop != NULL && prop != &rv) {
+			ZVAL_COPY(buf, prop);
+		} else {
+			ZVAL_UNDEF(buf);
+		}
+
+		zval_ptr_dtor(&rv);
+	} else {
+		ZVAL_COPY(buf, obj);
+	}
+
+	if (UNEXPECTED(!zephir_is_buffer(buf))) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Argument must be a Buffer or TensorBuffer object."));
+		zval_ptr_dtor(buf);
+		ZVAL_UNDEF(buf);
+		return 0;
+	}
+
+	return 1;
 }
 
 static int tensor_double_cmp(const void * a, const void * b)
@@ -303,21 +362,33 @@ void tensor_buffer_slice(zval * return_value, zval * obj, zval * offset, zval * 
  */
 void tensor_buffer_sum(zval * return_value, zval * obj)
 {
-	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
+	zval buffer;
+	uint8_t kind;
+	zend_long len;
+
+	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
+		return;
+	}
+
+	kind = zephir_buffer_kind(&buffer);
+	len = zephir_buffer_len(&buffer);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
 	if (len == 0) {
-		RETURN_DOUBLE(0.0);
+		RETVAL_DOUBLE(0.0);
+		zval_ptr_dtor(&buffer);
+		return;
 	}
 
 	RETVAL_DOUBLE(tensor_buffer_sum_values(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(obj) : (const void *) zephir_buffer_doubles(obj), len));
+		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len));
+	zval_ptr_dtor(&buffer);
 }
 
 /**
@@ -328,21 +399,33 @@ void tensor_buffer_sum(zval * return_value, zval * obj)
  */
 void tensor_buffer_product(zval * return_value, zval * obj)
 {
-	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
+	zval buffer;
+	uint8_t kind;
+	zend_long len;
+
+	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
+		return;
+	}
+
+	kind = zephir_buffer_kind(&buffer);
+	len = zephir_buffer_len(&buffer);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
 	if (len == 0) {
-		RETURN_DOUBLE(1.0);
+		RETVAL_DOUBLE(1.0);
+		zval_ptr_dtor(&buffer);
+		return;
 	}
 
 	RETVAL_DOUBLE(tensor_buffer_product_values(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(obj) : (const void *) zephir_buffer_doubles(obj), len));
+		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len));
+	zval_ptr_dtor(&buffer);
 }
 
 /**
@@ -353,26 +436,37 @@ void tensor_buffer_product(zval * return_value, zval * obj)
  */
 void tensor_buffer_min(zval * return_value, zval * obj)
 {
-	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
+	zval buffer;
+	uint8_t kind;
+	zend_long len;
+	double value = 0.0;
+	zend_long index = 0;
+
+	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
+		return;
+	}
+
+	kind = zephir_buffer_kind(&buffer);
+	len = zephir_buffer_len(&buffer);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
 	if (UNEXPECTED(len == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Cannot compute the minimum of an empty buffer."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
-	double value = 0.0;
-	zend_long index = 0;
-
 	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(obj) : (const void *) zephir_buffer_doubles(obj), len, 1, &value, &index);
+		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 1, &value, &index);
+
+	zval_ptr_dtor(&buffer);
 
 	RETVAL_DOUBLE(value);
 }
@@ -385,26 +479,37 @@ void tensor_buffer_min(zval * return_value, zval * obj)
  */
 void tensor_buffer_max(zval * return_value, zval * obj)
 {
-	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
+	zval buffer;
+	uint8_t kind;
+	zend_long len;
+	double value = 0.0;
+	zend_long index = 0;
+
+	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
+		return;
+	}
+
+	kind = zephir_buffer_kind(&buffer);
+	len = zephir_buffer_len(&buffer);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
 	if (UNEXPECTED(len == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Cannot compute the maximum of an empty buffer."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
-	double value = 0.0;
-	zend_long index = 0;
-
 	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(obj) : (const void *) zephir_buffer_doubles(obj), len, 0, &value, &index);
+		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 0, &value, &index);
+
+	zval_ptr_dtor(&buffer);
 
 	RETVAL_DOUBLE(value);
 }
@@ -417,25 +522,36 @@ void tensor_buffer_max(zval * return_value, zval * obj)
  */
 void tensor_buffer_argmin(zval * return_value, zval * obj)
 {
-	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
+	zval buffer;
+	uint8_t kind;
+	zend_long len;
+	zend_long index = 0;
+
+	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
+		return;
+	}
+
+	kind = zephir_buffer_kind(&buffer);
+	len = zephir_buffer_len(&buffer);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
 	if (UNEXPECTED(len == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Cannot compute the argmin of an empty buffer."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
-	zend_long index = 0;
-
 	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(obj) : (const void *) zephir_buffer_doubles(obj), len, 1, NULL, &index);
+		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 1, NULL, &index);
+
+	zval_ptr_dtor(&buffer);
 
 	RETVAL_LONG(index);
 }
@@ -448,25 +564,36 @@ void tensor_buffer_argmin(zval * return_value, zval * obj)
  */
 void tensor_buffer_argmax(zval * return_value, zval * obj)
 {
-	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
+	zval buffer;
+	uint8_t kind;
+	zend_long len;
+	zend_long index = 0;
+
+	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
+		return;
+	}
+
+	kind = zephir_buffer_kind(&buffer);
+	len = zephir_buffer_len(&buffer);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
 	if (UNEXPECTED(len == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Cannot compute the argmax of an empty buffer."));
+		zval_ptr_dtor(&buffer);
 		return;
 	}
 
-	zend_long index = 0;
-
 	tensor_buffer_extreme(kind, kind == ZEPHIR_BUFFER_LONG
-		? (const void *) zephir_buffer_longs(obj) : (const void *) zephir_buffer_doubles(obj), len, 0, NULL, &index);
+		? (const void *) zephir_buffer_longs(&buffer) : (const void *) zephir_buffer_doubles(&buffer), len, 0, NULL, &index);
+
+	zval_ptr_dtor(&buffer);
 
 	RETVAL_LONG(index);
 }

@@ -116,34 +116,6 @@ namespace Tensor {
         {
         }
 
-        public function map(callable $callback) : TensorBuffer
-        {
-        }
-
-        public function sum() : float
-        {
-        }
-
-        public function product() : float
-        {
-        }
-
-        public function min() : float
-        {
-        }
-
-        public function max() : float
-        {
-        }
-
-        public function argmin() : int
-        {
-        }
-
-        public function argmax() : int
-        {
-        }
-
         public function sliceStrided(int $offset, int $length, int $stride) : TensorBuffer
         {
         }

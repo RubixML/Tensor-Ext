@@ -363,7 +363,7 @@ class Matrix implements Tensor
         if unlikely rows < 1 {
             var buffer = tensor_buffer_from_array([]);
 
-            return new self(new TensorBuffer(<Buffer> buffer), 0, 0);
+            return new self(buffer, 0, 0);
         }
 
         var rowA, valueA;
@@ -410,7 +410,7 @@ class Matrix implements Tensor
 
         var buffer = tensor_buffer_from_array(flat);
 
-        return new self(new TensorBuffer(<Buffer> buffer), rows, n);
+        return new self(buffer, rows, n);
     }
 
     /**
@@ -682,7 +682,11 @@ class Matrix implements Tensor
      */
     public function map(const var callback) -> <Matrix>
     {
-        return new self(this->a->map(callback), this->m, this->n);
+        var b = array_map(callback, this->a->toArray());
+
+        var buffer = tensor_buffer_from_array(b);
+
+        return new self(buffer, this->m, this->n);
     }
 
     /**
@@ -1586,7 +1590,7 @@ class Matrix implements Tensor
         array b = [];
 
         for rowBuffer in this->a->split(this->n) {
-            let b[] = rowBuffer->sum();
+            let b[] = tensor_buffer_sum(rowBuffer);
         }
 
         return ColumnVector::fromArray(b, false);
@@ -1604,7 +1608,7 @@ class Matrix implements Tensor
         array b = [];
 
         for rowBuffer in this->a->split(this->n) {
-            let b[] = rowBuffer->product();
+            let b[] = tensor_buffer_product(rowBuffer);
         }
 
         return ColumnVector::fromArray(b, false);
@@ -1622,7 +1626,7 @@ class Matrix implements Tensor
         array b = [];
 
         for rowBuffer in this->a->split(this->n) {
-            let b[] = rowBuffer->min();
+            let b[] = tensor_buffer_min(rowBuffer);
         }
 
         return ColumnVector::fromArray(b, false);
@@ -1640,7 +1644,43 @@ class Matrix implements Tensor
         array b = [];
 
         for rowBuffer in this->a->split(this->n) {
-            let b[] = rowBuffer->max();
+            let b[] = tensor_buffer_max(rowBuffer);
+        }
+
+        return ColumnVector::fromArray(b, false);
+    }
+
+    /**
+     * Return the index of the minimum of each row in the matrix.
+     *
+     * @return \Tensor\ColumnVector
+     */
+    public function argmin() -> <ColumnVector>
+    {
+        var rowBuffer;
+
+        array b = [];
+
+        for rowBuffer in this->a->split(this->n) {
+            let b[] = tensor_buffer_argmin(rowBuffer);
+        }
+
+        return ColumnVector::fromArray(b, false);
+    }
+
+    /**
+     * Return the index of the maximum of each row in the matrix.
+     *
+     * @return \Tensor\ColumnVector
+     */
+    public function argmax() -> <ColumnVector>
+    {
+        var rowBuffer;
+
+        array b = [];
+
+        for rowBuffer in this->a->split(this->n) {
+            let b[] = tensor_buffer_argmax(rowBuffer);
         }
 
         return ColumnVector::fromArray(b, false);

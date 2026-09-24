@@ -5,8 +5,9 @@ use Tensor\Exceptions\InvalidArgumentException;
 /**
  * TensorBuffer
  *
- * A decorator that wraps the kernel Buffer class and provides additional
- * operations such as sorting and slicing.
+ * A decorator that wraps the kernel Buffer class and provides structural
+ * operations such as sorting, slicing, splitting, concatenating, and
+ * repeating.
  *
  * @internal
  *
@@ -35,18 +36,14 @@ class TensorBuffer
         int rows = count(buffers);
 
         if unlikely rows < 1 {
-            var zero = tensor_buffer_from_array([]);
-
-            return new self(<Buffer> zero);
+            return tensor_buffer_from_array([]);
         }
 
         if unlikely rows == 1 {
-            return new self(buffers[0]->asBuffer());
+            return buffers[0];
         }
 
-        var b = buffers[0]->concat(array_slice(buffers, 1));
-
-        return new self(b->asBuffer());
+        return buffers[0]->concat(array_slice(buffers, 1));
     }
 
     /**
@@ -119,83 +116,6 @@ class TensorBuffer
         var b = tensor_buffer_slice(this->buffer, offset, length);
 
         return new TensorBuffer(<Buffer> b);
-    }
-
-    /**
-     * Map a function over the elements in the buffer and return a new decorator.
-     *
-     * @internal
-     *
-     * @param callable callback
-     * @return self
-     */
-    public function map(const var callback) -> <TensorBuffer>
-    {
-        var b = array_map(callback, this->buffer->toArray());
-
-        var buffer = tensor_buffer_from_array(b);
-
-        return new TensorBuffer(<Buffer> buffer);
-    }
-
-    /**
-     * Return the sum of the elements in the buffer.
-     *
-     * @return float
-     */
-    public function sum() -> float
-    {
-        return tensor_buffer_sum(this->buffer);
-    }
-
-    /**
-     * Return the product of the elements in the buffer.
-     *
-     * @return float
-     */
-    public function product() -> float
-    {
-        return tensor_buffer_product(this->buffer);
-    }
-
-    /**
-     * Return the minimum element in the buffer.
-     *
-     * @return float
-     */
-    public function min() -> float
-    {
-        return tensor_buffer_min(this->buffer);
-    }
-
-    /**
-     * Return the maximum element in the buffer.
-     *
-     * @return float
-     */
-    public function max() -> float
-    {
-        return tensor_buffer_max(this->buffer);
-    }
-
-    /**
-     * Return the index of the minimum element in the buffer.
-     *
-     * @return int
-     */
-    public function argmin() -> int
-    {
-        return tensor_buffer_argmin(this->buffer);
-    }
-
-    /**
-     * Return the index of the maximum element in the buffer.
-     *
-     * @return int
-     */
-    public function argmax() -> int
-    {
-        return tensor_buffer_argmax(this->buffer);
     }
 
     /**

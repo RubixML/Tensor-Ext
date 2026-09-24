@@ -328,6 +328,8 @@ See [Statistical](interfaces/statistical.md) and [Special](interfaces/special.md
 - `product() : float` — the product of the vector
 - `min() : float` — the minimum element
 - `max() : float` — the maximum element
+- `argmin() : int` — the index of the minimum element; ties resolve to the first occurrence
+- `argmax() : int` — the index of the maximum element; ties resolve to the first occurrence
 - `mean() : float` — the mean of the vector
 - `median() : float` — the median of the vector
 - `quantile(float $q) : float` — the q'th quantile (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)

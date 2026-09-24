@@ -138,7 +138,7 @@ PHP_METHOD(Tensor_Decompositions_Lu, decompose)
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_10, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, &l, "__construct", NULL, 15, &_8, &_9, &_10);
+	ZEPHIR_CALL_METHOD(NULL, &l, "__construct", NULL, 14, &_8, &_9, &_10);
 	zephir_check_call_status();
 	ZEPHIR_INIT_VAR(&u);
 	object_init_ex(&u, tensor_matrix_ce);
@@ -147,7 +147,7 @@ PHP_METHOD(Tensor_Decompositions_Lu, decompose)
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_13, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, &u, "__construct", NULL, 15, &_11, &_12, &_13);
+	ZEPHIR_CALL_METHOD(NULL, &u, "__construct", NULL, 14, &_11, &_12, &_13);
 	zephir_check_call_status();
 	ZEPHIR_INIT_VAR(&p);
 	object_init_ex(&p, tensor_matrix_ce);
@@ -156,10 +156,10 @@ PHP_METHOD(Tensor_Decompositions_Lu, decompose)
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_16, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, &p, "__construct", NULL, 15, &_14, &_15, &_16);
+	ZEPHIR_CALL_METHOD(NULL, &p, "__construct", NULL, 14, &_14, &_15, &_16);
 	zephir_check_call_status();
 	object_init_ex(return_value, tensor_decompositions_lu_ce);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 25, &l, &u, &p);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 24, &l, &u, &p);
 	zephir_check_call_status();
 	RETURN_MM();
 }

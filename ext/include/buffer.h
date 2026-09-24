@@ -24,10 +24,10 @@ int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer);
  * success with a NULL pointer and `*len` of 0. */
 double * tensor_tensorbuffer_doubles(zval * obj, zend_long * len, int * success);
 
-/* Build an object of the kernel `Tensor\Buffer` class from a PHP array of
- * values, casting every element to a double. Passed arrays must be 1-d and
- * positionally indexed; keys are discarded. Returns FAILURE (NULL zval) on
- * invalid input. Used to seed TensorBuffers from arrays in Zephir. */
+/* Build a `Tensor\TensorBuffer` decorator from a PHP array of values, casting
+ * every element to a double. Passed arrays must be 1-d and positionally
+ * indexed; keys are discarded. On failure `ret` is set to NULL. Used to seed
+ * tensor classes from arrays in Zephir. */
 void tensor_buffer_from_array(zval * ret, zval * arr);
 
 void tensor_buffer_sort(zval * return_value, zval * obj, zval * ascending);

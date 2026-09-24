@@ -31,6 +31,20 @@ interface Special
     public function max();
 
     /**
+     * Return the index (or per-row indices) of the minimum of the tensor.
+     *
+     * @return mixed
+     */
+    public function argmin();
+
+    /**
+     * Return the index (or per-row indices) of the maximum of the tensor.
+     *
+     * @return mixed
+     */
+    public function argmax();
+
+    /**
      * Clip the tensor to be between the given minimum and maximum.
      *
      * @param float min

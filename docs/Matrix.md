@@ -424,6 +424,8 @@ See [Statistical](interfaces/statistical.md) and [Special](interfaces/special.md
 - `product() : ColumnVector` — calculate the row product of the matrix
 - `min() : ColumnVector` — minimum of each row
 - `max() : ColumnVector` — maximum of each row
+- `argmin() : ColumnVector` — index of the minimum of each row; ties resolve to the first occurrence
+- `argmax() : ColumnVector` — index of the maximum of each row; ties resolve to the first occurrence
 - `mean() : ColumnVector` — means of each row
 - `median() : ColumnVector` — median vector of this matrix
 - `quantile(float $q) : ColumnVector` — q'th quantile of each row (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)

@@ -286,7 +286,7 @@ class Vector implements Tensor
 
         var buffer = tensor_buffer_from_array(flat);
 
-        return new static(new TensorBuffer(<Buffer> buffer));
+        return new static(buffer);
     }
 
     /**
@@ -1124,7 +1124,7 @@ class Vector implements Tensor
      */
     public function sum() -> float
     {
-        return this->a->sum();
+        return tensor_buffer_sum(this->a);
     }
 
     /**
@@ -1134,7 +1134,7 @@ class Vector implements Tensor
      */
     public function product() -> float
     {
-        return this->a->product();
+        return tensor_buffer_product(this->a);
     }
 
     /**
@@ -1144,7 +1144,7 @@ class Vector implements Tensor
      */
     public function min() -> float
     {
-        return this->a->min();
+        return tensor_buffer_min(this->a);
     }
 
     /**
@@ -1154,7 +1154,27 @@ class Vector implements Tensor
      */
     public function max() -> float
     {
-        return this->a->max();
+        return tensor_buffer_max(this->a);
+    }
+
+    /**
+     * Return the index of the minimum element in the vector.
+     *
+     * @return int
+     */
+    public function argmin() -> int
+    {
+        return tensor_buffer_argmin(this->a);
+    }
+
+    /**
+     * Return the index of the maximum element in the vector.
+     *
+     * @return int
+     */
+    public function argmax() -> int
+    {
+        return tensor_buffer_argmax(this->a);
     }
 
     /**

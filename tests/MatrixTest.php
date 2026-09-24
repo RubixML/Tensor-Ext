@@ -2680,6 +2680,42 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function argmin() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $b = $a->argmin();
+
+        $expected = ColumnVector::fromArray([1, 2, 2]);
+
+        $this->assertEquals($expected->asArray(), $b->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function argmax() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $b = $a->argmax();
+
+        $expected = ColumnVector::fromArray([0, 1, 0]);
+
+        $this->assertEquals($expected->asArray(), $b->asArray());
+    }
+
+    /**
+     * @test
+     */
     public function mean() : void
     {
         $a = Matrix::fromArray([

@@ -1492,6 +1492,70 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function argmin() : void
+    {
+        $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);
+
+        $this->assertSame(4, $a->argmin());
+    }
+
+    /**
+     * @test
+     */
+    public function argminTie() : void
+    {
+        $a = Vector::fromArray([2.0, 1.0, 1.0, 3.0]);
+
+        $this->assertSame(1, $a->argmin());
+    }
+
+    /**
+     * @test
+     */
+    public function argminEmptyVector() : void
+    {
+        $a = Vector::fromArray([], false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $a->argmin();
+    }
+
+    /**
+     * @test
+     */
+    public function argmax() : void
+    {
+        $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);
+
+        $this->assertSame(6, $a->argmax());
+    }
+
+    /**
+     * @test
+     */
+    public function argmaxTie() : void
+    {
+        $a = Vector::fromArray([2.0, 3.0, 3.0, 1.0]);
+
+        $this->assertSame(1, $a->argmax());
+    }
+
+    /**
+     * @test
+     */
+    public function argmaxEmptyVector() : void
+    {
+        $a = Vector::fromArray([], false);
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $a->argmax();
+    }
+
+    /**
+     * @test
+     */
     public function mean() : void
     {
         $a = Vector::fromArray([-15.0, 25.0, 35.0, -36.0, -72.0, 89.0, 106.0, 45.0]);

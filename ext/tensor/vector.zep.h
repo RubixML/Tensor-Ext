@@ -68,6 +68,8 @@ PHP_METHOD(Tensor_Vector, sum);
 PHP_METHOD(Tensor_Vector, product);
 PHP_METHOD(Tensor_Vector, min);
 PHP_METHOD(Tensor_Vector, max);
+PHP_METHOD(Tensor_Vector, argmin);
+PHP_METHOD(Tensor_Vector, argmax);
 PHP_METHOD(Tensor_Vector, mean);
 PHP_METHOD(Tensor_Vector, median);
 PHP_METHOD(Tensor_Vector, quantile);
@@ -363,6 +365,12 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_vector_max, 0, 0, IS_DOUBLE, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_vector_argmin, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_vector_argmax, 0, 0, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_vector_mean, 0, 0, IS_DOUBLE, 0)
 ZEND_END_ARG_INFO()
 
@@ -648,6 +656,8 @@ PHP_ME(Tensor_Vector, transpose, arginfo_tensor_vector_transpose, ZEND_ACC_PUBLI
 	PHP_ME(Tensor_Vector, product, arginfo_tensor_vector_product, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, min, arginfo_tensor_vector_min, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, max, arginfo_tensor_vector_max, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, argmin, arginfo_tensor_vector_argmin, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, argmax, arginfo_tensor_vector_argmax, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, mean, arginfo_tensor_vector_mean, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, median, arginfo_tensor_vector_median, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, quantile, arginfo_tensor_vector_quantile, ZEND_ACC_PUBLIC)
