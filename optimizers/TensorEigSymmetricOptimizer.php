@@ -24,9 +24,9 @@ class TensorEigSymmetricOptimizer extends OptimizerAbstract
             return false;
         }
 
-        if (count($expression['parameters']) !== 1) {
+        if (count($expression['parameters']) !== 2) {
             throw new CompilerException(
-                'Eig symmetric accepts exactly one argument, ' . count($expression['parameters']) . 'given.',
+                'Eig symmetric accepts exactly two arguments, ' . count($expression['parameters']) . 'given.',
                 $expression
             );
         }
@@ -64,7 +64,7 @@ class TensorEigSymmetricOptimizer extends OptimizerAbstract
         $symbol = $context->backend->getVariableCode($symbolVariable);
 
         $context->codePrinter->output(
-            "tensor_eig_symmetric($symbol, {$resolvedParams[0]});"
+            "tensor_eig_symmetric($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
         );
 
         return new CompiledExpression(

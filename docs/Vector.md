@@ -14,28 +14,21 @@ Interface methods are implemented by Vectors with scalar-level semantics — red
 
 ## Constructors & Factories
 
-### `__construct(array $a, bool $validate = true)`
+### `__construct(\Tensor\TensorBuffer $a)`
 
-Instantiate a vector directly.
+Instantiate a vector from a `TensorBuffer` holding its elements.
+
+- **Parameters:** `$a` — the `TensorBuffer` of elements
+
+### `Vector::fromArray(array $a, bool $validate = true) : Vector`
+
+Build a vector from a flat PHP array of numeric elements, casting each value to a float.
 
 - **Parameters:**
-  - `$a` — the 1-dimensional element array `(int|float)[]`
-  - `$validate` — whether to validate and cast elements to floats (default `true`)
-- **Note:** Prefer the factory methods below.
-
-### `Vector::build(array $a = [])`
-
-Factory method to build a new vector from an array, running validation.
-
-- **Parameters:** `$a` — `(int|float)[]`
-- **Returns:** `mixed` (a `Vector`/`static`)
-
-### `Vector::quick(array $a = [])`
-
-Build a vector foregoing any validation for quicker instantiation.
-
-- **Parameters:** `$a` — `(int|float)[]`
-- **Returns:** `mixed` (a `Vector`/`static`)
+  - `$a` — `list<int|float>`, a flat array of numeric elements
+  - `$validate` — whether to reject nested arrays (default `true`)
+- **Returns:** `Vector` (or `ColumnVector` when called on `Tensor\ColumnVector`)
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$a` is not a flat array of numeric elements (i.e. contains a nested array, when `$validate` is `true`)
 
 ### `Vector::zeros(int $n) : Vector`
 
@@ -335,6 +328,8 @@ See [Statistical](interfaces/statistical.md) and [Special](interfaces/special.md
 - `product() : float` — the product of the vector
 - `min() : float` — the minimum element
 - `max() : float` — the maximum element
+- `argmin() : int` — the index of the minimum element; ties resolve to the first occurrence
+- `argmax() : int` — the index of the maximum element; ties resolve to the first occurrence
 - `mean() : float` — the mean of the vector
 - `median() : float` — the median of the vector
 - `quantile(float $q) : float` — the q'th quantile (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)

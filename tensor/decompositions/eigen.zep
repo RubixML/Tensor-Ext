@@ -51,9 +51,9 @@ class Eigen
         var result;
 
         if symmetric {
-            let result = tensor_eig_symmetric(a->asArray());
+            let result = tensor_eig_symmetric(a->asTensorBuffer(), a->n());
         } else {
-            let result = tensor_eig(a->asArray());
+            let result = tensor_eig(a->asTensorBuffer(), a->n());
         }
 
         if is_null(result) {
@@ -64,8 +64,8 @@ class Eigen
 
         let eig = (array) result;
 
-        var eigenvalues = eig[0];
-        var eigenvectors = Matrix::quick(eig[1])->transpose();
+        var eigenvalues = (array) eig[0];
+        var eigenvectors = new Matrix(eig[1], a->n(), a->n())->transpose();
 
         return new self(eigenvalues, eigenvectors);
     }

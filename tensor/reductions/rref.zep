@@ -1,9 +1,8 @@
 namespace Tensor\Reductions;
 
 use Tensor\Matrix;
-use Tensor\Tensor;
-use InvalidArgumentException;
-use RuntimeException;
+use Tensor\Exceptions\InvalidArgumentException;
+use Tensor\Exceptions\RuntimeException;
 
 /**
  * RREF
@@ -31,83 +30,13 @@ class Rref
      */
     public static function reduce(const <Matrix> a) -> <Rref>
     {
-        int i, j;
-        float scale, divisor;
-        bool hasPivot;
-        float epsilon = (float) Tensor::EPSILON;
-        
-        array b = [];
-        array rowB = [];
-        array t = [];
+        var result = tensor_rref(a->asTensorBuffer(), a->m(), a->n());
 
-        int m = (int) a->m();
-        int n = (int) a->n();
-
-        int row = 0;
-        int col = 0;
-
-        let b = (array) a->ref()->a()->asArray();
-
-        while row < m && col < n {
-            let t = (array) b[row];
-
-            if abs(t[col]) < epsilon {
-                let hasPivot = false;
-
-                for i in range(col, n - 1) {
-                    if abs(t[i]) >= epsilon {
-                        let hasPivot = true;
-
-                        break;
-                    }
-                }
-
-                if hasPivot == false {
-                    for i in range(col, n - 1) {
-                        let t[i] = 0.0;
-                    }
-
-                    let b[row] = t;
-
-                    let row++;
-
-                    continue;
-                }
-
-                let col++;
-
-                continue;
-            }
-
-            let divisor = (float) t[col];
-
-            if divisor !== 1.0 {
-                for i in range(0, n - 1) {
-                    let t[i] = t[i] / divisor;
-                }
-            }
-
-            for i in reverse range(0, row - 1) {
-                let rowB = (array) b[i];
-
-                let scale = (float) rowB[col];
-
-                if abs(scale) >= epsilon {
-                    for j in range(0, n - 1) {
-                        let rowB[j] = rowB[j] - scale * t[j];
-                    }
-                }
-
-                let b[i] = rowB;
-            }
-
-            let b[row] = t;
-
-            let row++;
-            let col++;
+        if is_null(result) {
+            throw new RuntimeException("Failed to reduce matrix.");
         }
 
-        return new self(Matrix::quick(b));
+        return new self(new Matrix(result, a->m(), a->n()));
     }
 
     /**

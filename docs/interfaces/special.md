@@ -13,7 +13,7 @@ interface Special
 ```
 
 - For `Vector`, reductions return a `float` scalar.
-- For `Matrix`, the reductions `sum`, `product`, `min`, and `max` operate per-row and return a `ColumnVector`; clipping returns a new `Matrix` of the same shape.
+- For `Matrix`, the reductions `sum`, `product`, `min`, `max`, `argmin`, and `argmax` operate per-row and return a `ColumnVector`; clipping returns a new `Matrix` of the same shape.
 
 ## Methods
 
@@ -32,6 +32,14 @@ Return the minimum of the tensor.
 ### `max() : mixed`
 
 Return the maximum of the tensor.
+
+### `argmin() : mixed`
+
+Return the index of the minimum of the tensor. For a `Vector`, this is an `int`; for a `Matrix`, this is a `ColumnVector` of the per-row minimum indices. Ties resolve to the first occurrence.
+
+### `argmax() : mixed`
+
+Return the index of the maximum of the tensor. For a `Vector`, this is an `int`; for a `Matrix`, this is a `ColumnVector` of the per-row maximum indices. Ties resolve to the first occurrence.
 
 ### `clip(float $min, float $max) : mixed`
 

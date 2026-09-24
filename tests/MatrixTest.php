@@ -42,10 +42,10 @@ class MatrixTest extends TestCase
      */
     public function build() : void
     {
-        $matrix = Matrix::build([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertInstanceOf(Matrix::class, $matrix);
@@ -64,9 +64,9 @@ class MatrixTest extends TestCase
      */
     public function buildCastsIntegersToFloatsAndPreservesShape() : void
     {
-        $matrix = Matrix::build([
-            [1, 2, 3],
-            [4, 5, 6],
+        $matrix = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
         ]);
 
         $this->assertSame([2, 3], $matrix->shape());
@@ -93,18 +93,58 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function fromArrayThrowsOnNonArrayRow() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::fromArray([
+            [1.0, 2.0],
+            3.0,
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function fromArrayThrowsOnRaggedColumns() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0],
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function fromArraySkipsValidationWhenValidateFalse() : void
+    {
+        $matrix = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0],
+        ], false);
+
+        $this->assertInstanceOf(Matrix::class, $matrix);
+        $this->assertSame([2, 2], $matrix->shape());
+    }
+
+    /**
+     * @test
+     */
     public function identity() : void
     {
         $matrix = Matrix::identity(4);
 
-        $expected = Matrix::quick([
-            [1, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1],
+        $expected = Matrix::fromArray([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -114,12 +154,12 @@ class MatrixTest extends TestCase
     {
         $matrix = Matrix::zeros(2, 4);
 
-        $expected = Matrix::quick([
-            [0, 0, 0, 0],
-            [0, 0, 0, 0],
+        $expected = Matrix::fromArray([
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -129,14 +169,14 @@ class MatrixTest extends TestCase
     {
         $matrix = Matrix::ones(4, 2);
 
-        $expected = Matrix::quick([
-            [1, 1],
-            [1, 1],
-            [1, 1],
-            [1, 1],
+        $expected = Matrix::fromArray([
+            [1.0, 1.0],
+            [1.0, 1.0],
+            [1.0, 1.0],
+            [1.0, 1.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -144,16 +184,16 @@ class MatrixTest extends TestCase
      */
     public function diagonal() : void
     {
-        $matrix = Matrix::diagonal([0, 1, 4, 5]);
+        $matrix = Matrix::diagonal([0.0, 1.0, 4.0, 5.0]);
 
-        $expected = Matrix::quick([
-            [0, 0, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 4, 0],
-            [0, 0, 0, 5],
+        $expected = Matrix::fromArray([
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 4.0, 0.0],
+            [0.0, 0.0, 0.0, 5.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -161,16 +201,16 @@ class MatrixTest extends TestCase
      */
     public function fill() : void
     {
-        $matrix = Matrix::fill(5, 4, 4);
+        $matrix = Matrix::fill(5.0, 4, 4);
 
-        $expected = Matrix::quick([
-            [5, 5, 5, 5],
-            [5, 5, 5, 5],
-            [5, 5, 5, 5],
-            [5, 5, 5, 5],
+        $expected = Matrix::fromArray([
+            [5.0, 5.0, 5.0, 5.0],
+            [5.0, 5.0, 5.0, 5.0],
+            [5.0, 5.0, 5.0, 5.0],
+            [5.0, 5.0, 5.0, 5.0],
         ]);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -212,7 +252,7 @@ class MatrixTest extends TestCase
 
         $expected = Matrix::fill(0.0, 3, 3);
 
-        $this->assertEquals($expected, $matrix);
+        $this->assertEquals($expected->asArray(), $matrix->asArray());
     }
 
     /**
@@ -240,10 +280,10 @@ class MatrixTest extends TestCase
      */
     public function shape() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals([3, 3], $matrix->shape());
@@ -254,9 +294,9 @@ class MatrixTest extends TestCase
      */
     public function shapeString() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12, 16],
-            [4, 11, -2, 18],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0, 16.0],
+            [4.0, 11.0, -2.0, 18.0],
         ]);
 
         $this->assertEquals('2 x 4', $matrix->shapeString());
@@ -280,18 +320,18 @@ class MatrixTest extends TestCase
     public function isSquareProvider() : Generator
     {
         yield [
-            Matrix::quick([
-                [22, -17, 12],
-                [4, 11, -2],
-                [20, -6, -9],
+            Matrix::fromArray([
+                [22.0, -17.0, 12.0],
+                [4.0, 11.0, -2.0],
+                [20.0, -6.0, -9.0],
             ]),
             true,
         ];
 
         yield [
-            Matrix::quick([
-                [22, -17, 12, 16],
-                [4, 11, -2, 18],
+            Matrix::fromArray([
+                [22.0, -17.0, 12.0, 16.0],
+                [4.0, 11.0, -2.0, 18.0],
             ]),
             false,
         ];
@@ -302,10 +342,10 @@ class MatrixTest extends TestCase
      */
     public function size() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals(9, $matrix->size());
@@ -316,10 +356,10 @@ class MatrixTest extends TestCase
      */
     public function m() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals(3, $matrix->m());
@@ -330,10 +370,10 @@ class MatrixTest extends TestCase
      */
     public function n() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $this->assertEquals(3, $matrix->n());
@@ -344,17 +384,17 @@ class MatrixTest extends TestCase
      */
     public function rowAsVector() : void
     {
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $b = $a->rowAsVector(1);
 
-        $expected = Vector::quick([4, 11, -2]);
+        $expected = Vector::fromArray([4.0, 11.0, -2.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -362,17 +402,17 @@ class MatrixTest extends TestCase
      */
     public function columnAsVector() : void
     {
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $b = $a->columnAsVector(1);
 
-        $expected = ColumnVector::quick([-17, 11, -6]);
+        $expected = ColumnVector::fromArray([-17.0, 11.0, -6.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -380,17 +420,17 @@ class MatrixTest extends TestCase
      */
     public function diagonalAsVector() : void
     {
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $b = $a->diagonalAsVector();
 
-        $expected = Vector::quick([22, 11, -9]);
+        $expected = Vector::fromArray([22.0, 11.0, -9.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -398,16 +438,16 @@ class MatrixTest extends TestCase
      */
     public function asArray() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $expected = [
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ];
 
         $this->assertEquals($expected, $matrix->asArray());
@@ -416,23 +456,51 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function serialization() : void
+    {
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+        ]);
+
+        $serialized = serialize($matrix);
+
+        $this->assertStringNotContainsString('TensorBuffer', $serialized);
+
+        $restored = unserialize($serialized);
+
+        $this->assertInstanceOf(Matrix::class, $restored);
+        $this->assertEquals([2, 3], $restored->shape());
+        $this->assertEquals([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+        ], $restored->asArray());
+        $this->assertSame(serialize($matrix), serialize($restored));
+    }
+
+    /**
+     * @test
+     */
     public function asVectors() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $vectors = $matrix->asVectors();
 
         $expected = [
-            Vector::quick([22, -17, 12]),
-            Vector::quick([4, 11, -2]),
-            Vector::quick([20, -6, -9]),
+            Vector::fromArray([22.0, -17.0, 12.0]),
+            Vector::fromArray([4.0, 11.0, -2.0]),
+            Vector::fromArray([20.0, -6.0, -9.0]),
         ];
 
-        $this->assertEquals($expected, $vectors);
+        $this->assertEquals(
+            array_map(static fn (Vector $vector) => $vector->asArray(), $expected),
+            array_map(static fn (Vector $vector) => $vector->asArray(), $vectors)
+        );
     }
 
     /**
@@ -440,21 +508,24 @@ class MatrixTest extends TestCase
      */
     public function asColumnVectors() : void
     {
-        $matrix = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $matrix = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $vectors = $matrix->asColumnVectors();
 
         $expected = [
-            ColumnVector::quick([22, 4, 20]),
-            ColumnVector::quick([-17, 11, -6]),
-            ColumnVector::quick([12, -2, -9]),
+            ColumnVector::fromArray([22.0, 4.0, 20.0]),
+            ColumnVector::fromArray([-17.0, 11.0, -6.0]),
+            ColumnVector::fromArray([12.0, -2.0, -9.0]),
         ];
 
-        $this->assertEquals($expected, $vectors);
+        $this->assertEquals(
+            array_map(static fn (ColumnVector $vector) => $vector->asArray(), $expected),
+            array_map(static fn (ColumnVector $vector) => $vector->asArray(), $vectors)
+        );
     }
 
     /**
@@ -462,17 +533,17 @@ class MatrixTest extends TestCase
      */
     public function flatten() : void
     {
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $b = $a->flatten();
 
-        $expected = Vector::quick([22, -17, 12, 4, 11, -2, 20, -6, -9]);
+        $expected = Vector::fromArray([22.0, -17.0, 12.0, 4.0, 11.0, -2.0, 20.0, -6.0, -9.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -480,21 +551,86 @@ class MatrixTest extends TestCase
      */
     public function transpose() : void
     {
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $b = $a->transpose();
 
-        $expected = Matrix::quick([
-            [22, 4, 20],
-            [-17, 11, -6],
-            [12, -2, -9],
+        $expected = Matrix::fromArray([
+            [22.0, 4.0, 20.0],
+            [-17.0, 11.0, -6.0],
+            [12.0, -2.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
+    }
+
+    /**
+     * Regression test: passing an array callable [instance, 'method'] to
+     * Matrix::map() must not segfault. The previous Zephir dynamic
+     * user-callback dispatch inside TensorBuffer::map() was triggered only
+     * for arrays holding a non-static instance and crashed on the second
+     * and later elements.
+     *
+     * @test
+     */
+    public function mapWithInstanceArrayCallable() : void
+    {
+        $helper = new class() {
+            public float $slope = 0.1;
+
+            public function activate(float $v) : float
+            {
+                return $v > 0.0 ? $v : $v * $this->slope;
+            }
+        };
+
+        $a = Matrix::fromArray([
+            [1.0, -2.0],
+            [-3.0, 4.0],
+        ]);
+
+        $b = $a->map([$helper, 'activate']);
+
+        $expected = Matrix::fromArray([
+            [1.0, -0.2],
+            [-0.3, 4.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A static array callable [Class::class, 'method'] must also work on
+     * Matrix::map() over a multi-element matrix.
+     *
+     * @test
+     */
+    public function mapWithStaticArrayCallable() : void
+    {
+        $a = Matrix::fromArray([
+            [7.0, -2.5],
+            [-3.0, 4.25],
+        ]);
+
+        $helper = new class() {
+            public static function square(float $v) : float
+            {
+                return $v * $v;
+            }
+        };
+
+        $b = $a->map([get_class($helper), 'square']);
+
+        $expected = Matrix::fromArray([
+            [49.0, 6.25],
+            [9.0, 18.0625],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -502,21 +638,21 @@ class MatrixTest extends TestCase
      */
     public function inverse() : void
     {
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
         $b = $a->inverse();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.02093549603923048, 0.042436816295737464, 0.018483591097698978],
             [0.0007544322897019996, 0.08261033572236892, -0.017351942663145988],
             [0.04602036967182196, 0.03923047906450396, -0.05846850245190495],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -526,7 +662,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
             [5.0, 6.0],
@@ -541,7 +677,7 @@ class MatrixTest extends TestCase
         // Exactly singular (column 3 = column 0 - column 1 + column 2); the
         // inverse must be rejected rather than return a magnitude ~1e15 matrix
         // that does not satisfy A * A^-1 = I.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, 1.0, 0.0, 1.0],
             [1.0, 2.0, 1.0, 0.0],
             [0.0, 1.0, 2.0, 1.0],
@@ -555,24 +691,23 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
      */
     public function pseudoinverse() : void
     {
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
         ]);
 
         $b = $a->pseudoinverse();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.03147992432205172, 0.05583000490505223],
             [-0.009144418751313844, 0.07003713825239999],
             [0.01266554551187723, -0.0031357298016957483],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -580,10 +715,10 @@ class MatrixTest extends TestCase
      */
     public function det() : void
     {
-        $a = Matrix::quick([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+        $a = Matrix::fromArray([
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
         $this->assertEqualsWithDelta(-544.0, $a->det(), self::MAX_DELTA);
@@ -596,7 +731,7 @@ class MatrixTest extends TestCase
     {
         // Exactly singular (column 3 = column 0 - column 1 + column 2); the
         // determinant must be ~0 rather than a spurious ~1e-15 value.
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [2.0, 1.0, 0.0, 1.0],
             [1.0, 2.0, 1.0, 0.0],
             [0.0, 1.0, 2.0, 1.0],
@@ -611,10 +746,10 @@ class MatrixTest extends TestCase
      */
     public function trace() : void
     {
-        $a = Matrix::quick([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+        $a = Matrix::fromArray([
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
         $this->assertEquals(21.0, $a->trace());
@@ -638,19 +773,31 @@ class MatrixTest extends TestCase
     public function symmetricProvider() : Generator
     {
         yield [
-            Matrix::quick([
-                [22, -17, 12],
-                [4, 11, -2],
-                [20, -6, -9],
+            Matrix::fromArray([
+                [22.0, -17.0, 12.0],
+                [4.0, 11.0, -2.0],
+                [20.0, -6.0, -9.0],
             ]),
             false,
         ];
 
         yield [
-            Matrix::quick([
-                [1, 5, 2],
-                [5, 1, 3],
-                [2, 3, 1],
+            Matrix::fromArray([
+                [1.0, 5.0, 2.0],
+                [5.0, 1.0, 3.0],
+                [2.0, 3.0, 1.0],
+            ]),
+            true,
+        ];
+
+        yield [
+            Matrix::fromArray([]),
+            true,
+        ];
+
+        yield [
+            Matrix::fromArray([
+                [5.0],
             ]),
             true,
         ];
@@ -661,7 +808,7 @@ class MatrixTest extends TestCase
      */
     public function rank() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -669,7 +816,7 @@ class MatrixTest extends TestCase
 
         $this->assertEquals(3, $a->rank());
 
-        $b = Matrix::quick([
+        $b = Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]);
@@ -679,7 +826,7 @@ class MatrixTest extends TestCase
         // Exactly singular (column 3 = column 0 - column 1 + column 2); the
         // rank must be 3, not 4, even though floating point leaves a ~1e-16
         // residual on the diagonal.
-        $c = Matrix::quick([
+        $c = Matrix::fromArray([
             [2.0, 1.0, 0.0, 1.0],
             [1.0, 2.0, 1.0, 0.0],
             [0.0, 1.0, 2.0, 1.0],
@@ -694,7 +841,7 @@ class MatrixTest extends TestCase
      */
     public function fullRank() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -702,7 +849,7 @@ class MatrixTest extends TestCase
 
         $this->assertTrue($a->fullRank());
 
-        $b = Matrix::quick([
+        $b = Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]);
@@ -710,7 +857,7 @@ class MatrixTest extends TestCase
         $this->assertTrue($b->fullRank());
 
         // Exactly singular 4x4 (see rank() above); fullRank() must be false.
-        $c = Matrix::quick([
+        $c = Matrix::fromArray([
             [2.0, 1.0, 0.0, 1.0],
             [1.0, 2.0, 1.0, 0.0],
             [0.0, 1.0, 2.0, 1.0],
@@ -725,7 +872,7 @@ class MatrixTest extends TestCase
      */
     public function reciprocal() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -733,13 +880,13 @@ class MatrixTest extends TestCase
 
         $b = $a->reciprocal();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.045454545454545456, -0.058823529411764705, 0.08333333333333333],
             [0.25, 0.09090909090909091, -0.5],
             [0.05, -0.16666666666666666, -0.1111111111111111],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -747,7 +894,7 @@ class MatrixTest extends TestCase
      */
     public function map() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -759,13 +906,13 @@ class MatrixTest extends TestCase
 
         $b = $a->map($sign);
 
-        $expected = Matrix::quick([
-            [1, -1, 1],
-            [1, 1, -1],
-            [1, -1, -1],
+        $expected = Matrix::fromArray([
+            [1.0, -1.0, 1.0],
+            [1.0, 1.0, -1.0],
+            [1.0, -1.0, -1.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -773,7 +920,7 @@ class MatrixTest extends TestCase
      */
     public function reduce() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
@@ -793,7 +940,7 @@ class MatrixTest extends TestCase
         $this->assertEqualsWithDelta(-8.0, $a->reduce($subtract, 2.0), self::MAX_DELTA);
 
         // Must match Vector::reduce() for the same data and callback.
-        $v = Vector::quick([1.0, 2.0, 3.0, 4.0]);
+        $v = Vector::fromArray([1.0, 2.0, 3.0, 4.0]);
 
         $this->assertEqualsWithDelta($v->reduce($subtract), $a->reduce($subtract), self::MAX_DELTA);
     }
@@ -803,7 +950,7 @@ class MatrixTest extends TestCase
      */
     public function ref() : void
     {
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -811,15 +958,16 @@ class MatrixTest extends TestCase
 
         $ref = $matrix->ref();
 
-        $a = Matrix::quick([
-            [22, -17, 12],
-            [0, 14.09090909090909, -4.181818181818182],
-            [0, 0, -17.10322580645161],
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [0.0, 14.09090909090909, -4.181818181818182],
+            [0.0, 0.0, -17.10322580645161],
         ]);
 
         $expected = new REF($a, 0);
 
-        $this->assertEqualsWithDelta($expected, $ref, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
+        $this->assertEquals(0, $ref->swaps());
     }
 
     /**
@@ -827,7 +975,7 @@ class MatrixTest extends TestCase
      */
     public function rref() : void
     {
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -835,15 +983,15 @@ class MatrixTest extends TestCase
 
         $rref = $matrix->rref();
 
-        $a = Matrix::quick([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
+        $a = Matrix::fromArray([
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
         ]);
 
         $expected = new RREF($a);
 
-        $this->assertEqualsWithDelta($expected, $rref, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($a->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -851,7 +999,7 @@ class MatrixTest extends TestCase
      */
     public function lu() : void
     {
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -859,27 +1007,29 @@ class MatrixTest extends TestCase
 
         $lu = $matrix->lu();
 
-        $l = Matrix::quick([
-            [1.0, 0, 0],
-            [0.18181818181818182, 1.0, 0],
+        $l = Matrix::fromArray([
+            [1.0, 0.0, 0.0],
+            [0.18181818181818182, 1.0, 0.0],
             [0.9090909090909091, 0.6709677419354838, 1.0],
         ]);
 
-        $u = Matrix::quick([
-            [22, -17, 12],
-            [0, 14.09090909090909, -4.181818181818182],
-            [0, 0, -17.10322580645161],
+        $u = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [0.0, 14.09090909090909, -4.181818181818182],
+            [0.0, 0.0, -17.10322580645161],
         ]);
 
-        $p = Matrix::quick([
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
+        $p = Matrix::fromArray([
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
         ]);
 
         $expected = new LU($l, $u, $p);
 
-        $this->assertEqualsWithDelta($expected, $lu, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->asArray(), $lu->l()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $lu->u()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($p->asArray(), $lu->p()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -887,7 +1037,7 @@ class MatrixTest extends TestCase
      */
     public function luMultiPivot() : void
     {
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [0.0,  1.0,  0.0,  0.0],
             [-1.0,  0.0,  0.0,  0.0],
             [0.0,  0.0,  0.0,  2.0],
@@ -899,7 +1049,7 @@ class MatrixTest extends TestCase
         $pa = $lu->p()->matmul($matrix);
         $luProd = $lu->l()->matmul($lu->u());
 
-        $this->assertEqualsWithDelta($pa, $luProd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($pa->asArray(), $luProd->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -907,7 +1057,7 @@ class MatrixTest extends TestCase
      */
     public function luNegativePivot() : void
     {
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [1.0,  2.0,  3.0,  4.0],
             [-9.0,  1.0,  0.0,  0.0],
             [0.5,  0.5,  1.0,  1.0],
@@ -919,7 +1069,7 @@ class MatrixTest extends TestCase
         $pa = $lu->p()->matmul($matrix);
         $luProd = $lu->l()->matmul($lu->u());
 
-        $this->assertEqualsWithDelta($pa, $luProd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($pa->asArray(), $luProd->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -929,7 +1079,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [1.0, 2.0,  0.0,  0.0],
             [0.0, 1.0,  1.0,  0.0],
             [2.0, 4.0,  0.0,  1.0],
@@ -944,28 +1094,27 @@ class MatrixTest extends TestCase
      */
     public function cholesky() : void
     {
-        $matrix = Matrix::quick([
-            [2, -1, 0],
-            [-1, 2, -1],
-            [0, -1, 2],
+        $matrix = Matrix::fromArray([
+            [2.0, -1.0, 0.0],
+            [-1.0, 2.0, -1.0],
+            [0.0, -1.0, 2.0],
         ]);
 
         $cholesky = $matrix->cholesky();
 
-        $l = Matrix::quick([
-            [1.4142135623730951, 0, 0],
-            [-0.7071067811865475, 1.224744871391589, 0],
-            [0, -0.8164965809277261, 1.1547005383792515],
+        $l = Matrix::fromArray([
+            [1.4142135623730951, 0.0, 0.0],
+            [-0.7071067811865475, 1.224744871391589, 0.0],
+            [0.0, -0.8164965809277261, 1.1547005383792515],
         ]);
 
         $expected = new Cholesky($l);
 
-        $this->assertEqualsWithDelta($expected, $cholesky, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($l->asArray(), $cholesky->l()->asArray(), self::MAX_DELTA);
     }
 
     /**
      * @test
-     * @requires extension tensor
      * @dataProvider eigProvider
      *
      * @param Matrix $matrix
@@ -975,7 +1124,8 @@ class MatrixTest extends TestCase
     {
         $eig = $matrix->eig(false);
 
-        $this->assertEqualsWithDelta($expected, $eig, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvalues(), $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvectors()->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -984,7 +1134,7 @@ class MatrixTest extends TestCase
     public function eigProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
@@ -993,7 +1143,7 @@ class MatrixTest extends TestCase
                 [
                     -15.096331148319537, 25.108706520450326, 13.9876246278692,
                 ],
-                Matrix::quick([
+                Matrix::fromArray([
                     [0.25848694820886425, -0.11314537870318066, -0.9593657388523845],
                     [-0.8622719261400653, -0.17721179605718698, -0.47442924101375483],
                     [-0.6684472200177011, -0.6126879076802705, -0.42165369894378907],
@@ -1004,11 +1154,10 @@ class MatrixTest extends TestCase
 
     /**
      * @test
-     * @requires extension tensor
      */
     public function eigSymmetric() : void
     {
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -1018,7 +1167,7 @@ class MatrixTest extends TestCase
 
         $values = [-366.30071669298195, 335.92000012383926, 1084.3807165691428];
 
-        $vectors = Matrix::quick([
+        $vectors = Matrix::fromArray([
             [0.5423765325213931, 0.8162941265260668, -0.19872492538460218],
             [-0.04667292577741032, 0.26544998308386847, 0.9629942598375911],
             [-0.8388380862654284, 0.5130304137961217, -0.1820726765627782],
@@ -1026,16 +1175,16 @@ class MatrixTest extends TestCase
 
         $expected = new Eigen($values, $vectors);
 
-        $this->assertEqualsWithDelta($expected, $eig, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvalues(), $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvectors()->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
     /**
      * @test
-     * @requires extension tensor
      */
     public function svd() : void
     {
-        $matrix = Matrix::quick([
+        $matrix = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -1043,7 +1192,7 @@ class MatrixTest extends TestCase
 
         $svd = $matrix->svd();
 
-        $u = Matrix::quick([
+        $u = Matrix::fromArray([
             [-0.8436018806559158, 0.4252547343454771, -0.3278631999333884],
             [0.08179499775610413, -0.5016868397437385, -0.8611735557772425],
             [-0.5307027843302525, -0.7533052009276842, 0.38844025146657923],
@@ -1053,7 +1202,7 @@ class MatrixTest extends TestCase
             34.66917512262571, 17.12630582468919, 8.929610580306822,
         ];
 
-        $vT = Matrix::quick([
+        $vT = Matrix::fromArray([
             [-0.8320393250771425, 0.531457514846513, -0.15894486917903863],
             [-0.4506078135544562, -0.48043370238236727, 0.7524201326246152],
             [-0.3235168618307952, -0.6976649392999047, -0.6392186422366096],
@@ -1061,7 +1210,9 @@ class MatrixTest extends TestCase
 
         $expected = new SVD($u, $singularValues, $vT);
 
-        $this->assertEqualsWithDelta($expected, $svd, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($u->asArray(), $svd->u()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($singularValues, $svd->singularValues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($vT->asArray(), $svd->vT()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1069,25 +1220,25 @@ class MatrixTest extends TestCase
      */
     public function matmul() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
         ]);
 
-        $b = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $b = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $c = $a->matmul($b);
 
-        $expected = Matrix::quick([
-            [207], [155], [113],
+        $expected = Matrix::fromArray([
+            [207.0], [155.0], [113.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1095,19 +1246,19 @@ class MatrixTest extends TestCase
      */
     public function dotVector() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
         ]);
 
-        $b = Vector::quick([2, 10, -1]);
+        $b = Vector::fromArray([2.0, 10.0, -1.0]);
 
         $c = $a->dot($b);
 
-        $expected = ColumnVector::quick([-138, 120, -11]);
+        $expected = ColumnVector::fromArray([-138.0, 120.0, -11.0]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1115,33 +1266,33 @@ class MatrixTest extends TestCase
      */
     public function convolve() : void
     {
-        $a = Matrix::quick([
-            [3, 27, 66, 29, 42, 5],
-            [5, 9, 15, 42, 45, 16],
-            [1, 5, 10, 22, 66, 5],
-            [0, 1, 4, 9, 10, 22, 2],
-            [0, 0, 3, 19, 21, 25],
-            [0, 0, 0, 5, 2, 33, 35],
+        $a = Matrix::fromArray([
+            [3.0, 27.0, 66.0, 29.0, 42.0, 5.0],
+            [5.0, 9.0, 15.0, 42.0, 45.0, 16.0],
+            [1.0, 5.0, 10.0, 22.0, 66.0, 5.0],
+            [0.0, 1.0, 4.0, 9.0, 10.0, 22.0],
+            [0.0, 0.0, 3.0, 19.0, 21.0, 25.0],
+            [0.0, 0.0, 0.0, 5.0, 2.0, 33.0],
         ]);
 
-        $b = Matrix::quick([
-            [0, 0, 1],
-            [0, 1, 0],
-            [1, 0, 0],
+        $b = Matrix::fromArray([
+            [0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0],
+            [1.0, 0.0, 0.0],
         ]);
 
         $c = $a->convolve($b, 1);
 
-        $expected = Matrix::quick([
-            [3, 32, 75, 44, 84, 50],
-            [32, 76, 49, 94, 72, 82],
-            [10, 20, 53, 71, 91, 15],
-            [5, 11, 26, 78, 34, 43],
-            [1, 4, 12, 29, 48, 27],
-            [0, 3, 19, 26, 27, 33],
+        $expected = Matrix::fromArray([
+            [3.0, 32.0, 75.0, 44.0, 84.0, 50.0],
+            [32.0, 76.0, 49.0, 94.0, 72.0, 82.0],
+            [10.0, 20.0, 53.0, 71.0, 91.0, 15.0],
+            [5.0, 11.0, 26.0, 78.0, 34.0, 43.0],
+            [1.0, 4.0, 12.0, 29.0, 48.0, 27.0],
+            [0.0, 3.0, 19.0, 26.0, 27.0, 33.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1152,27 +1303,27 @@ class MatrixTest extends TestCase
      */
     public function convolveStrideTwo() : void
     {
-        $a = Matrix::quick([
-            [1, 2, 3, 4, 5, 6, 7, 8],
-            [9, 10, 11, 12, 13, 14, 15, 16],
-            [17, 18, 19, 20, 21, 22, 23, 24],
-            [25, 26, 27, 28, 29, 30, 31, 32],
-            [33, 34, 35, 36, 37, 38, 39, 40],
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0],
+            [17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0],
+            [25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0],
+            [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0],
         ]);
 
-        $b = Matrix::quick([
-            [1],
+        $b = Matrix::fromArray([
+            [1.0],
         ]);
 
         $c = $a->convolve($b, 2);
 
-        $expected = Matrix::quick([
-            [1, 3, 5, 7],
-            [17, 19, 21, 23],
-            [33, 35, 37, 39],
+        $expected = Matrix::fromArray([
+            [1.0, 3.0, 5.0, 7.0],
+            [17.0, 19.0, 21.0, 23.0],
+            [33.0, 35.0, 37.0, 39.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1180,26 +1331,26 @@ class MatrixTest extends TestCase
      */
     public function convolveStrideThree() : void
     {
-        $a = Matrix::quick([
-            [1, 2, 3, 4, 5, 6, 7, 8],
-            [9, 10, 11, 12, 13, 14, 15, 16],
-            [17, 18, 19, 20, 21, 22, 23, 24],
-            [25, 26, 27, 28, 29, 30, 31, 32],
-            [33, 34, 35, 36, 37, 38, 39, 40],
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0],
+            [17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0],
+            [25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0],
+            [33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0, 40.0],
         ]);
 
-        $b = Matrix::quick([
-            [1],
+        $b = Matrix::fromArray([
+            [1.0],
         ]);
 
         $c = $a->convolve($b, 3);
 
-        $expected = Matrix::quick([
-            [1, 4, 7],
-            [25, 28, 31],
+        $expected = Matrix::fromArray([
+            [1.0, 4.0, 7.0],
+            [25.0, 28.0, 31.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1214,7 +1365,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->multiply($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1223,62 +1374,62 @@ class MatrixTest extends TestCase
     public function multiplyProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [88, -102, -144],
-                [4, 33, -10],
-                [-200, 6, -126],
+            Matrix::fromArray([
+                [88.0, -102.0, -144.0],
+                [4.0, 33.0, -10.0],
+                [-200.0, 6.0, -126.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [44, -170, -12],
-                [8, 110, 2],
-                [40, -60, 9],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [44.0, -170.0, -12.0],
+                [8.0, 110.0, 2.0],
+                [40.0, -60.0, 9.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [55.0, -42.5, 30.],
-                [-4, -11, 2],
-                [96.0, -28.799999999999997, -43.199999999999996],
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
+                [55.0, -42.5, 30.0],
+                [-4.0, -11.0, 2.0],
+                [96.0, -28.8, -43.2],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             2.5,
-            Matrix::quick([
-                [55, -42.5, 30],
-                [10.0, 27.5, -5.],
-                [50, -15, -22.5],
+            Matrix::fromArray([
+                [55.0, -42.5, 30.0],
+                [10.0, 27.5, -5.0],
+                [50.0, -15.0, -22.5],
             ]),
         ];
     }
@@ -1295,7 +1446,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->divide($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1304,61 +1455,61 @@ class MatrixTest extends TestCase
     public function divideProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [5.5, -2.8333333333333335, -1],
-                [4, 3.6666666666666665, -0.4],
-                [-2, 6, -0.6428571428571429],
+            Matrix::fromArray([
+                [5.5, -2.8333333333333335, -1.0],
+                [4.0, 3.6666666666666665, -0.4],
+                [-2.0, 6.0, -0.6428571428571429],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [11, -1.7, -12],
-                [2, 1.1, 2],
-                [10, -0.6, 9],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [11.0, -1.7, -12.0],
+                [2.0, 1.1, 2.0],
+                [10.0, -0.6, 9.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
                 [8.8, -6.8, 4.8],
-                [-4, -11, 2],
+                [-4.0, -11.0, 2.0],
                 [4.166666666666667, -1.25, -1.875],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             2.0,
-            Matrix::quick([
-                [11.0, -8.5, 6.],
-                [2.0, 5.5, -1.],
+            Matrix::fromArray([
+                [11.0, -8.5, 6.0],
+                [2.0, 5.5, -1.0],
                 [10.0, -3.0, -4.5],
             ]),
         ];
@@ -1376,7 +1527,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->add($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1385,62 +1536,62 @@ class MatrixTest extends TestCase
     public function addProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [26, -11, 0],
-                [5, 14, 3],
-                [10, -7, 5],
+            Matrix::fromArray([
+                [26.0, -11.0, 0.0],
+                [5.0, 14.0, 3.0],
+                [10.0, -7.0, 5.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [24, -7, 11],
-                [6, 21, -3],
-                [22, 4, -10],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [24.0, -7.0, 11.0],
+                [6.0, 21.0, -3.0],
+                [22.0, 4.0, -10.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
                 [24.5, -14.5, 14.5],
-                [3, 10, -3],
+                [3.0, 10.0, -3.0],
                 [24.8, -1.2000000000000002, -4.2],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             1.0,
-            Matrix::quick([
-                [23, -16, 13],
-                [5, 12, -1],
-                [21, -5, -8],
+            Matrix::fromArray([
+                [23.0, -16.0, 13.0],
+                [5.0, 12.0, -1.0],
+                [21.0, -5.0, -8.0],
             ]),
         ];
     }
@@ -1457,7 +1608,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->subtract($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1466,62 +1617,62 @@ class MatrixTest extends TestCase
     public function subtractProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [18, -23, 24],
-                [3, 8, -7],
-                [30, -5, -23],
+            Matrix::fromArray([
+                [18.0, -23.0, 24.0],
+                [3.0, 8.0, -7.0],
+                [30.0, -5.0, -23.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [20, -27, 13],
-                [2, 1, -1],
-                [18, -16, -8],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [20.0, -27.0, 13.0],
+                [2.0, 1.0, -1.0],
+                [18.0, -16.0, -8.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
                 [19.5, -19.5, 9.5],
-                [5, 12, -1],
+                [5.0, 12.0, -1.0],
                 [15.2, -10.8, -13.8],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             10.0,
-            Matrix::quick([
-                [12, -27, 2],
-                [-6, 1, -12],
-                [10, -16, -19],
+            Matrix::fromArray([
+                [12.0, -27.0, 2.0],
+                [-6.0, 1.0, -12.0],
+                [10.0, -16.0, -19.0],
             ]),
         ];
     }
@@ -1538,7 +1689,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->pow($b);
 
-        $this->assertEqualsWithDelta($expected, $c, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1547,48 +1698,48 @@ class MatrixTest extends TestCase
     public function powProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [234256, 24137569, 1.1215665478461509E-13],
-                [4, 1331, -32],
-                [9.765625E-14, -0.16666666666666666, 22876792454961],
+            Matrix::fromArray([
+                [234256.0, 24137569.0, 1.1215665478461509E-13],
+                [4.0, 1331.0, -32.0],
+                [9.765625E-14, -0.16666666666666666, 22876792454961.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [484, 2015993900449, 0.08333333333333333],
-                [16, 25937424601, -0.5],
-                [400, 60466176, -0.1111111111111111],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [484.0, 2015993900449.0, 0.08333333333333333],
+                [16.0, 25937424601.0, -0.5],
+                [400.0, 60466176.0, -0.1111111111111111],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             3.0,
-            Matrix::quick([
-                [10648, -4913, 1728],
-                [64, 1331, -8],
-                [8000, -216, -729],
+            Matrix::fromArray([
+                [10648.0, -4913.0, 1728.0],
+                [64.0, 1331.0, -8.0],
+                [8000.0, -216.0, -729.0],
             ]),
         ];
     }
@@ -1605,7 +1756,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->mod($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1614,62 +1765,62 @@ class MatrixTest extends TestCase
     public function modProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [2, -5, 0],
-                [0, 2, -2],
-                [0, 0, -9],
+            Matrix::fromArray([
+                [2.0, -5.0, 0.0],
+                [0.0, 2.0, -2.0],
+                [0.0, 0.0, -9.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [0, -7, 0],
-                [0, 1, 0],
-                [0, -6, 0],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [0.0, -7.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, -6.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [0,  -1,  0],
-                [0, 0, 0],
-                [0,  -2,  -1]
+            ColumnVector::fromArray([2.5, -1.0, 4.0]),
+            Matrix::fromArray([
+                [2.0, -2.0, 2.0],
+                [0.0, 0.0, 0.0],
+                [0.0, -2.0, -1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             10.0,
-            Matrix::quick([
-                [2, -7, 2],
-                [4, 1, -2],
-                [0, -6, -9],
+            Matrix::fromArray([
+                [2.0, -7.0, 2.0],
+                [4.0, 1.0, -2.0],
+                [0.0, -6.0, -9.0],
             ]),
         ];
     }
@@ -1686,7 +1837,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->equal($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1695,62 +1846,62 @@ class MatrixTest extends TestCase
     public function equalProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0],
+            Matrix::fromArray([
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0],
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             4.0,
-            Matrix::quick([
-                [0, 0, 0],
-                [1, 0, 0],
-                [0, 0, 0],
+            Matrix::fromArray([
+                [0.0, 0.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0],
             ]),
         ];
     }
@@ -1767,7 +1918,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->notEqual($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1776,62 +1927,62 @@ class MatrixTest extends TestCase
     public function notEqualProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [1, 1, 1],
-                [1, 1, 1],
-                [1, 1, 1],
+            Matrix::fromArray([
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [1, 1, 1],
-                [1, 1, 1],
-                [1, 1, 1],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [1, 1, 1],
-                [1, 1, 1],
-                [1, 1, 1],
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             4.0,
-            Matrix::quick([
-                [1, 1, 1],
-                [0, 1, 1],
-                [1, 1, 1],
+            Matrix::fromArray([
+                [1.0, 1.0, 1.0],
+                [0.0, 1.0, 1.0],
+                [1.0, 1.0, 1.0],
             ]),
         ];
     }
@@ -1848,7 +1999,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->greater($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1857,62 +2008,62 @@ class MatrixTest extends TestCase
     public function greaterProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [1, 0, 1],
-                [1, 1, 0],
-                [1, 0, 0],
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [1, 0, 1],
-                [1, 1, 0],
-                [1, 0, 0],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [1, 0, 1],
-                [1, 1, 0],
-                [1, 0, 0],
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             4.0,
-            Matrix::quick([
-                [1, 0, 1],
-                [0, 1, 0],
-                [1, 0, 0],
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [0.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
     }
@@ -1929,7 +2080,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->greaterEqual($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -1938,62 +2089,62 @@ class MatrixTest extends TestCase
     public function greaterEqualProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [1, 0, 1],
-                [1, 1, 0],
-                [1, 0, 0],
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [1, 0, 1],
-                [1, 1, 0],
-                [1, 0, 0],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [1, 0, 1],
-                [1, 1, 0],
-                [1, 0, 0],
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             4.0,
-            Matrix::quick([
-                [1, 0, 1],
-                [1, 1, 0],
-                [1, 0, 0],
+            Matrix::fromArray([
+                [1.0, 0.0, 1.0],
+                [1.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
             ]),
         ];
     }
@@ -2010,7 +2161,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->less($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -2019,62 +2170,62 @@ class MatrixTest extends TestCase
     public function lessProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [0, 1, 0],
-                [0, 0, 1],
-                [0, 1, 1],
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [0, 1, 0],
-                [0, 0, 1],
-                [0, 1, 1],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [0, 1, 0],
-                [0, 0, 1],
-                [0, 1, 1],
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             10.0,
-            Matrix::quick([
-                [0, 1, 0],
-                [1, 0, 1],
-                [0, 1, 1],
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [1.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
     }
@@ -2091,7 +2242,7 @@ class MatrixTest extends TestCase
     {
         $c = $a->lessEqual($b);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -2100,62 +2251,62 @@ class MatrixTest extends TestCase
     public function lessEqualProvider() : Generator
     {
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Matrix::quick([
-                [4, 6, -12],
-                [1, 3, 5],
-                [-10, -1, 14],
+            Matrix::fromArray([
+                [4.0, 6.0, -12.0],
+                [1.0, 3.0, 5.0],
+                [-10.0, -1.0, 14.0],
             ]),
-            Matrix::quick([
-                [0, 1, 0],
-                [0, 0, 1],
-                [0, 1, 1],
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            Vector::quick([2, 10, -1]),
-            Matrix::quick([
-                [0, 1, 0],
-                [0, 0, 1],
-                [0, 1, 1],
+            Vector::fromArray([2.0, 10.0, -1.0]),
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
-            ColumnVector::quick([2.5, -1, 4.8]),
-            Matrix::quick([
-                [0, 1, 0],
-                [0, 0, 1],
-                [0, 1, 1],
+            ColumnVector::fromArray([2.5, -1.0, 4.8]),
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
 
         yield [
-            Matrix::quick([
+            Matrix::fromArray([
                 [22.0, -17.0, 12.0],
                 [4.0, 11.0, -2.0],
                 [20.0, -6.0, -9.0],
             ]),
             10.0,
-            Matrix::quick([
-                [0, 1, 0],
-                [1, 0, 1],
-                [0, 1, 1],
+            Matrix::fromArray([
+                [0.0, 1.0, 0.0],
+                [1.0, 0.0, 1.0],
+                [0.0, 1.0, 1.0],
             ]),
         ];
     }
@@ -2165,7 +2316,7 @@ class MatrixTest extends TestCase
      */
     public function abs() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2173,13 +2324,13 @@ class MatrixTest extends TestCase
 
         $b = $a->abs();
 
-        $expected = Matrix::quick([
-            [22, 17, 12],
-            [4, 11, 2],
-            [20, 6, 9],
+        $expected = Matrix::fromArray([
+            [22.0, 17.0, 12.0],
+            [4.0, 11.0, 2.0],
+            [20.0, 6.0, 9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2187,7 +2338,7 @@ class MatrixTest extends TestCase
      */
     public function square() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2195,13 +2346,13 @@ class MatrixTest extends TestCase
 
         $b = $a->square();
 
-        $expected = Matrix::quick([
-            [484, 289, 144],
-            [16, 121, 4],
-            [400, 36, 81],
+        $expected = Matrix::fromArray([
+            [484.0, 289.0, 144.0],
+            [16.0, 121.0, 4.0],
+            [400.0, 36.0, 81.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2209,21 +2360,21 @@ class MatrixTest extends TestCase
      */
     public function sqrt() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->sqrt();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [3.605551275463989],
             [3.3166247903554],
-            [3],
+            [3.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2231,21 +2382,21 @@ class MatrixTest extends TestCase
      */
     public function exp() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->exp();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [442413.3920089205],
             [59874.14171519778],
             [8103.08392757538],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2253,21 +2404,21 @@ class MatrixTest extends TestCase
      */
     public function expm1() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->expm1();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [442412.3920089205],
             [59873.14171519782],
             [8102.083927575384],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2275,21 +2426,21 @@ class MatrixTest extends TestCase
      */
     public function log() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->log();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [2.5649493574615367],
             [2.3978952727983707],
             [2.1972245773362196],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2297,21 +2448,21 @@ class MatrixTest extends TestCase
      */
     public function log1p() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->log1p();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [2.6390573296152584],
             [2.4849066497880004],
             [2.302585092994046],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2319,21 +2470,21 @@ class MatrixTest extends TestCase
      */
     public function sin() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->sin();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.4201670368266409],
             [-0.9999902065507035],
             [0.4121184852417566],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2341,7 +2492,7 @@ class MatrixTest extends TestCase
      */
     public function asin() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [0.32],
             [-0.5],
             [0.01],
@@ -2349,13 +2500,13 @@ class MatrixTest extends TestCase
 
         $b = $a->asin();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.3257294872946302],
             [-0.5235987755982989],
             [0.010000166674167114],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2363,21 +2514,21 @@ class MatrixTest extends TestCase
      */
     public function cos() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->cos();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.9074467814501962],
             [0.004425697988050785],
             [-0.9111302618846769],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2385,7 +2536,7 @@ class MatrixTest extends TestCase
      */
     public function acos() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [0.32],
             [-0.5],
             [0.01],
@@ -2393,13 +2544,13 @@ class MatrixTest extends TestCase
 
         $b = $a->acos();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [1.2450668395002664],
             [2.0943951023931957],
             [1.5607961601207294],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2407,21 +2558,21 @@ class MatrixTest extends TestCase
      */
     public function tan() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->tan();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.4630211329364896],
             [-225.95084645419513],
             [-0.45231565944180985],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2429,21 +2580,21 @@ class MatrixTest extends TestCase
      */
     public function atan() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->atan();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [1.4940244355251187],
             [1.4801364395941514],
             [1.460139105621001],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2451,21 +2602,21 @@ class MatrixTest extends TestCase
      */
     public function rad2deg() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->rad2deg();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [744.8451336700701],
             [630.2535746439056],
             [515.6620156177408],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2473,21 +2624,21 @@ class MatrixTest extends TestCase
      */
     public function deg2rad() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->deg2rad();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [0.22689280275926282],
             [0.19198621771937624],
             [0.15707963267948966],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2495,7 +2646,7 @@ class MatrixTest extends TestCase
      */
     public function sum() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2503,9 +2654,9 @@ class MatrixTest extends TestCase
 
         $b = $a->sum();
 
-        $expected = ColumnVector::quick([17, 13, 5]);
+        $expected = ColumnVector::fromArray([17.0, 13.0, 5.0]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2513,7 +2664,7 @@ class MatrixTest extends TestCase
      */
     public function product() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2521,9 +2672,9 @@ class MatrixTest extends TestCase
 
         $b = $a->product();
 
-        $expected = ColumnVector::quick([-4488.0, -88.0, 1080.0]);
+        $expected = ColumnVector::fromArray([-4488.0, -88.0, 1080.0]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2531,7 +2682,7 @@ class MatrixTest extends TestCase
      */
     public function min() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2539,9 +2690,9 @@ class MatrixTest extends TestCase
 
         $b = $a->min();
 
-        $expected = ColumnVector::quick([-17, -2, -9]);
+        $expected = ColumnVector::fromArray([-17.0, -2.0, -9.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2549,7 +2700,7 @@ class MatrixTest extends TestCase
      */
     public function max() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2557,9 +2708,45 @@ class MatrixTest extends TestCase
 
         $b = $a->max();
 
-        $expected = ColumnVector::quick([22, 11, 20]);
+        $expected = ColumnVector::fromArray([22.0, 11.0, 20.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function argmin() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $b = $a->argmin();
+
+        $expected = ColumnVector::fromArray([1, 2, 2]);
+
+        $this->assertEquals($expected->asArray(), $b->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function argmax() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $b = $a->argmax();
+
+        $expected = ColumnVector::fromArray([0, 1, 0]);
+
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2567,7 +2754,7 @@ class MatrixTest extends TestCase
      */
     public function mean() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2575,9 +2762,9 @@ class MatrixTest extends TestCase
 
         $b = $a->mean();
 
-        $expected = ColumnVector::quick([5.666666666666667, 4.333333333333333, 1.6666666666666667]);
+        $expected = ColumnVector::fromArray([5.666666666666667, 4.333333333333333, 1.6666666666666667]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2585,7 +2772,7 @@ class MatrixTest extends TestCase
      */
     public function median() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2593,9 +2780,9 @@ class MatrixTest extends TestCase
 
         $b = $a->median();
 
-        $expected = ColumnVector::quick([12, 4, -6]);
+        $expected = ColumnVector::fromArray([12.0, 4.0, -6.0]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2603,7 +2790,7 @@ class MatrixTest extends TestCase
      */
     public function quantile() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2611,27 +2798,27 @@ class MatrixTest extends TestCase
 
         $b = $a->quantile(0.4);
 
-        $expected = ColumnVector::quick([6.200000000000001, 2.8000000000000003, -6.6]);
+        $expected = ColumnVector::fromArray([6.200000000000001, 2.8000000000000003, -6.6]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
 
         $max = $a->quantile(1.0);
 
-        $maxExpected = ColumnVector::quick([22.0, 11.0, 20.0]);
+        $maxExpected = ColumnVector::fromArray([22.0, 11.0, 20.0]);
 
-        $this->assertEqualsWithDelta($maxExpected, $max, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($maxExpected->asArray(), $max->asArray(), self::MAX_DELTA);
 
-        $single = Matrix::quick([
+        $single = Matrix::fromArray([
             [5.0],
             [3.0],
             [8.0],
         ]);
 
-        $singleExpected = ColumnVector::quick([5.0, 3.0, 8.0]);
+        $singleExpected = ColumnVector::fromArray([5.0, 3.0, 8.0]);
 
         $this->assertEqualsWithDelta(
-            $singleExpected,
-            $single->quantile(0.5),
+            $singleExpected->asArray(),
+            $single->quantile(0.5)->asArray(),
             self::MAX_DELTA
         );
     }
@@ -2641,7 +2828,7 @@ class MatrixTest extends TestCase
      */
     public function variance() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2649,9 +2836,9 @@ class MatrixTest extends TestCase
 
         $b = $a->variance();
 
-        $expected = ColumnVector::quick([273.55555555555554, 28.222222222222225, 169.55555555555554]);
+        $expected = ColumnVector::fromArray([273.55555555555554, 28.222222222222225, 169.55555555555554]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2659,16 +2846,16 @@ class MatrixTest extends TestCase
      */
     public function varianceRowNonSquare() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [10.0, 20.0, 30.0],
         ]);
 
         $b = $a->variance();
 
-        $expected = ColumnVector::quick([0.6666666666666666, 66.66666666666667]);
+        $expected = ColumnVector::fromArray([0.6666666666666666, 66.66666666666667]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2676,7 +2863,7 @@ class MatrixTest extends TestCase
      */
     public function covariance() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2684,27 +2871,27 @@ class MatrixTest extends TestCase
 
         $b = $a->covariance();
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [273.55555555555554, -65.55555555555556, 135.2222222222222],
             [-65.55555555555556, 28.222222222222225, 3.4444444444444406],
             [135.2222222222222, 3.4444444444444406, 169.55555555555554],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
 
-        $c = Matrix::quick([
+        $c = Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]);
 
         $d = $c->covariance();
 
-        $expectedC = Matrix::quick([
+        $expectedC = Matrix::fromArray([
             [2.0 / 3.0, 2.0 / 3.0],
             [2.0 / 3.0, 2.0 / 3.0],
         ]);
 
-        $this->assertEqualsWithDelta($expectedC, $d, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedC->asArray(), $d->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -2712,7 +2899,7 @@ class MatrixTest extends TestCase
      */
     public function round() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2720,13 +2907,51 @@ class MatrixTest extends TestCase
 
         $b = $a->round(2);
 
-        $expected = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $expected = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $b, self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function roundFractions() : void
+    {
+        $a = Matrix::fromArray([
+            [1.2345, 2.675, -0.125],
+            [0.125, 1.005, 12.345],
+            [-12.345, 2.5, -2.5],
+        ]);
+
+        $b = $a->round(2);
+
+        $expected = Matrix::fromArray([
+            [round(1.2345, 2), round(2.675, 2), round(-0.125, 2)],
+            [round(0.125, 2), round(1.005, 2), round(12.345, 2)],
+            [round(-12.345, 2), round(2.5, 2), round(-2.5, 2)],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function roundNegativePrecisionThrows() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $a->round(-1);
     }
 
     /**
@@ -2734,7 +2959,7 @@ class MatrixTest extends TestCase
      */
     public function floor() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2742,13 +2967,13 @@ class MatrixTest extends TestCase
 
         $b = $a->floor();
 
-        $expected = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $expected = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2756,7 +2981,7 @@ class MatrixTest extends TestCase
      */
     public function ceil() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2764,13 +2989,13 @@ class MatrixTest extends TestCase
 
         $b = $a->ceil();
 
-        $expected = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $expected = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2778,13 +3003,13 @@ class MatrixTest extends TestCase
      */
     public function l1Norm() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
         ]);
 
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2798,7 +3023,7 @@ class MatrixTest extends TestCase
      */
     public function l2Norm() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2812,7 +3037,7 @@ class MatrixTest extends TestCase
      */
     public function infinityNorm() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2826,7 +3051,7 @@ class MatrixTest extends TestCase
      */
     public function maxNorm() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2840,7 +3065,7 @@ class MatrixTest extends TestCase
      */
     public function clip() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2848,13 +3073,13 @@ class MatrixTest extends TestCase
 
         $b = $a->clip(0.0, INF);
 
-        $expected = Matrix::quick([
-            [22, 0.0, 12],
-            [4, 11, 0.],
-            [20, 0.0, 0.],
+        $expected = Matrix::fromArray([
+            [22.0, 0.0, 12.0],
+            [4.0, 11.0, 0.],
+            [20.0, 0.0, 0.],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2862,7 +3087,7 @@ class MatrixTest extends TestCase
      */
     public function clipLower() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2870,13 +3095,13 @@ class MatrixTest extends TestCase
 
         $b = $a->clipLower(5.);
 
-        $expected = Matrix::quick([
-            [22, 5.0, 12],
-            [5.0, 11, 5.],
-            [20, 5.0, 5.],
+        $expected = Matrix::fromArray([
+            [22.0, 5.0, 12.0],
+            [5.0, 11.0, 5.],
+            [20.0, 5.0, 5.],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2884,7 +3109,7 @@ class MatrixTest extends TestCase
      */
     public function clipUpper() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2892,13 +3117,13 @@ class MatrixTest extends TestCase
 
         $b = $a->clipUpper(16.0);
 
-        $expected = Matrix::quick([
-            [16.0, -17.0, 12],
-            [4, 11, -2.0],
-            [16, -6.0, -9.0],
+        $expected = Matrix::fromArray([
+            [16.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [16.0, -6.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2906,7 +3131,7 @@ class MatrixTest extends TestCase
      */
     public function sign() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2914,13 +3139,13 @@ class MatrixTest extends TestCase
 
         $b = $a->sign();
 
-        $expected = Matrix::quick([
-            [1, -1, 1],
-            [1, 1, -1],
-            [1, -1, -1],
+        $expected = Matrix::fromArray([
+            [1.0, -1.0, 1.0],
+            [1.0, 1.0, -1.0],
+            [1.0, -1.0, -1.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2928,7 +3153,7 @@ class MatrixTest extends TestCase
      */
     public function negate() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
@@ -2936,13 +3161,13 @@ class MatrixTest extends TestCase
 
         $b = $a->negate();
 
-        $expected = Matrix::quick([
-            [-22, 17, -12],
-            [-4, -11, 2],
-            [-20, 6, 9],
+        $expected = Matrix::fromArray([
+            [-22.0, 17.0, -12.0],
+            [-4.0, -11.0, 2.0],
+            [-20.0, 6.0, 9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -2950,30 +3175,30 @@ class MatrixTest extends TestCase
      */
     public function augmentAbove() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
         ]);
 
-        $b = Matrix::quick([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+        $b = Matrix::fromArray([
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
         $c = $a->augmentAbove($b);
 
-        $expected = Matrix::quick([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
+        $expected = Matrix::fromArray([
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -2981,30 +3206,30 @@ class MatrixTest extends TestCase
      */
     public function augmentBelow() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
         ]);
 
-        $b = Matrix::quick([
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+        $b = Matrix::fromArray([
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
         $c = $a->augmentBelow($b);
 
-        $expected = Matrix::quick([
-            [22, -17, 12],
-            [4, 11, -2],
-            [20, -6, -9],
-            [4, 6, -12],
-            [1, 3, 5],
-            [-10, -1, 14],
+        $expected = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+            [4.0, 6.0, -12.0],
+            [1.0, 3.0, 5.0],
+            [-10.0, -1.0, 14.0],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -3012,27 +3237,27 @@ class MatrixTest extends TestCase
      */
     public function augmentLeft() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
         ]);
 
-        $b = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $b = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $c = $a->augmentLeft($b);
 
-        $expected = Matrix::quick([
-            [13, 22, -17, 12],
-            [11, 4, 11, -2],
-            [9, 20, -6, -9],
+        $expected = Matrix::fromArray([
+            [13.0, 22.0, -17.0, 12.0],
+            [11.0, 4.0, 11.0, -2.0],
+            [9.0, 20.0, -6.0, -9.0],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -3040,27 +3265,27 @@ class MatrixTest extends TestCase
      */
     public function augmentRight() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [22.0, -17.0, 12.0],
             [4.0, 11.0, -2.0],
             [20.0, -6.0, -9.0],
         ]);
 
-        $b = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $b = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $c = $a->augmentRight($b);
 
-        $expected = Matrix::quick([
-            [22, -17, 12, 13],
-            [4, 11, -2, 11],
-            [20, -6, -9, 9],
+        $expected = Matrix::fromArray([
+            [22.0, -17.0, 12.0, 13.0],
+            [4.0, 11.0, -2.0, 11.0],
+            [20.0, -6.0, -9.0, 9.0],
         ]);
 
-        $this->assertEquals($expected, $c);
+        $this->assertEquals($expected->asArray(), $c->asArray());
     }
 
     /**
@@ -3068,24 +3293,24 @@ class MatrixTest extends TestCase
      */
     public function repeat() : void
     {
-        $a = Matrix::quick([
-            [13],
-            [11],
-            [9],
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
         ]);
 
         $b = $a->repeat(1, 3);
 
-        $expected = Matrix::quick([
-            [13, 13, 13, 13],
-            [11, 11, 11, 11],
-            [9, 9, 9, 9],
-            [13, 13, 13, 13],
-            [11, 11, 11, 11],
-            [9, 9, 9, 9],
+        $expected = Matrix::fromArray([
+            [13.0, 13.0, 13.0, 13.0],
+            [11.0, 11.0, 11.0, 11.0],
+            [9.0, 9.0, 9.0, 9.0],
+            [13.0, 13.0, 13.0, 13.0],
+            [11.0, 11.0, 11.0, 11.0],
+            [9.0, 9.0, 9.0, 9.0],
         ]);
 
-        $this->assertEquals($expected, $b);
+        $this->assertEquals($expected->asArray(), $b->asArray());
     }
 
     /**
@@ -3125,7 +3350,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ])->det();
@@ -3138,10 +3363,10 @@ class MatrixTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
-        ])->matmul(Matrix::quick([
+        ])->matmul(Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
             [5.0, 6.0],
@@ -3155,10 +3380,10 @@ class MatrixTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
-        ])->dot(Vector::quick([1.0, 2.0]));
+        ])->dot(Vector::fromArray([1.0, 2.0]));
     }
 
     /**
@@ -3168,9 +3393,9 @@ class MatrixTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0],
-        ])->augmentAbove(Matrix::quick([
+        ])->augmentAbove(Matrix::fromArray([
             [1.0, 2.0, 3.0],
         ]));
     }
@@ -3182,9 +3407,9 @@ class MatrixTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0],
-        ])->augmentBelow(Matrix::quick([
+        ])->augmentBelow(Matrix::fromArray([
             [1.0, 2.0, 3.0],
         ]));
     }
@@ -3196,9 +3421,9 @@ class MatrixTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0],
-        ])->augmentLeft(Matrix::quick([
+        ])->augmentLeft(Matrix::fromArray([
             [1.0],
             [2.0],
             [3.0],
@@ -3212,9 +3437,9 @@ class MatrixTest extends TestCase
     {
         $this->expectException(DimensionalityMismatch::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0],
-        ])->augmentRight(Matrix::quick([
+        ])->augmentRight(Matrix::fromArray([
             [1.0],
             [2.0],
             [3.0],
@@ -3228,7 +3453,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
@@ -3243,7 +3468,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
@@ -3258,7 +3483,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
@@ -3273,7 +3498,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ])->lu();
@@ -3286,7 +3511,7 @@ class MatrixTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        Matrix::quick([
+        Matrix::fromArray([
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ])->cholesky();
@@ -3297,7 +3522,7 @@ class MatrixTest extends TestCase
      */
     public function eigReturnsEigen() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 2.0],
             [3.0, 4.0],
         ]);
@@ -3326,7 +3551,7 @@ class MatrixTest extends TestCase
      */
     public function eigSymmetricReturnsEigen() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [9.0, 3.0],
             [3.0, 5.0],
         ]);
@@ -3343,16 +3568,16 @@ class MatrixTest extends TestCase
      */
     public function pseudoinversePreservesTinySingularValues() : void
     {
-        $a = Matrix::quick([
+        $a = Matrix::fromArray([
             [1.0, 0.0],
             [0.0, 1e-9],
         ]);
 
-        $expected = Matrix::quick([
+        $expected = Matrix::fromArray([
             [1.0, 0.0],
             [0.0, 1.0 / 1e-9],
         ]);
 
-        $this->assertEqualsWithDelta($expected, $a->pseudoinverse(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->asArray(), $a->pseudoinverse()->asArray(), self::MAX_DELTA);
     }
 }

@@ -55,13 +55,16 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 {
 	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
 	zend_long ZEPHIR_LAST_CALL_STATUS;
-	zval *a, a_sub, _0, l, _4, _5, _1$$3, _2$$3, _3$$3;
+	zval *a, a_sub, _0, l, _4, _5, _6, _7, _8, _1$$3, _2$$3, _3$$3;
 
 	ZVAL_UNDEF(&a_sub);
 	ZVAL_UNDEF(&_0);
 	ZVAL_UNDEF(&l);
 	ZVAL_UNDEF(&_4);
 	ZVAL_UNDEF(&_5);
+	ZVAL_UNDEF(&_6);
+	ZVAL_UNDEF(&_7);
+	ZVAL_UNDEF(&_8);
 	ZVAL_UNDEF(&_1$$3);
 	ZVAL_UNDEF(&_2$$3);
 	ZVAL_UNDEF(&_3$$3);
@@ -71,33 +74,41 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &a);
-	ZEPHIR_CALL_METHOD(&_0, a, "issquare", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_0, a, "isSquare", NULL, 0);
 	zephir_check_call_status();
 	if (!(zephir_is_true(&_0))) {
 		ZEPHIR_INIT_VAR(&_1$$3);
 		object_init_ex(&_1$$3, tensor_exceptions_invalidargumentexception_ce);
-		ZEPHIR_CALL_METHOD(&_2$$3, a, "shapestring", NULL, 0);
+		ZEPHIR_CALL_METHOD(&_2$$3, a, "shapeString", NULL, 0);
 		zephir_check_call_status();
 		ZEPHIR_INIT_VAR(&_3$$3);
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "Matrix must be", " square, ", &_2$$3, " given.");
-		ZEPHIR_CALL_METHOD(NULL, &_1$$3, "__construct", NULL, 3, &_3$$3);
+		ZEPHIR_CALL_METHOD(NULL, &_1$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
 		zephir_throw_exception_debug(&_1$$3, "tensor/decompositions/cholesky.zep", 37);
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
 	ZEPHIR_INIT_VAR(&l);
-	ZEPHIR_CALL_METHOD(&_4, a, "asarray", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_4, a, "asTensorBuffer", NULL, 0);
 	zephir_check_call_status();
-	tensor_cholesky(&l, &_4);
+	ZEPHIR_CALL_METHOD(&_5, a, "n", NULL, 0);
+	zephir_check_call_status();
+	tensor_cholesky(&l, &_4, &_5);
 	if (Z_TYPE_P(&l) == IS_NULL) {
 		ZEPHIR_THROW_EXCEPTION_DEBUG_STR(tensor_exceptions_runtimeexception_ce, "Failed to decompose matrix.", "tensor/decompositions/cholesky.zep", 43);
 		return;
 	}
 	object_init_ex(return_value, tensor_decompositions_cholesky_ce);
-	ZEPHIR_CALL_CE_STATIC(&_5, tensor_matrix_ce, "quick", NULL, 0, &l);
+	ZEPHIR_INIT_VAR(&_6);
+	object_init_ex(&_6, tensor_matrix_ce);
+	ZEPHIR_CALL_METHOD(&_7, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 24, &_5);
+	ZEPHIR_CALL_METHOD(&_8, a, "n", NULL, 0);
+	zephir_check_call_status();
+	ZEPHIR_CALL_METHOD(NULL, &_6, "__construct", NULL, 14, &l, &_7, &_8);
+	zephir_check_call_status();
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 19, &_6);
 	zephir_check_call_status();
 	RETURN_MM();
 }

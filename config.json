@@ -4,13 +4,17 @@
     "extension-name": "tensor_ext",
     "description": "Scientific computing for the PHP language.",
     "author": "The Rubix ML Community",
-    "version": "3.1.1",
+    "version": "4.0.0",
     "verbose": true,
     "extra-cflags": "-O3",
     "extra-libs": "-lopenblas -llapacke -lgfortran",
     "extra-sources": [
         "include/arithmetic.c",
+        "include/buffer.c",
         "include/comparison.c",
+        "include/reductions.c",
+        "include/shape.c",
+        "include/unary.c",
         "include/linear_algebra.c",
         "include/signal_processing.c",
         "include/settings.c"
@@ -20,6 +24,9 @@
             {
                 "include": "cblas.h",
                 "code": "openblas_set_num_threads(1)"
+            },
+            {
+                "code": "extern zend_class_entry *tensor_buffer_ce; extern zend_class_entry *zephir_buffer_ce; tensor_buffer_ce = zephir_buffer_ce;"
             }
         ]
     },
@@ -33,10 +40,7 @@
         "constant-folding": true,
         "static-constant-class-folding": true,
         "call-gatherer-pass": true,
-        "check-invalid-reads": false,
-        "private-internal-methods": false,
-        "public-internal-methods": false,
-        "public-internal-functions": true
+        "check-invalid-reads": false
     },
     "warnings": {
         "unused-variable": true,
@@ -49,5 +53,8 @@
     "extra": {
         "export-classes": false,
         "indent": "spaces"
+    },
+    "kernel-classes": {
+        "buffer": true
     }
 }
