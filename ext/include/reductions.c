@@ -83,42 +83,99 @@ static double tensor_group_reduce(const uint8_t kind, const void * data, const z
 
 	if (mode == TENSOR_REDUCE_SUM) {
 		double acc = 0.0;
+		double u0 = 0.0, u1 = 0.0, u2 = 0.0, u3 = 0.0;
+		double u4 = 0.0, u5 = 0.0, u6 = 0.0, u7 = 0.0;
+
+		/* Accumulate into eight independent partial sums so the floating
+		 * point dependency chain no longer serializes the iterations, and
+		 * merge the partials in a small tree on the way out. The pairwise
+		 * merge also keeps the accumulated rounding error a fraction of the
+		 * naive serial sum. */
+		i = 0;
 
 		if (kind == ZEPHIR_BUFFER_LONG) {
 			const zend_long * ptr = (const zend_long *) data;
 
-			for (i = 0; i < len; ++i) {
+			for (; i + 7 < len; i += 8) {
+				u0 += (double) ptr[i];
+				u1 += (double) ptr[i + 1];
+				u2 += (double) ptr[i + 2];
+				u3 += (double) ptr[i + 3];
+				u4 += (double) ptr[i + 4];
+				u5 += (double) ptr[i + 5];
+				u6 += (double) ptr[i + 6];
+				u7 += (double) ptr[i + 7];
+			}
+
+			for (; i < len; ++i) {
 				acc += (double) ptr[i];
 			}
 		} else {
 			const double * ptr = (const double *) data;
 
-			for (i = 0; i < len; ++i) {
+			for (; i + 7 < len; i += 8) {
+				u0 += ptr[i];
+				u1 += ptr[i + 1];
+				u2 += ptr[i + 2];
+				u3 += ptr[i + 3];
+				u4 += ptr[i + 4];
+				u5 += ptr[i + 5];
+				u6 += ptr[i + 6];
+				u7 += ptr[i + 7];
+			}
+
+			for (; i < len; ++i) {
 				acc += ptr[i];
 			}
 		}
 
-		return acc;
+		return ((u0 + u1) + (u2 + u3)) + ((u4 + u5) + (u6 + u7)) + acc;
 	}
 
 	if (mode == TENSOR_REDUCE_PRODUCT) {
 		double acc = 1.0;
+		double u0 = 1.0, u1 = 1.0, u2 = 1.0, u3 = 1.0;
+		double u4 = 1.0, u5 = 1.0, u6 = 1.0, u7 = 1.0;
+
+		i = 0;
 
 		if (kind == ZEPHIR_BUFFER_LONG) {
 			const zend_long * ptr = (const zend_long *) data;
 
-			for (i = 0; i < len; ++i) {
+			for (; i + 7 < len; i += 8) {
+				u0 *= (double) ptr[i];
+				u1 *= (double) ptr[i + 1];
+				u2 *= (double) ptr[i + 2];
+				u3 *= (double) ptr[i + 3];
+				u4 *= (double) ptr[i + 4];
+				u5 *= (double) ptr[i + 5];
+				u6 *= (double) ptr[i + 6];
+				u7 *= (double) ptr[i + 7];
+			}
+
+			for (; i < len; ++i) {
 				acc *= (double) ptr[i];
 			}
 		} else {
 			const double * ptr = (const double *) data;
 
-			for (i = 0; i < len; ++i) {
+			for (; i + 7 < len; i += 8) {
+				u0 *= ptr[i];
+				u1 *= ptr[i + 1];
+				u2 *= ptr[i + 2];
+				u3 *= ptr[i + 3];
+				u4 *= ptr[i + 4];
+				u5 *= ptr[i + 5];
+				u6 *= ptr[i + 6];
+				u7 *= ptr[i + 7];
+			}
+
+			for (; i < len; ++i) {
 				acc *= ptr[i];
 			}
 		}
 
-		return acc;
+		return ((u0 * u1) * (u2 * u3)) * ((u4 * u5) * (u6 * u7)) * acc;
 	}
 
 	int find_min = mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_ARGMIN;
@@ -235,6 +292,7 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 
 		for (i = 0; i < groupsHat; ++i) {
 			zend_long index = 0;
+
 			double value = tensor_group_reduce(kind, ptr + i * lengthHat, lengthHat, mode, &index);
 
 			vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
@@ -245,6 +303,7 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 
 		for (i = 0; i < groupsHat; ++i) {
 			zend_long index = 0;
+			
 			double value = tensor_group_reduce(kind, ptr + i * lengthHat, lengthHat, mode, &index);
 
 			vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
