@@ -8,150 +8,65 @@
 #include <stdio.h>
 #include <ext/spl/spl_exceptions.h>
 #include "kernel/operators.h"
+#include "php_ext.h"
 #include "kernel/buffer.h"
 #include "include/buffer.h"
 
 /* Values wrapped up by the kernel Buffer used in the unary operations below.
  * Returns a reference to a newly created `Tensor\TensorBuffer` holding the
- * mapped doubles. */
+ * mapped doubles.  Each operation expands into its own dedicated loop so the
+ * optimizer can vectorize the elementwise mapping instead of being blocked by
+ * an indirect call. */
 
-static void tensor_elementwise_unary(zval * return_value, zval * a, double (* fn)(double))
-{
-	zend_long n = 0;
-	int ok = 0;
-
-	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);
-
-	if (UNEXPECTED(!ok)) {
-		return;
-	}
-
-	zval b;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) {
-		return;
-	}
-
-	double * vb = zephir_buffer_doubles(&b);
-
-	zend_long i;
-
-	for (i = 0; i < n; ++i) {
-		vb[i] = fn(va[i]);
-	}
-
-	zval_ptr_dtor(&b);
+#define TENSOR_UNARY(name, expr)                                                 \
+void tensor_##name(zval * return_value, zval * a)                               \
+{                                                                                \
+	zend_long n = 0;                                                             \
+	int ok = 0;                                                                  \
+	                                                                             \
+	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);                       \
+	                                                                             \
+	if (UNEXPECTED(!ok)) {                                                       \
+		return;                                                                  \
+	}                                                                            \
+	                                                                             \
+	zval b;                                                                      \
+	                                                                             \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) { \
+		return;                                                                  \
+	}                                                                            \
+	                                                                             \
+	double * vb = zephir_buffer_doubles(&b);                                     \
+	                                                                             \
+	zend_long i;                                                                 \
+	                                                                             \
+	for (i = 0; i < n; ++i) {                                                    \
+		vb[i] = expr;                                                            \
+	}                                                                            \
+	                                                                             \
+	zval_ptr_dtor(&b);                                                           \
 }
 
-static double tensor_rad2deg_value(double v)
-{
-	return (v / M_PI) * 180;
-}
+TENSOR_UNARY(abs, fabs(va[i]))
+TENSOR_UNARY(sqrt, sqrt(va[i]))
+TENSOR_UNARY(exp, exp(va[i]))
+TENSOR_UNARY(expm1, expm1(va[i]))
+TENSOR_UNARY(log, log(va[i]))
+TENSOR_UNARY(log1p, log1p(va[i]))
+TENSOR_UNARY(sin, sin(va[i]))
+TENSOR_UNARY(asin, asin(va[i]))
+TENSOR_UNARY(cos, cos(va[i]))
+TENSOR_UNARY(acos, acos(va[i]))
+TENSOR_UNARY(tan, tan(va[i]))
+TENSOR_UNARY(atan, atan(va[i]))
+TENSOR_UNARY(rad2deg, (va[i] / M_PI) * 180)
+TENSOR_UNARY(deg2rad, (va[i] / 180.0) * M_PI)
+TENSOR_UNARY(floor, floor(va[i]))
+TENSOR_UNARY(ceil, ceil(va[i]))
+TENSOR_UNARY(negate, -va[i])
+TENSOR_UNARY(sign, va[i] > 0.0 ? 1.0 : (va[i] < 0.0 ? -1.0 : 0.0))
 
-static double tensor_deg2rad_value(double v)
-{
-	return (v / 180.0) * M_PI;
-}
-
-static double tensor_negate_value(double v)
-{
-	return -v;
-}
-
-static double tensor_sign_value(double v)
-{
-	return v > 0.0 ? 1.0 : (v < 0.0 ? -1.0 : 0.0);
-}
-
-void tensor_abs(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, fabs);
-}
-
-void tensor_sqrt(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, sqrt);
-}
-
-void tensor_exp(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, exp);
-}
-
-void tensor_expm1(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, expm1);
-}
-
-void tensor_log(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, log);
-}
-
-void tensor_log1p(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, log1p);
-}
-
-void tensor_sin(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, sin);
-}
-
-void tensor_asin(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, asin);
-}
-
-void tensor_cos(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, cos);
-}
-
-void tensor_acos(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, acos);
-}
-
-void tensor_tan(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, tan);
-}
-
-void tensor_atan(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, atan);
-}
-
-void tensor_rad2deg(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, tensor_rad2deg_value);
-}
-
-void tensor_deg2rad(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, tensor_deg2rad_value);
-}
-
-void tensor_floor(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, floor);
-}
-
-void tensor_ceil(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, ceil);
-}
-
-void tensor_negate(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, tensor_negate_value);
-}
-
-void tensor_sign(zval * return_value, zval * a)
-{
-	tensor_elementwise_unary(return_value, a, tensor_sign_value);
-}
+#undef TENSOR_UNARY
 
 void tensor_log_base(zval * return_value, zval * a, zval * b)
 {

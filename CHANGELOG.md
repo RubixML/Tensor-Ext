@@ -1,7 +1,6 @@
 # Change Log
 
 - 4.0.0
-    - Consolidated the buffer and matrix reductions into a single shape-agnostic `tensor_reduce_*` family shared by Vector, ColumnVector, and Matrix
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension

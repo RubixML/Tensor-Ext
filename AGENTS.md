@@ -34,7 +34,7 @@ All are Composer scripts (see `composer.json`):
 | Fix style | `composer fix` |
 | Full build | `composer build` = validate → install → analyze → test → check |
 | Benchmarks | `composer benchmark` (requires the extension to be loaded) |
-| Compile extension | `composer compile` = zephir generate → `php build-ext` → zephir compile |
+| Compile extension | `composer compile` = zephir generate → zephir compile |
 | Clean generated extension | `composer clean` (zephir fullclean) |
 
 **Recommended loop before submitting a change:**
@@ -73,10 +73,10 @@ Do **not** hand-edit the generated C in `ext/` (files like `*.dep`, `*.lo`, `*.o
 
 ## Working verification paths
 
-To run the tests against the locally compiled extension, load the built shared object. For example:
+An installed TEnsor extension will override any new changes. To run the tests against the locally compiled extension, load the built shared object. For example:
 
 ```sh
-php -n -d extension=$PWD/ext/modules/tensor.so vendor/bin/phpunit ...
+php -n -d extension=$PWD/ext/modules/tensor.so extension=iconv -d extension=mbstring -d extension=tokenizer -d extension=dom -d extension=xml -d extension=ctype vendor/bin/phpunit ...
 ```
 
 If a system-installed `tensor` extension is already enabled, you can rely on it instead of building locally.

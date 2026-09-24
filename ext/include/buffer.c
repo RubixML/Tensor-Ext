@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <ext/spl/spl_exceptions.h>
 #include "kernel/main.h"
+#include "php_ext.h"
 #include "kernel/buffer.h"
 #include "kernel/exception.h"
 #include "kernel/operators.h"

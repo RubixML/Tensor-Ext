@@ -5,6 +5,7 @@
 #include <php.h>
 #include <ext/spl/spl_exceptions.h>
 #include "kernel/operators.h"
+#include "php_ext.h"
 #include "kernel/buffer.h"
 #include "include/buffer.h"
 
