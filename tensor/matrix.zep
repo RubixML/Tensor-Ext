@@ -368,44 +368,37 @@ class Matrix implements Tensor
 
         var rowA, valueA;
 
-        var firstRow, n, aList;
-
-        int i;
-
-        let aList = array_values(a);
-
-        let firstRow = aList[0];
-
-        if unlikely !is_array(firstRow) {
-            throw new InvalidArgumentException("Matrix requires an"
-                . " array of arrays.");
-        }
-
-        let n = count(firstRow);
-
         array flat = [];
 
-        let i = 0;
+        int n = 0;
+        bool found = false;
 
-        while i < rows {
-            let rowA = aList[i];
+        for rowA in a {
+            if unlikely !found {
+                if unlikely !is_array(rowA) {
+                    throw new InvalidArgumentException("Matrix requires an"
+                        . " array of arrays.");
+                }
 
-            if unlikely validate && !is_array(rowA) {
-                throw new InvalidArgumentException("Matrix requires an"
-                    . " array of arrays.");
-            }
+                let n = count(rowA);
 
-            if unlikely validate && count(rowA) !== n {
-                throw new InvalidArgumentException("The number of"
-                    . " columns must be equal for all rows, "
-                    .  strval(n) . " needed but " . count(rowA) . " given.");
+                let found = true;
+            } else {
+                if unlikely validate && !is_array(rowA) {
+                    throw new InvalidArgumentException("Matrix requires an"
+                        . " array of arrays.");
+                }
+
+                if unlikely validate && count(rowA) !== n {
+                    throw new InvalidArgumentException("The number of"
+                        . " columns must be equal for all rows, "
+                        .  strval(n) . " needed but " . count(rowA) . " given.");
+                }
             }
 
             for valueA in rowA {
                 let flat[] = valueA;
             }
-
-            let i++;
         }
 
         var buffer = tensor_buffer_from_array(flat);

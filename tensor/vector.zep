@@ -271,20 +271,18 @@ class Vector implements Tensor
      */
     public static function fromArray(const array a, const bool validate = true) -> <Vector>
     {
-        var valueA;
+        var buffer, valueA;
 
-        array flat = [];
-
-        for valueA in (array) a {
-            if unlikely validate && is_array(valueA) {
-                throw new InvalidArgumentException("Vector requires a"
-                    . " flat array of numeric elements.");
+        if unlikely validate {
+            for valueA in (array) a {
+                if unlikely is_array(valueA) {
+                    throw new InvalidArgumentException("Vector requires a"
+                        . " flat array of numeric elements.");
+                }
             }
-
-            let flat[] = valueA;
         }
 
-        var buffer = tensor_buffer_from_array(flat);
+        let buffer = tensor_buffer_from_array(a);
 
         return new static(buffer);
     }

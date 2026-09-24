@@ -1,6 +1,7 @@
 # Change Log
 
 - 4.0.0
+    - Speed up `Vector::fromArray()` and `Matrix::fromArray()` by eliminating intermediate array copies
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension
