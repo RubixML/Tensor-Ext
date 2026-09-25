@@ -210,16 +210,6 @@ class VectorTest extends TestCase
     /**
      * @test
      */
-    public function poisson() : void
-    {
-        $vector = Vector::poisson(4, 2.0);
-
-        $this->assertCount(4, $vector);
-    }
-
-    /**
-     * @test
-     */
     public function uniform() : void
     {
         $vector = Vector::uniform(4);
@@ -301,58 +291,6 @@ class VectorTest extends TestCase
 
         // Variance of a standard normal is 1.
         $this->assertEqualsWithDelta(1.0, $vector->variance(), 0.1);
-    }
-
-    /**
-     * @test
-     */
-    public function poissonIsNonNegative() : void
-    {
-        $vector = Vector::poisson(1000, 3.0);
-
-        $this->assertCount(1000, $vector);
-        $this->assertGreaterThanOrEqual(0.0, $vector->min(), 'Poisson samples must be non-negative.');
-
-        // Spot-check that Poisson samples are integer values.
-        foreach (array_slice($vector->asArray(), 0, 50) as $value) {
-            $this->assertEquals(0.0, fmod($value, 1.0), 'Poisson samples must be integers.');
-        }
-    }
-
-    /**
-     * @test
-     */
-    public function poissonMeanMatchesLambda() : void
-    {
-        $lambda = 4.0;
-
-        $vector = Vector::poisson(10000, $lambda);
-
-        // Poisson has mean = lambda = variance.
-        $this->assertEqualsWithDelta($lambda, $vector->mean(), 0.2);
-        $this->assertEqualsWithDelta($lambda, $vector->variance(), 0.3);
-    }
-
-    /**
-     * @test
-     */
-    public function poissonZeroLambdaIsZero() : void
-    {
-        $vector = Vector::poisson(4, 0.0);
-
-        $this->assertCount(4, $vector);
-        $this->assertSame(0.0, $vector->min(), 'Poisson with lambda=0 must sample 0.0.');
-        $this->assertSame(0.0, $vector->max(), 'Poisson with lambda=0 must sample 0.0.');
-    }
-
-    /**
-     * @test
-     */
-    public function poissonNegativeLambdaThrows() : void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        Vector::poisson(1, -1.0);
     }
 
     /**
@@ -2195,16 +2133,6 @@ class VectorTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         Vector::gaussian(0);
-    }
-
-    /**
-     * @test
-     */
-    public function poissonNegativeNThrows() : void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        Vector::poisson(0);
     }
 
     /**

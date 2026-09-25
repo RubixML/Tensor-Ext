@@ -195,7 +195,7 @@ class Matrix implements Tensor
     }
  
     /**
-     * Return a standard normally (Gaussian( distributed random matrix of specified dimensionality.
+     * Return a standard normally (Gaussian) distributed random matrix of specified dimensionality.
      *
      * @param int m
      * @param int n
@@ -245,67 +245,6 @@ class Matrix implements Tensor
             let a[] = rowA;
         }
  
-        return self::fromArray(a, false);
-    }
-
-    /**
-     * Generate a m x n matrix with elements from a Poisson distribution.
-     *
-     * @param int m
-     * @param int n
-     * @param float lambda
-     * @throws \Tensor\Exceptions\InvalidArgumentException
-     * @return self
-     */
-    public static function poisson(const int m, const int n, const float lambda = 1.0) -> <Matrix>
-    {
-        if unlikely m < 1 {
-            throw new InvalidArgumentException("M must be"
-                . " greater than 0, " . strval(m) . " given.");
-        }
-
-        if unlikely n < 1 {
-            throw new InvalidArgumentException("N must be"
-                . " greater than 0, " . strval(n) . " given.");
-        }
-
-        if unlikely lambda < 0.0 {
-            throw new InvalidArgumentException("Lambda must be"
-                . " greater than or equal to 0, " . strval(lambda) . " given.");
-        }
-
-        if unlikely lambda == 0.0 {
-            return self::fill(0.0, m, n);
-        }
-
-        float l, p, k;
-
-        array a = [];
-        array rowA = [];
-
-        let l = (float) exp(-lambda);
-
-        int max = (int) getrandmax();
-
-        while count(a) < m {
-            let rowA = [];
-
-            while count(rowA) < n {
-                let k = 0.0;
-                let p = 1.0;
-
-                while p > l {
-                    let k++;
-
-                    let p *= rand() / max;
-                }
-
-                let rowA[] = k - 1.0;
-            }
-
-            let a[] = rowA;
-        }
-
         return self::fromArray(a, false);
     }
 

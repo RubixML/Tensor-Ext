@@ -10,7 +10,6 @@ PHP_METHOD(Tensor_Matrix, diagonal);
 PHP_METHOD(Tensor_Matrix, fill);
 PHP_METHOD(Tensor_Matrix, rand);
 PHP_METHOD(Tensor_Matrix, gaussian);
-PHP_METHOD(Tensor_Matrix, poisson);
 PHP_METHOD(Tensor_Matrix, uniform);
 PHP_METHOD(Tensor_Matrix, fromArray);
 PHP_METHOD(Tensor_Matrix, fromBuffer);
@@ -195,12 +194,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_gaussian, 0, 2, Tensor\\Matrix, 0)
 	ZEND_ARG_TYPE_INFO(0, m, IS_LONG, 0)
 	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_poisson, 0, 2, Tensor\\Matrix, 0)
-	ZEND_ARG_TYPE_INFO(0, m, IS_LONG, 0)
-	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
-	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, lambda, IS_DOUBLE, 0, "1.0")
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_uniform, 0, 2, Tensor\\Matrix, 0)
@@ -767,7 +760,6 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, fill, arginfo_tensor_matrix_fill, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, rand, arginfo_tensor_matrix_rand, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, gaussian, arginfo_tensor_matrix_gaussian, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Tensor_Matrix, poisson, arginfo_tensor_matrix_poisson, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, uniform, arginfo_tensor_matrix_uniform, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, fromArray, arginfo_tensor_matrix_fromarray, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, fromBuffer, arginfo_tensor_matrix_frombuffer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
