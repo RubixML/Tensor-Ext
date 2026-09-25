@@ -9,6 +9,7 @@
     - Rename Special interface to `Reductions` and Algebraic to `Unary`
     - Moved `clip()`, `clipLower()`, and `clipUpper()` into `Unary` interface
     - Remove `poisson` factory method
+    - Add AVX2 dynamic dispatching to arithmetic operations
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension
