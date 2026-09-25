@@ -12,6 +12,7 @@
         "include/arithmetic.c",
         "include/buffer.c",
         "include/comparison.c",
+        "include/cpu.c",
         "include/reductions.c",
         "include/shape.c",
         "include/unary.c",
@@ -21,6 +22,10 @@
     ],
     "initializers": {
         "module": [
+            {
+                "include": "include/cpu.h",
+                "code": "tensor_cpu_init()"
+            },
             {
                 "include": "cblas.h",
                 "code": "openblas_set_num_threads(1)"

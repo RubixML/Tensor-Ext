@@ -35,6 +35,7 @@ if test "$PHP_TENSOR" = "yes"; then
 	tensor/tensorbuffer.zep.c include/arithmetic.c
 	include/buffer.c
 	include/comparison.c
+	include/cpu.c
 	include/reductions.c
 	include/shape.c
 	include/unary.c

@@ -5,5 +5,6 @@
 
 void tensor_set_num_threads(zval * return_value, zval * threads);
 void tensor_get_num_threads(zval * return_value);
+void tensor_get_cpu_features(zval * return_value);
 
 #endif
