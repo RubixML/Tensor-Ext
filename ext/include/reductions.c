@@ -12,6 +12,7 @@
 #include "kernel/operators.h"
 #include "include/buffer.h"
 #include "include/reductions.h"
+#include "../tensor/exceptions/invalidargumentexception.zep.h"
 
 #ifdef ZEPHIR_BUFFER_ENABLED
 
@@ -580,6 +581,9 @@ void tensor_quantile(zval * return_value, zval * obj, zval * n, zval * q)
  * of times. Result element (r, c) is element (r % m, c % n) of the input,
  * yielding (m * (times_m + 1)) rows and (n * (times_n + 1)) columns.
  *
+ * Throws an InvalidArgumentException when either time is negative, or when any
+ * of the resulting counts would overflow a zend_long.
+ *
  * @param return_value
  * @param obj
  * @param n
@@ -600,13 +604,43 @@ void tensor_matrix_repeat(zval * return_value, zval * obj, zval * n, zval * time
 	t_n = zephir_get_intval(times_n);
 
 	if (UNEXPECTED(t_m < 0 || t_n < 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Times must be non-negative."));
+		return;
+	}
+
+	/* Every count below is a zend_long, so reject the repeat counts that would
+	 * wrap before any of them is computed. A wrapped count is not merely a
+	 * wrong answer: rows * cols can fold back to a small or negative element
+	 * count, the destination buffer is then under-allocated, and the copy loop
+	 * below still strides by the unwrapped rows and cols, so it reads and
+	 * writes far past the end of the allocation. Dividing instead of
+	 * multiplying keeps the guards exact on the boundary value. */
+
+	/* times + 1 */
+	if (UNEXPECTED(t_m == ZEND_LONG_MAX || t_n == ZEND_LONG_MAX)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Repeat count must not overflow the matrix dimensions."));
+		return;
+	}
+
+	/* m * (times_m + 1) and n * (times_n + 1) */
+	if (UNEXPECTED((m > 0 && t_m > ZEND_LONG_MAX / m - 1) ||
+		(n_hat > 0 && t_n > ZEND_LONG_MAX / n_hat - 1))) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Repeat count must not overflow the matrix dimensions."));
 		return;
 	}
 
 	zend_long rows = m * (t_m + 1);
 	zend_long cols = n_hat * (t_n + 1);
+
+	/* rows * cols, the number of elements in the result */
+	if (UNEXPECTED(rows > 0 && cols > ZEND_LONG_MAX / rows)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Repeat count must not overflow the matrix dimensions."));
+		return;
+	}
 
 	zval c;
 

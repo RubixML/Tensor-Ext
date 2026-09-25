@@ -295,6 +295,8 @@ Attach matrix `$b` to the right of this matrix.
 
 Repeat the matrix `$m` times along the vertical axis and `$n` times along the horizontal axis.
 
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if either count is negative, or if the resulting dimensions would overflow
+
 ## Norms
 
 - `l1Norm() : float` — the L1 norm of the matrix

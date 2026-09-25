@@ -3288,6 +3288,61 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function repeatRejectsOverflowingTimes() : void
+    {
+        $a = Matrix::fromArray([
+            [13.0],
+            [11.0],
+            [9.0],
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $a->repeat(4294967295, 4294967295);
+    }
+
+    /**
+     * @test
+     * @dataProvider repeatOverflowProvider
+     *
+     * @param int $m
+     * @param int $n
+     */
+    public function repeatOverflowThrows(int $m, int $n) : void
+    {
+        $a = Matrix::fromArray([
+            [13.0, 11.0],
+            [9.0, 7.0],
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $a->repeat($m, $n);
+    }
+
+    /**
+     * @return Generator<mixed[]>
+     */
+    public function repeatOverflowProvider() : Generator
+    {
+        // times + 1 wraps.
+        yield [PHP_INT_MAX, 1];
+        yield [1, PHP_INT_MAX];
+
+        // m * (times_m + 1) and n * (times_n + 1) wrap.
+        yield [PHP_INT_MAX, PHP_INT_MAX];
+        yield [intdiv(PHP_INT_MAX, 2), 2];
+        yield [2, intdiv(PHP_INT_MAX, 2)];
+
+        // rows * cols wraps back to a small element count, so the result
+        // buffer is allocated far too small for the copy loop.
+        yield [4294967295, 4294967295];
+        yield [4611686018427387904, 4611686018427387906];
+    }
+
+    /**
+     * @test
+     */
     public function fillNegativeMThrows() : void
     {
         $this->expectException(InvalidArgumentException::class);
