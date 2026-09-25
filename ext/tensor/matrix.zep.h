@@ -95,11 +95,11 @@ PHP_METHOD(Tensor_Matrix, covariance);
 PHP_METHOD(Tensor_Matrix, round);
 PHP_METHOD(Tensor_Matrix, floor);
 PHP_METHOD(Tensor_Matrix, ceil);
+PHP_METHOD(Tensor_Matrix, sign);
+PHP_METHOD(Tensor_Matrix, negate);
 PHP_METHOD(Tensor_Matrix, clip);
 PHP_METHOD(Tensor_Matrix, clipLower);
 PHP_METHOD(Tensor_Matrix, clipUpper);
-PHP_METHOD(Tensor_Matrix, sign);
-PHP_METHOD(Tensor_Matrix, negate);
 PHP_METHOD(Tensor_Matrix, augmentAbove);
 PHP_METHOD(Tensor_Matrix, augmentBelow);
 PHP_METHOD(Tensor_Matrix, augmentLeft);
@@ -488,6 +488,12 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_ceil, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_sign, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_negate, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_clip, 0, 2, Tensor\\Matrix, 0)
 	ZEND_ARG_TYPE_INFO(0, min, IS_DOUBLE, 0)
 	ZEND_ARG_TYPE_INFO(0, max, IS_DOUBLE, 0)
@@ -499,12 +505,6 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_clipupper, 0, 1, Tensor\\Matrix, 0)
 	ZEND_ARG_TYPE_INFO(0, max, IS_DOUBLE, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_sign, 0, 0, Tensor\\Matrix, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_negate, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_augmentabove, 0, 1, Tensor\\Matrix, 0)
@@ -845,11 +845,11 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, round, arginfo_tensor_matrix_round, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, floor, arginfo_tensor_matrix_floor, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, ceil, arginfo_tensor_matrix_ceil, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, sign, arginfo_tensor_matrix_sign, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, negate, arginfo_tensor_matrix_negate, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, clip, arginfo_tensor_matrix_clip, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, clipLower, arginfo_tensor_matrix_cliplower, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, clipUpper, arginfo_tensor_matrix_clipupper, ZEND_ACC_PUBLIC)
-	PHP_ME(Tensor_Matrix, sign, arginfo_tensor_matrix_sign, ZEND_ACC_PUBLIC)
-	PHP_ME(Tensor_Matrix, negate, arginfo_tensor_matrix_negate, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, augmentAbove, arginfo_tensor_matrix_augmentabove, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, augmentBelow, arginfo_tensor_matrix_augmentbelow, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, augmentLeft, arginfo_tensor_matrix_augmentleft, ZEND_ACC_PUBLIC)

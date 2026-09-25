@@ -6,7 +6,7 @@ Guidance for AI coding agents contributing to **Tensor** — a scientific-comput
 
 | Path | Purpose |
 | --- | --- |
-| `tensor/` | Zephir source. `Tensor` interface plus `Vector`, `Matrix`, `ColumnVector`; `Decompositions/` (Cholesky, Eigen, LU, SVD), `Reductions/` (REF, RREF), `Exceptions/`, and `settings.zep`. Compiled into C by `composer compile`. |
+| `tensor/` | Zephir source. `Tensor` interface plus `Vector`, `Matrix`, `ColumnVector`; the sub-interfaces `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Statistical`, `Reductions`; `Decompositions/` (Cholesky, Eigen, LU, SVD), `Reductions/` (REF, RREF), `Exceptions/`, and `settings.zep`. Note `Reductions` is both an interface in `Tensor` and a namespace holding REF/RREF. Compiled into C by `composer compile`. |
 | `docs/` | Project documentation. |
 | `tests/` | PHPUnit test suite. One `*Test.php` per class. |
 | `benchmarks/` | phpbench suites, organized per functional area. |
@@ -57,7 +57,7 @@ composer fix
 - **Documentation:** update docs if behavior changes.
 - **PHPDoc:** classes use `@category` / `@package` / `@author` blocks; methods carry param and return annotations. Use `@var list<float>` for element arrays.
 - **Exceptions** are typed under `Tensor\Exceptions` (e.g. `InvalidArgumentException`, `DimensionalityMismatch`, `RuntimeException`). Use the existing ones rather than `Exception`.
-- **Math is float-only.** Values stored/computed as `float`; don't introduce integer-only branches. When adding a new operation, mirror it across the `Tensor` sub-interfaces (`Arithmetic`, `Comparable`, `Algebraic`, `Trigonometric`, `Statistical`, `Special`).
+- **Math is float-only.** Values stored/computed as `float`; don't introduce integer-only branches. When adding a new operation, mirror it across the `Tensor` sub-interfaces (`Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Statistical`, `Reductions`).
 - Optimizations should be accompanied by a before and after benchmark to measure and prove the performance gain.
 
 ## Adding or changing an operation

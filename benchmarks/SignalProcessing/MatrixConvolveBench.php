@@ -1,6 +1,6 @@
 <?php
 
-namespace Tensor\Benchmarks\Special;
+namespace Tensor\Benchmarks\SignalProcessing;
 
 use Tensor\Matrix;
 

@@ -1,15 +1,15 @@
-# Algebraic
+# Unary
 
-Element-wise algebraic functions.
+Element-wise unary functions, including clipping.
 
-- **Namespace:** `Tensor\Algebraic`
+- **Namespace:** `Tensor\Unary`
 
 ## Overview
 
-`Algebraic` defines element-wise algebraic operations. Each method returns a new tensor of the same shape as `$this`.
+`Unary` defines element-wise operations that map each tensor to a new tensor of the same shape as `$this`.
 
 ```php
-interface Algebraic
+interface Unary
 ```
 
 ## Methods
@@ -70,3 +70,18 @@ Return the element-wise sign indication (`1.0`, `-1.0`, or `0.0`).
 ### `negate() : mixed`
 
 Negate the tensor, i.e. take the negative.
+
+### `clip(float $min, float $max) : mixed`
+
+Clip the tensor to be between the given minimum and maximum.
+
+- **Parameters:** `$min`, `$max` — the clip interval bounds.
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$min` is greater than `$max`.
+
+### `clipLower(float $min) : mixed`
+
+Clip the tensor to be lower bounded by a given minimum.
+
+### `clipUpper(float $max) : mixed`
+
+Clip the tensor to be upper bounded by a given maximum.

@@ -1753,6 +1753,26 @@ class Matrix implements Tensor
     }
 
     /**
+     * Return the element-wise sign indication.
+     *
+     * @return self
+     */
+    public function sign() -> <Matrix>
+    {
+        return new self(tensor_sign(this->a), this->m, this->n);
+    }
+
+    /**
+     * Negate the matrix i.e take the negative of each value elementwise.
+     *
+     * @return self
+     */
+    public function negate() -> <Matrix>
+    {
+        return new self(tensor_negate(this->a), this->m, this->n);
+    }
+
+    /**
      * Clip the elements in the matrix to be between given minimum and maximum
      * and return a new matrix.
      *
@@ -1797,26 +1817,6 @@ class Matrix implements Tensor
         return new self(
             tensor_clip_upper(this->a, (double) max), this->m, this->n
         );
-    }
-
-    /**
-     * Return the element-wise sign indication.
-     *
-     * @return self
-     */
-    public function sign() -> <Matrix>
-    {
-        return new self(tensor_sign(this->a), this->m, this->n);
-    }
-
-    /**
-     * Negate the matrix i.e take the negative of each value elementwise.
-     *
-     * @return self
-     */
-    public function negate() -> <Matrix>
-    {
-        return new self(tensor_negate(this->a), this->m, this->n);
     }
 
     /**

@@ -5,9 +5,9 @@ namespace Tensor\Tests;
 use Tensor\Tensor;
 use Tensor\Vector;
 use Tensor\Matrix;
-use Tensor\Special;
+use Tensor\Reductions;
 use Tensor\ArrayLike;
-use Tensor\Algebraic;
+use Tensor\Unary;
 use Tensor\Arithmetic;
 use Tensor\Comparable;
 use Tensor\Statistical;
@@ -40,10 +40,10 @@ class ColumnVectorTest extends TestCase
         $this->assertInstanceOf(ArrayLike::class, $vector);
         $this->assertInstanceOf(Arithmetic::class, $vector);
         $this->assertInstanceOf(Comparable::class, $vector);
-        $this->assertInstanceOf(Algebraic::class, $vector);
+        $this->assertInstanceOf(Unary::class, $vector);
         $this->assertInstanceOf(Trigonometric::class, $vector);
         $this->assertInstanceOf(Statistical::class, $vector);
-        $this->assertInstanceOf(Special::class, $vector);
+        $this->assertInstanceOf(Reductions::class, $vector);
     }
 
     /**

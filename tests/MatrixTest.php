@@ -5,9 +5,9 @@ namespace Tensor\Tests;
 use Tensor\Tensor;
 use Tensor\Vector;
 use Tensor\Matrix;
-use Tensor\Special;
+use Tensor\Reductions;
 use Tensor\ArrayLike;
-use Tensor\Algebraic;
+use Tensor\Unary;
 use Tensor\Arithmetic;
 use Tensor\Comparable;
 use Tensor\Statistical;
@@ -53,10 +53,10 @@ class MatrixTest extends TestCase
         $this->assertInstanceOf(ArrayLike::class, $matrix);
         $this->assertInstanceOf(Arithmetic::class, $matrix);
         $this->assertInstanceOf(Comparable::class, $matrix);
-        $this->assertInstanceOf(Algebraic::class, $matrix);
+        $this->assertInstanceOf(Unary::class, $matrix);
         $this->assertInstanceOf(Trigonometric::class, $matrix);
         $this->assertInstanceOf(Statistical::class, $matrix);
-        $this->assertInstanceOf(Special::class, $matrix);
+        $this->assertInstanceOf(Reductions::class, $matrix);
     }
 
     /**

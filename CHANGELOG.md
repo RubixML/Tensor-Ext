@@ -1,6 +1,13 @@
 # Change Log
 
 - 4.0.0
+    - Added `fromArray()` factory method to build from PHP array
+    - Removed `build()` and `quick()` factory methods
+    - Tensor constructors are no longer public
+    - Modulus results no longer rounded to nearest integer
+    - Standardized serial representation with extension
+    - Rename Special interface to `Reductions` and Algebraic to `Unary`
+    - Moved `clip()`, `clipLower()`, and `clipUpper()` into `Unary` interface
 
 - 3.1.0
     - Implemented the singular value decomposition (SVD) in the extension

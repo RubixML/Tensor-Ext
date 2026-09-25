@@ -1323,6 +1323,26 @@ class Vector implements Tensor
     }
 
     /**
+     * Return the element-wise sign indication.
+     *
+     * @return self
+     */
+    public function sign() -> <Vector>
+    {
+        return new static(tensor_sign(this->a));
+    }
+
+    /**
+     * Negate the vector i.e take the negative of each value elementwise.
+     *
+     * @return self
+     */
+    public function negate() -> <Vector>
+    {
+        return new static(tensor_negate(this->a));
+    }
+
+    /**
      * Clip the elements in the vector to be between given minimum and maximum
      * and return a new vector.
      *
@@ -1361,26 +1381,6 @@ class Vector implements Tensor
     public function clipUpper(const float max) -> <Vector>
     {
         return new static(tensor_clip_upper(this->a, (double) max));
-    }
-
-    /**
-     * Return the element-wise sign indication.
-     *
-     * @return self
-     */
-    public function sign() -> <Vector>
-    {
-        return new static(tensor_sign(this->a));
-    }
-
-    /**
-     * Negate the vector i.e take the negative of each value elementwise.
-     *
-     * @return self
-     */
-    public function negate() -> <Vector>
-    {
-        return new static(tensor_negate(this->a));
     }
 
     /**

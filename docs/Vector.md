@@ -3,7 +3,7 @@
 A one dimensional (rank 1) tensor with integer and/or floating point elements.
 
 - **Namespace:** `Tensor\Vector`
-- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Algebraic`, `Trigonometric`, `Statistical`, `Special`
+- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Statistical`, `Reductions`
 - **Also implements:** `ArrayAccess`, `IteratorAggregate`, `Countable`
 
 ## Overview
@@ -289,9 +289,9 @@ The vector is applied to each row of the matrix, broadcasting along columns. `*`
 - `lessScalar(float $b) : self` — element-wise less-than comparison
 - `lessEqualScalar(float $b) : self` — element-wise less-than-or-equal comparison
 
-## Algebraic
+## Unary
 
-See [Algebraic](interfaces/algebraic.md). Each method returns a new `Vector`.
+See [Unary](interfaces/unary.md). Each method returns a new `Vector`.
 
 - `abs() : self` — absolute value of the vector
 - `square() : self` — square the vector
@@ -306,6 +306,9 @@ See [Algebraic](interfaces/algebraic.md). Each method returns a new `Vector`.
 - `ceil() : self` — round up to the nearest integer
 - `sign() : self` — element-wise sign indication (`1.0`, `-1.0`, `0.0`)
 - `negate() : self` — negate each value
+- `clip(float $min, float $max) : self` — clip the elements between the given minimum and maximum (throws `InvalidArgumentException` if `$min > $max`)
+- `clipLower(float $min) : self` — clip the elements to be lower bounded by a given minimum
+- `clipUpper(float $max) : self` — clip the elements to be upper bounded by a given maximum
 
 ## Trigonometric
 
@@ -322,7 +325,7 @@ See [Trigonometric](interfaces/trigonometric.md). Each method returns a new `Vec
 
 ## Statistical & Reductions
 
-See [Statistical](interfaces/statistical.md) and [Special](interfaces/special.md). For a `Vector` these return scalar `float`s.
+See [Statistical](interfaces/statistical.md) and [Reductions](interfaces/reductions.md). For a `Vector` these return scalar `float`s.
 
 - `sum() : float` — the sum of the vector
 - `product() : float` — the product of the vector
@@ -334,12 +337,6 @@ See [Statistical](interfaces/statistical.md) and [Special](interfaces/special.md
 - `median() : float` — the median of the vector
 - `quantile(float $q) : float` — the q'th quantile (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)
 - `variance($mean = null) : float` — the variance; `$mean` optionally provides a pre-computed mean
-
-## Clipping
-
-- `clip(float $min, float $max) : self` — clip the elements between the given minimum and maximum (throws `InvalidArgumentException` if `$min > $max`)
-- `clipLower(float $min) : self` — clip the tensor to be lower bounded by a given minimum
-- `clipUpper(float $max) : self` — clip the tensor to be upper bounded by a given maximum
 
 ## Array Access
 

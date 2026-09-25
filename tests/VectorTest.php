@@ -5,9 +5,9 @@ namespace Tensor\Tests;
 use Tensor\Tensor;
 use Tensor\Vector;
 use Tensor\Matrix;
-use Tensor\Special;
+use Tensor\Reductions;
 use Tensor\ArrayLike;
-use Tensor\Algebraic;
+use Tensor\Unary;
 use Tensor\Arithmetic;
 use Tensor\Comparable;
 use Tensor\Statistical;
@@ -18,6 +18,8 @@ use Tensor\Exceptions\InvalidArgumentException;
 use Tensor\Exceptions\RuntimeException;
 use PHPUnit\Framework\TestCase;
 use Generator;
+use ReflectionClass;
+use ReflectionMethod;
 
 /**
  * @covers \Tensor\Vector
@@ -43,10 +45,65 @@ class VectorTest extends TestCase
         $this->assertInstanceOf(ArrayLike::class, $vector);
         $this->assertInstanceOf(Arithmetic::class, $vector);
         $this->assertInstanceOf(Comparable::class, $vector);
-        $this->assertInstanceOf(Algebraic::class, $vector);
+        $this->assertInstanceOf(Unary::class, $vector);
         $this->assertInstanceOf(Trigonometric::class, $vector);
         $this->assertInstanceOf(Statistical::class, $vector);
-        $this->assertInstanceOf(Special::class, $vector);
+        $this->assertInstanceOf(Reductions::class, $vector);
+    }
+
+    /**
+     * @test
+     */
+    public function unaryInterfaceSurface() : void
+    {
+        $methods = array_map(
+            fn (ReflectionMethod $method) : string => $method->getName(),
+            (new ReflectionClass(Unary::class))->getMethods()
+        );
+
+        sort($methods);
+
+        $this->assertEquals([
+            'abs',
+            'ceil',
+            'clip',
+            'clipLower',
+            'clipUpper',
+            'exp',
+            'expm1',
+            'floor',
+            'log',
+            'log1p',
+            'negate',
+            'round',
+            'sign',
+            'sqrt',
+            'square',
+        ], $methods);
+
+        $this->assertEquals(2.7182818284590452354, Unary::M_E);
+    }
+
+    /**
+     * @test
+     */
+    public function reductionsInterfaceSurface() : void
+    {
+        $methods = array_map(
+            fn (ReflectionMethod $method) : string => $method->getName(),
+            (new ReflectionClass(Reductions::class))->getMethods()
+        );
+
+        sort($methods);
+
+        $this->assertEquals([
+            'argmax',
+            'argmin',
+            'max',
+            'min',
+            'product',
+            'sum',
+        ], $methods);
     }
 
     /**

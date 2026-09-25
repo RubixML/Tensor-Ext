@@ -77,11 +77,11 @@ PHP_METHOD(Tensor_Vector, variance);
 PHP_METHOD(Tensor_Vector, round);
 PHP_METHOD(Tensor_Vector, floor);
 PHP_METHOD(Tensor_Vector, ceil);
+PHP_METHOD(Tensor_Vector, sign);
+PHP_METHOD(Tensor_Vector, negate);
 PHP_METHOD(Tensor_Vector, clip);
 PHP_METHOD(Tensor_Vector, clipLower);
 PHP_METHOD(Tensor_Vector, clipUpper);
-PHP_METHOD(Tensor_Vector, sign);
-PHP_METHOD(Tensor_Vector, negate);
 PHP_METHOD(Tensor_Vector, multiplyMatrix);
 PHP_METHOD(Tensor_Vector, divideMatrix);
 PHP_METHOD(Tensor_Vector, addMatrix);
@@ -395,6 +395,12 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_ceil, 0, 0, Tensor\\Vector, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_sign, 0, 0, Tensor\\Vector, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_negate, 0, 0, Tensor\\Vector, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_clip, 0, 2, Tensor\\Vector, 0)
 	ZEND_ARG_TYPE_INFO(0, min, IS_DOUBLE, 0)
 	ZEND_ARG_TYPE_INFO(0, max, IS_DOUBLE, 0)
@@ -406,12 +412,6 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_clipupper, 0, 1, Tensor\\Vector, 0)
 	ZEND_ARG_TYPE_INFO(0, max, IS_DOUBLE, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_sign, 0, 0, Tensor\\Vector, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_negate, 0, 0, Tensor\\Vector, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_multiplymatrix, 0, 1, Tensor\\Matrix, 0)
@@ -665,11 +665,11 @@ PHP_ME(Tensor_Vector, transpose, arginfo_tensor_vector_transpose, ZEND_ACC_PUBLI
 	PHP_ME(Tensor_Vector, round, arginfo_tensor_vector_round, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, floor, arginfo_tensor_vector_floor, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, ceil, arginfo_tensor_vector_ceil, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, sign, arginfo_tensor_vector_sign, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, negate, arginfo_tensor_vector_negate, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, clip, arginfo_tensor_vector_clip, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, clipLower, arginfo_tensor_vector_cliplower, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, clipUpper, arginfo_tensor_vector_clipupper, ZEND_ACC_PUBLIC)
-	PHP_ME(Tensor_Vector, sign, arginfo_tensor_vector_sign, ZEND_ACC_PUBLIC)
-	PHP_ME(Tensor_Vector, negate, arginfo_tensor_vector_negate, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, multiplyMatrix, arginfo_tensor_vector_multiplymatrix, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, divideMatrix, arginfo_tensor_vector_dividematrix, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, addMatrix, arginfo_tensor_vector_addmatrix, ZEND_ACC_PUBLIC)

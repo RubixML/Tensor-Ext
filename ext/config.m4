@@ -9,14 +9,14 @@ if test "$PHP_TENSOR_EXT" = "yes"; then
 	fi
 
 	AC_DEFINE(HAVE_TENSOR_EXT, 1, [Whether you have Tensor_ext])
-	tensor_ext_sources="tensor_ext.c kernel/main.c kernel/memory.c kernel/exception.c kernel/debug.c kernel/backtrace.c kernel/object.c kernel/array.c kernel/string.c kernel/fcall.c kernel/require.c kernel/file.c kernel/operators.c kernel/math.c kernel/concat.c kernel/variables.c kernel/filter.c kernel/iterator.c kernel/time.c kernel/exit.c kernel/generator.c kernel/buffer.c tensor/algebraic.zep.c
-	tensor/arithmetic.zep.c
+	tensor_ext_sources="tensor_ext.c kernel/main.c kernel/memory.c kernel/exception.c kernel/debug.c kernel/backtrace.c kernel/object.c kernel/array.c kernel/string.c kernel/fcall.c kernel/require.c kernel/file.c kernel/operators.c kernel/math.c kernel/concat.c kernel/variables.c kernel/filter.c kernel/iterator.c kernel/time.c kernel/exit.c kernel/generator.c kernel/buffer.c tensor/arithmetic.zep.c
 	tensor/arraylike.zep.c
 	tensor/comparable.zep.c
 	tensor/exceptions/tensorexception.zep.c
-	tensor/special.zep.c
+	tensor/reductions.zep.c
 	tensor/statistical.zep.c
 	tensor/trigonometric.zep.c
+	tensor/unary.zep.c
 	tensor/tensor.zep.c
 	tensor/exceptions/invalidargumentexception.zep.c
 	tensor/exceptions/runtimeexception.zep.c

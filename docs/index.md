@@ -16,20 +16,22 @@ Tensor \
 ├── ArrayLike (interface)
 ├── Arithmetic (interface)
 ├── Comparable (interface)
-├── Algebraic (interface)
+├── Unary (interface)
 ├── Trigonometric (interface)
 ├── Statistical (interface)
-├── Special (interface)
+├── Reductions (interface)
 │
 ├── Decompositions
 │   ├── Cholesky
 │   ├── Eigen
 │   ├── LU
 │   └── SVD
-└── Reductions
+└── Reductions (namespace)
     ├── REF
     └── RREF
 ```
+
+`Reductions` names both an interface and a namespace. The interface declares the aggregate reduction methods; the namespace holds the REF and RREF classes.
 
 ## Classes
 
@@ -48,10 +50,10 @@ Tensor \
 | [ArrayLike](interfaces/arraylike.md) | Array-like access, iteration, counting, and mapping. |
 | [Arithmetic](interfaces/arithmetic.md) | Universal element-wise arithmetic functions. |
 | [Comparable](interfaces/comparable.md) | Universal element-wise comparison functions. |
-| [Algebraic](interfaces/algebraic.md) | Element-wise algebraic functions. |
+| [Unary](interfaces/unary.md) | Element-wise unary functions, including clipping. |
 | [Trigonometric](interfaces/trigonometric.md) | Element-wise trigonometric functions. |
 | [Statistical](interfaces/statistical.md) | Statistical measures. |
-| [Special](interfaces/special.md) | Reductions and clipping operations. |
+| [Reductions](interfaces/reductions.md) | Aggregate reduction operations. |
 
 ## Decompositions
 

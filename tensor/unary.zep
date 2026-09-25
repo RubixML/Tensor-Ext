@@ -1,6 +1,6 @@
 namespace Tensor;
 
-interface Algebraic
+interface Unary
 {    
     const M_E = 2.7182818284590452354;
 
@@ -89,4 +89,29 @@ interface Algebraic
      * @return mixed
      */
     public function negate();
+
+    /**
+     * Clip the tensor to be between the given minimum and maximum.
+     *
+     * @param float min
+     * @param float max
+     * @return mixed
+     */
+    public function clip(const float min, const float max);
+
+    /**
+     * Clip the tensor to be lower bounded by a given minimum.
+     *
+     * @param float min
+     * @return mixed
+     */
+    public function clipLower(const float min);
+
+    /**
+     * Clip the tensor to be upper bounded by a given maximum.
+     *
+     * @param float max
+     * @return mixed
+     */
+    public function clipUpper(const float max);
 }

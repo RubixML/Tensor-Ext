@@ -3,7 +3,7 @@
 A two dimensional (rank 2) tensor with integer and/or floating point elements.
 
 - **Namespace:** `Tensor\Matrix`
-- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Algebraic`, `Trigonometric`, `Statistical`, `Special`
+- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Statistical`, `Reductions`
 - **Also implements:** `ArrayAccess`, `IteratorAggregate`, `Countable`
 
 ## Overview
@@ -385,9 +385,9 @@ The column vector is broadcast along the rows of the matrix. `*` is one of the o
 - `lessScalar(float $b) : self` — element-wise less-than comparison
 - `lessEqualScalar(float $b) : self` — element-wise less-than-or-equal comparison
 
-## Algebraic
+## Unary
 
-See [Algebraic](interfaces/algebraic.md). Each method returns a new `Matrix`.
+See [Unary](interfaces/unary.md). Each method returns a new `Matrix`.
 
 - `abs() : self` — absolute value of each element
 - `square() : self` — square of the matrix element-wise
@@ -402,6 +402,9 @@ See [Algebraic](interfaces/algebraic.md). Each method returns a new `Matrix`.
 - `ceil() : self` — round up to the nearest integer
 - `sign() : self` — element-wise sign indication (`1.0`, `-1.0`, `0.0`)
 - `negate() : self` — take the negative of each value element-wise
+- `clip(float $min, float $max) : self` — clip the elements between the given minimum and maximum (throws `InvalidArgumentException` if `$min > $max`)
+- `clipLower(float $min) : self` — clip the elements to be lower bounded by a given minimum
+- `clipUpper(float $max) : self` — clip the elements to be upper bounded by a given maximum
 
 ## Trigonometric
 
@@ -418,7 +421,7 @@ See [Trigonometric](interfaces/trigonometric.md). Each method returns a new `Mat
 
 ## Statistical & Reductions
 
-See [Statistical](interfaces/statistical.md) and [Special](interfaces/special.md). For a `Matrix`, row-wise reductions return a `ColumnVector`.
+See [Statistical](interfaces/statistical.md) and [Reductions](interfaces/reductions.md). For a `Matrix`, row-wise reductions return a `ColumnVector`.
 
 - `sum() : ColumnVector` — sum the rows of the matrix
 - `product() : ColumnVector` — calculate the row product of the matrix
@@ -431,12 +434,6 @@ See [Statistical](interfaces/statistical.md) and [Special](interfaces/special.md
 - `quantile(float $q) : ColumnVector` — q'th quantile of each row (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)
 - `variance($mean = null) : ColumnVector` — row variance of the matrix; `$mean` optionally provides a pre-computed mean `ColumnVector` (throws `DimensionalityMismatch` if `$mean->m() !== $this->m`)
 - `covariance(?ColumnVector $mean = null) : self` — compute the covariance matrix (throws `DimensionalityMismatch` if `$mean->m() !== $this->m`)
-
-## Clipping
-
-- `clip(float $min, float $max) : self` — clip the elements between the given minimum and maximum (throws `InvalidArgumentException` if `$min > $max`)
-- `clipLower(float $min) : self` — clip the tensor to be lower bounded by a given minimum
-- `clipUpper(float $max) : self` — clip the tensor to be upper bounded by a given maximum
 
 ## Array Access
 

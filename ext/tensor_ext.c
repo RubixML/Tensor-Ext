@@ -24,14 +24,14 @@
 
 #include "cblas.h"
 
-zend_class_entry *tensor_algebraic_ce;
 zend_class_entry *tensor_arithmetic_ce;
 zend_class_entry *tensor_arraylike_ce;
 zend_class_entry *tensor_comparable_ce;
 zend_class_entry *tensor_exceptions_tensorexception_ce;
-zend_class_entry *tensor_special_ce;
+zend_class_entry *tensor_reductions_ce;
 zend_class_entry *tensor_statistical_ce;
 zend_class_entry *tensor_trigonometric_ce;
+zend_class_entry *tensor_unary_ce;
 zend_class_entry *tensor_tensor_ce;
 zend_class_entry *tensor_exceptions_invalidargumentexception_ce;
 zend_class_entry *tensor_exceptions_runtimeexception_ce;
@@ -71,14 +71,14 @@ static PHP_MINIT_FUNCTION(tensor_ext)
 {
 	REGISTER_INI_ENTRIES();
 	zephir_module_init();
-	ZEPHIR_INIT(Tensor_Algebraic);
 	ZEPHIR_INIT(Tensor_Arithmetic);
 	ZEPHIR_INIT(Tensor_ArrayLike);
 	ZEPHIR_INIT(Tensor_Comparable);
 	ZEPHIR_INIT(Tensor_Exceptions_TensorException);
-	ZEPHIR_INIT(Tensor_Special);
+	ZEPHIR_INIT(Tensor_Reductions);
 	ZEPHIR_INIT(Tensor_Statistical);
 	ZEPHIR_INIT(Tensor_Trigonometric);
+	ZEPHIR_INIT(Tensor_Unary);
 	ZEPHIR_INIT(Tensor_Tensor);
 	ZEPHIR_INIT(Tensor_Exceptions_InvalidArgumentException);
 	ZEPHIR_INIT(Tensor_Exceptions_RuntimeException);
