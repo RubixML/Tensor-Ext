@@ -4,14 +4,14 @@
 #ifndef ZEPHIR_CLASS_ENTRIES_H
 #define ZEPHIR_CLASS_ENTRIES_H
 
-#include "tensor/algebraic.zep.h"
 #include "tensor/arithmetic.zep.h"
 #include "tensor/arraylike.zep.h"
 #include "tensor/comparable.zep.h"
 #include "tensor/exceptions/tensorexception.zep.h"
-#include "tensor/special.zep.h"
+#include "tensor/reductions.zep.h"
 #include "tensor/statistical.zep.h"
 #include "tensor/trigonometric.zep.h"
+#include "tensor/unary.zep.h"
 #include "tensor/tensor.zep.h"
 #include "tensor/exceptions/invalidargumentexception.zep.h"
 #include "tensor/exceptions/runtimeexception.zep.h"
@@ -27,5 +27,6 @@
 #include "tensor/reductions/ref.zep.h"
 #include "tensor/reductions/rref.zep.h"
 #include "tensor/settings.zep.h"
+#include "tensor/tensorbuffer.zep.h"
 
 #endif

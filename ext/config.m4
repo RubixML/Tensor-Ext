@@ -1,15 +1,15 @@
-PHP_ARG_ENABLE(tensor_ext, whether to enable tensor_ext, [ --enable-tensor_ext   Enable Tensor_ext])
+PHP_ARG_ENABLE(tensor, whether to enable tensor, [ --enable-tensor   Enable Tensor])
 
-if test "$PHP_TENSOR_EXT" = "yes"; then
+if test "$PHP_TENSOR" = "yes"; then
 
 	
 
 	if ! test "x-lopenblas -llapacke -lgfortran" = "x"; then
-		PHP_EVAL_LIBLINE(-lopenblas -llapacke -lgfortran, TENSOR_EXT_SHARED_LIBADD)
+		PHP_EVAL_LIBLINE(-lopenblas -llapacke -lgfortran, TENSOR_SHARED_LIBADD)
 	fi
 
-	AC_DEFINE(HAVE_TENSOR_EXT, 1, [Whether you have Tensor_ext])
-	tensor_ext_sources="tensor_ext.c kernel/main.c kernel/memory.c kernel/exception.c kernel/debug.c kernel/backtrace.c kernel/object.c kernel/array.c kernel/string.c kernel/fcall.c kernel/require.c kernel/file.c kernel/operators.c kernel/math.c kernel/concat.c kernel/variables.c kernel/filter.c kernel/iterator.c kernel/time.c kernel/exit.c kernel/generator.c kernel/buffer.c tensor/arithmetic.zep.c
+	AC_DEFINE(HAVE_TENSOR, 1, [Whether you have Tensor])
+	tensor_sources="tensor.c kernel/main.c kernel/memory.c kernel/exception.c kernel/debug.c kernel/backtrace.c kernel/object.c kernel/array.c kernel/string.c kernel/fcall.c kernel/require.c kernel/file.c kernel/operators.c kernel/math.c kernel/concat.c kernel/variables.c kernel/filter.c kernel/iterator.c kernel/time.c kernel/exit.c kernel/generator.c kernel/buffer.c tensor/arithmetic.zep.c
 	tensor/arraylike.zep.c
 	tensor/comparable.zep.c
 	tensor/exceptions/tensorexception.zep.c
@@ -41,12 +41,12 @@ if test "$PHP_TENSOR_EXT" = "yes"; then
 	include/linear_algebra.c
 	include/signal_processing.c
 	include/settings.c"
-	PHP_NEW_EXTENSION(tensor_ext, $tensor_ext_sources, $ext_shared,, -O3)
+	PHP_NEW_EXTENSION(tensor, $tensor_sources, $ext_shared,, -O3)
 	PHP_ADD_BUILD_DIR([$ext_builddir/kernel/])
 	for dir in "tensor tensor/decompositions tensor/exceptions tensor/reductions"; do
 		PHP_ADD_BUILD_DIR([$ext_builddir/$dir])
 	done
-	PHP_SUBST(TENSOR_EXT_SHARED_LIBADD)
+	PHP_SUBST(TENSOR_SHARED_LIBADD)
 
 	old_CPPFLAGS=$CPPFLAGS
 	CPPFLAGS="$CPPFLAGS $INCLUDES"
@@ -57,7 +57,7 @@ if test "$PHP_TENSOR_EXT" = "yes"; then
 			AC_CHECK_HEADERS(
 				[ext/pcre/php_pcre.h],
 				[
-					PHP_ADD_EXTENSION_DEP([tensor_ext], [pcre])
+					PHP_ADD_EXTENSION_DEP([tensor], [pcre])
 					AC_DEFINE([ZEPHIR_USE_PHP_PCRE], [1], [Whether PHP pcre extension is present at compile time])
 				],
 				,
@@ -76,7 +76,7 @@ if test "$PHP_TENSOR_EXT" = "yes"; then
 	AC_CHECK_HEADERS(
 		[ext/json/php_json.h],
 		[
-			PHP_ADD_EXTENSION_DEP([tensor_ext], [json])
+			PHP_ADD_EXTENSION_DEP([tensor], [json])
 			AC_DEFINE([ZEPHIR_USE_PHP_JSON], [1], [Whether PHP json extension is present at compile time])
 		],
 		,
@@ -89,6 +89,6 @@ if test "$PHP_TENSOR_EXT" = "yes"; then
 	dnl function has always taken zval** since PHP 7.0. ZEPHIR_Z_PARAM_ARRAY
 	dnl now unconditionally feeds the zval* companion. See kernel/main.h.
 
-	PHP_INSTALL_HEADERS([ext/tensor_ext], [php_TENSOR_EXT.h])
+	PHP_INSTALL_HEADERS([ext/tensor], [php_TENSOR.h])
 
 fi

@@ -2,7 +2,7 @@
     "name": "rubix/tensor_ext",
     "type": "php-ext",
     "php-ext": {
-        "extension-name": "tensor_ext",
+        "extension-name": "tensor",
         "build-path": "ext"
     },
     "description": "A PHP extension that provides objects for scientific computing in PHP.",

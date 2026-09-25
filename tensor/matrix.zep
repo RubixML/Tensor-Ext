@@ -1887,7 +1887,7 @@ class Matrix implements Tensor
     }
 
     /**
-     * Repeat the matrix m times along the vertival axes and n times along the
+     * Repeat the matrix m times along the vertical axes and n times along the
      * horizontal axes.
      *
      * @param int m

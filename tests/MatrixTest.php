@@ -795,6 +795,29 @@ class MatrixTest extends TestCase
 
         $this->assertEquals(2, $b->rank());
 
+        // A tall (m > n) matrix over-reads the pivot array when counting
+        // swaps; the rank must be reported without faulting.
+        $tall = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+            [5.0, 6.0],
+        ]);
+
+        $this->assertEquals(2, $tall->rank());
+
+        // A 2x1 tall matrix has rank 1.
+        $narrow = Matrix::fromArray([
+            [1.0],
+            [2.0],
+        ]);
+
+        $this->assertEquals(1, $narrow->rank());
+
+        // An m x 0 matrix has no columns and therefore rank 0.
+        $empty = Matrix::fromArray([[], []]);
+
+        $this->assertEquals(0, $empty->rank());
+
         // Exactly singular (column 3 = column 0 - column 1 + column 2); the
         // rank must be 3, not 4, even though floating point leaves a ~1e-16
         // residual on the diagonal.
@@ -827,6 +850,20 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertTrue($b->fullRank());
+
+        // A tall (m > n) matrix is full rank when its rank equals min(m, n).
+        $tall = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+            [5.0, 6.0],
+        ]);
+
+        $this->assertTrue($tall->fullRank());
+
+        // An m x 0 matrix has rank 0 === min(m, 0).
+        $empty = Matrix::fromArray([[], []]);
+
+        $this->assertTrue($empty->fullRank());
 
         // Exactly singular 4x4 (see rank() above); fullRank() must be false.
         $c = Matrix::fromArray([

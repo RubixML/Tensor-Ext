@@ -121,6 +121,46 @@ class RREFTest extends TestCase
     /**
      * @test
      */
+    public function reduce3x2Tall() : void
+    {
+        // A tall (m > n) matrix over-reads the pivot array when counting swaps:
+        // dgetrf writes only min(m, n) pivots, so the loop must be bounded
+        // accordingly.
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+            [5.0, 6.0],
+        ]);
+
+        $rref = RREF::reduce($a);
+
+        $expectedA = Matrix::fromArray([
+            [1.0, 0.0],
+            [0.0, 1.0],
+            [0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function reduceEmptyMatrix() : void
+    {
+        // An m x 0 matrix has no columns: it is trivially in RREF and the
+        // zero-length pivot buffer must not be over-read.
+        $a = Matrix::fromArray([[], []]);
+
+        $rref = RREF::reduce($a);
+
+        $this->assertEquals([2, 0], $rref->a()->shape());
+        $this->assertEquals([], $rref->a()->asArray());
+    }
+
+    /**
+     * @test
+     */
     public function reduceZeroRow() : void
     {
         // A leading zero row is swapped down; the result has a zero row.

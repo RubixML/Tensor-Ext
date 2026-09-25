@@ -989,6 +989,12 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
 {
     unsigned int i, j;
 
+    if (m == 0 || n == 0) {
+        *status = 0;
+
+        return 0;
+    }
+
     int * pivots = emalloc(MIN(m, n) * sizeof(int));
 
     *status = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, m, n, w, n, pivots);
@@ -1009,7 +1015,7 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
 
         return 0;
     } else {
-        for (i = 0; i < m; ++i) {
+        for (i = 0; i < MIN(m, n); ++i) {
             if (i + 1 != (unsigned int) pivots[i]) {
                 ++swaps;
             }

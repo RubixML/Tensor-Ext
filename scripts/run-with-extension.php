@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Run a PHP script with the tensor_ext extension available.
+ * Run a PHP script with the tensor extension available.
  *
  * The extension is normally installed system wide and loaded through php.ini.
  * Some environments however ship with the shared object present but disabled,
@@ -25,10 +25,10 @@ if (!$command) {
 
 $prefix = [PHP_BINARY];
 
-$library = dirname(__DIR__) . '/ext/modules/tensor_ext.so';
+$library = dirname(__DIR__) . '/ext/modules/tensor.so';
 $injected = false;
 
-if (extension_loaded('tensor_ext')) {
+if (extension_loaded('tensor')) {
     // Already enabled through php.ini, nothing to add.
 } elseif (is_file($library)) {
     $prefix[] = '-d';
@@ -36,9 +36,9 @@ if (extension_loaded('tensor_ext')) {
 
     $injected = true;
 
-    fwrite(STDERR, "tensor_ext is not enabled in php.ini, using $library\n\n");
+    fwrite(STDERR, "tensor is not enabled in php.ini, using $library\n\n");
 } else {
-    fwrite(STDERR, "tensor_ext is not enabled in php.ini and no local build was found at $library.\n");
+    fwrite(STDERR, "tensor is not enabled in php.ini and no local build was found at $library.\n");
     fwrite(STDERR, "Run \"composer compile\" to build it.\n");
 
     exit(1);

@@ -89,6 +89,51 @@ class REFTest extends TestCase
     /**
      * @test
      */
+    public function reduce3x2Tall() : void
+    {
+        // A tall (m > n) matrix over-reads the pivot array when counting swaps:
+        // dgetrf writes only min(m, n) pivots, so the loop must be bounded
+        // accordingly.
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+            [5.0, 6.0],
+        ]);
+
+        $ref = REF::reduce($a);
+
+        // Partial pivoting brings 5 (col 0) to the top.
+        $expectedA = Matrix::fromArray([
+            [5.0, 6.0],
+            [0.0, 0.8],
+            [0.0, 0.0],
+        ]);
+
+        // Two swaps (one per column): col 0 -> bring 5 to top from row 2,
+        // col 1 -> bring 0.8 to row 1 from row 2.
+        $this->assertEquals(2, $ref->swaps());
+        $this->assertEqualsWithDelta($expectedA->asArray(), $ref->a()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function reduceEmptyMatrix() : void
+    {
+        // An m x 0 matrix has no columns: it is trivially in REF and the
+        // zero-length pivot buffer must not be over-read.
+        $a = Matrix::fromArray([[], []]);
+
+        $ref = REF::reduce($a);
+
+        $this->assertEquals(0, $ref->swaps());
+        $this->assertEquals([2, 0], $ref->a()->shape());
+        $this->assertEquals([], $ref->a()->asArray());
+    }
+
+    /**
+     * @test
+     */
     public function reduceRequiresPivoting() : void
     {
         // First column is [0, 5] - a row swap is required to pivot.
