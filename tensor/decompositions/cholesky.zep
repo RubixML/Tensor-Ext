@@ -43,7 +43,7 @@ class Cholesky
             throw new RuntimeException("Failed to decompose matrix.");
         }
 
-        return new self(new Matrix(l, a->n(), a->n()));
+        return new self(Matrix::fromBuffer(l, a->n(), a->n()));
     }
 
     /**

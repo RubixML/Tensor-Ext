@@ -16,6 +16,8 @@ use Tensor\Trigonometric;
 use Tensor\Exceptions\DimensionalityMismatch;
 use Tensor\Exceptions\InvalidArgumentException;
 use Tensor\Exceptions\RuntimeException;
+use Tensor\Buffer;
+use Tensor\TensorBuffer;
 use PHPUnit\Framework\TestCase;
 use Generator;
 use ReflectionClass;
@@ -124,6 +126,29 @@ class VectorTest extends TestCase
         }
 
         $this->assertEqualsWithDelta([1.0, 2.0, 3.0, 4.0, 5.0], $result, self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function fromBuffer() : void
+    {
+        $buffer = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $vector = Vector::fromBuffer($buffer);
+
+        $this->assertInstanceOf(Vector::class, $vector);
+        $this->assertSame($buffer, $vector->asTensorBuffer());
+        $this->assertSame([5], $vector->shape());
+        $this->assertEqualsWithDelta([1.0, 2.0, 3.0, 4.0, 5.0], $vector->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function constructorIsProtected() : void
+    {
+        $this->assertTrue((new ReflectionMethod(Vector::class, '__construct'))->isProtected());
     }
 
     /**

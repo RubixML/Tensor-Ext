@@ -14,11 +14,18 @@ Interface methods are implemented by Vectors with scalar-level semantics — red
 
 ## Constructors & Factories
 
-### `__construct(\Tensor\TensorBuffer $a)`
+### `__construct(\Tensor\TensorBuffer $a)` (protected)
 
-Instantiate a vector from a `TensorBuffer` holding its elements.
+Instantiate a vector from a `TensorBuffer` holding its elements. The constructor is **protected** — use one of the factories below instead.
 
 - **Parameters:** `$a` — the `TensorBuffer` of elements
+
+### `Vector::fromBuffer(\Tensor\TensorBuffer $a) : Vector`
+
+Build a vector from a `TensorBuffer` holding its elements.
+
+- **Parameters:** `$a` — the `TensorBuffer` of elements
+- **Returns:** `Vector` (or `ColumnVector` when called on `Tensor\ColumnVector`)
 
 ### `Vector::fromArray(array $a, bool $validate = true) : Vector`
 

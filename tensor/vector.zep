@@ -290,12 +290,22 @@ class Vector implements Tensor
     }
 
     /**
+     * Build a new vector from a TensorBuffer holding its elements.
+     *
+     * @param \Tensor\TensorBuffer a
+     * @return self
+     */
+    public static function fromBuffer(<TensorBuffer> a) -> <Vector>
+    {
+        return new static(a);
+    }
+
+    /**
      * Construct a new vector from a TensorBuffer holding its elements.
      *
      * @param \Tensor\TensorBuffer a
-     * @throws \Tensor\Exceptions\InvalidArgumentException
      */
-    public function __construct(<TensorBuffer> a)
+    protected function __construct(<TensorBuffer> a)
     {
         let this->a = a;
         let this->n = this->a->count();
@@ -364,6 +374,8 @@ class Vector implements Tensor
     /**
      * Return the underlying TensorBuffer of the vector.
      *
+     * @internal
+     *
      * @return \Tensor\TensorBuffer
      */
     public function asTensorBuffer() -> <TensorBuffer>
@@ -378,7 +390,7 @@ class Vector implements Tensor
      */
     public function asRowMatrix() -> <Matrix>
     {
-        return new Matrix(this->a, 1, this->n);
+        return Matrix::fromBuffer(this->a, 1, this->n);
     }
 
     /**
@@ -388,7 +400,7 @@ class Vector implements Tensor
      */
     public function asColumnMatrix() -> <Matrix>
     {
-        return new Matrix(this->a, this->n, 1);
+        return Matrix::fromBuffer(this->a, this->n, 1);
     }
 
     /**
@@ -413,7 +425,7 @@ class Vector implements Tensor
                 . " are needed but vector only has " . this->n . ".");
         }
 
-        return new Matrix(this->a, m, n);
+        return Matrix::fromBuffer(this->a, m, n);
     }
 
     /**
@@ -423,7 +435,7 @@ class Vector implements Tensor
      */
     public function transpose()
     {
-        return new ColumnVector(this->a);
+        return ColumnVector::fromBuffer(this->a);
     }
 
     /**
@@ -526,7 +538,7 @@ class Vector implements Tensor
     {
         var result = tensor_outer(this->a, b->asTensorBuffer(), this->n, b->n());
 
-        return new Matrix(result, this->n, b->n());
+        return Matrix::fromBuffer(result, this->n, b->n());
     }
 
     /**
@@ -1404,7 +1416,7 @@ class Vector implements Tensor
 
         let result = tensor_multiply_row(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1428,7 +1440,7 @@ class Vector implements Tensor
 
         let result = tensor_divide_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1452,7 +1464,7 @@ class Vector implements Tensor
 
         let result = tensor_add_row(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1476,7 +1488,7 @@ class Vector implements Tensor
 
         let result = tensor_subtract_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1500,7 +1512,7 @@ class Vector implements Tensor
 
         let result = tensor_pow_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1524,7 +1536,7 @@ class Vector implements Tensor
 
         let result = tensor_mod_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1548,7 +1560,7 @@ class Vector implements Tensor
 
         let result = tensor_equal_row(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1572,7 +1584,7 @@ class Vector implements Tensor
 
         let result = tensor_not_equal_row(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1596,7 +1608,7 @@ class Vector implements Tensor
 
         let result = tensor_greater_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1620,7 +1632,7 @@ class Vector implements Tensor
 
         let result = tensor_greater_equal_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1644,7 +1656,7 @@ class Vector implements Tensor
 
         let result = tensor_less_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -1668,7 +1680,7 @@ class Vector implements Tensor
 
         let result = tensor_less_equal_row_reverse(bHat, this->a, this->n);
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**

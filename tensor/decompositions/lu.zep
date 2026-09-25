@@ -62,9 +62,9 @@ class Lu
 
         let lup = (array) result;
 
-        var l = new Matrix(lup[0], a->n(), a->n());
-        var u = new Matrix(lup[1], a->n(), a->n());
-        var p = new Matrix(lup[2], a->n(), a->n());
+        var l = Matrix::fromBuffer(lup[0], a->n(), a->n());
+        var u = Matrix::fromBuffer(lup[1], a->n(), a->n());
+        var p = Matrix::fromBuffer(lup[2], a->n(), a->n());
 
         return new self(l, u, p);
     }

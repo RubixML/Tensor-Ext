@@ -17,6 +17,7 @@ This page documents only the methods **defined on `ColumnVector`** and how they 
 - `transpose()` rotates the column vector into a horizontal `Vector`.
 - All inherited factory/operators operate on `static`, so they return `ColumnVector` instances where applicable.
 - `ColumnVector::fromArray(array $a, bool $validate = true)` is inherited from `Vector` and returns a `ColumnVector` instance directly.
+- `ColumnVector::fromBuffer(\Tensor\TensorBuffer $a)` is likewise inherited from `Vector` and returns a `ColumnVector` instance directly.
 
 ## Dimensionality
 

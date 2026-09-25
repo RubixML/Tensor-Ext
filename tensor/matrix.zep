@@ -414,18 +414,42 @@ class Matrix implements Tensor
     }
 
     /**
+     * Build a new matrix from a single TensorBuffer holding the elements in
+     * row-major order together with the target dimensionality.
+     *
+     * @internal
+     *
+     * @param \Tensor\TensorBuffer a
+     * @param int m
+     * @param int n
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
+     */
+    public static function fromBuffer(<TensorBuffer> a, const int m, const int n) -> <Matrix>
+    {
+        return new self(a, m, n);
+    }
+
+    /**
      * Construct a matrix from a single TensorBuffer holding the elements in
      * row-major order together with the target dimensionality.
      *
      * @param \Tensor\TensorBuffer a
      * @param int m
      * @param int n
+     * @throws \Tensor\Exceptions\InvalidArgumentException
      */
-    public function __construct(<TensorBuffer> a, const int m, const int n)
+    protected function __construct(<TensorBuffer> a, const int m, const int n)
     {
         if unlikely m < 0 || n < 0 {
             throw new InvalidArgumentException("Matrix dimensions must be"
                 . " non-negative.");
+        }
+
+        if unlikely a->count() !== m * n {
+            throw new InvalidArgumentException(strval(m) . " x " . strval(n)
+                . " matrix requires " . strval(m * n) . " elements but the"
+                . " buffer contains " . strval(a->count()) . ".");
         }
 
         let this->a = a;
@@ -507,7 +531,7 @@ class Matrix implements Tensor
                 . " bounds.");
         }
 
-        return new Vector(this->a->slice(index * this->n, this->n));
+        return Vector::fromBuffer(this->a->slice(index * this->n, this->n));
     }
 
     /**
@@ -524,7 +548,7 @@ class Matrix implements Tensor
                 . " bounds.");
         }
 
-        return new ColumnVector(this->a->sliceStrided(index, this->m, this->n));
+        return ColumnVector::fromBuffer(this->a->sliceStrided(index, this->m, this->n));
     }
 
     /**
@@ -540,7 +564,7 @@ class Matrix implements Tensor
                 . " square, " . this->shapeString() . " given.");
         }
 
-        return new Vector(this->a->sliceStrided(0, this->m, this->n + 1));
+        return Vector::fromBuffer(this->a->sliceStrided(0, this->m, this->n + 1));
     }
 
     /**
@@ -559,7 +583,7 @@ class Matrix implements Tensor
         }
 
         for rowBuffer in this->a->split(this->n) {
-            let b[] = new Vector(rowBuffer);
+            let b[] = Vector::fromBuffer(rowBuffer);
         }
 
         return b;
@@ -581,7 +605,7 @@ class Matrix implements Tensor
         }
 
         for columnBuffer in this->asColumnBuffers() {
-            let b[] = new ColumnVector(columnBuffer);
+            let b[] = ColumnVector::fromBuffer(columnBuffer);
         }
 
         return b;
@@ -594,7 +618,7 @@ class Matrix implements Tensor
      */
     public function flatten() -> <Vector>
     {
-        return new Vector(this->a);
+        return Vector::fromBuffer(this->a);
     }
 
 
@@ -857,7 +881,7 @@ class Matrix implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new ColumnVector(tensor_matrix_dot(this->a, b->asTensorBuffer(), this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_matrix_dot(this->a, b->asTensorBuffer(), this->m, this->n));
     }
 
     /**
@@ -1571,7 +1595,7 @@ class Matrix implements Tensor
      */
     public function sum() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_reduce_sum(this->a, this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_reduce_sum(this->a, this->m, this->n));
     }
 
     /**
@@ -1581,7 +1605,7 @@ class Matrix implements Tensor
      */
     public function product() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_reduce_product(this->a, this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_reduce_product(this->a, this->m, this->n));
     }
 
     /**
@@ -1591,7 +1615,7 @@ class Matrix implements Tensor
      */
     public function min() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_reduce_min(this->a, this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_reduce_min(this->a, this->m, this->n));
     }
 
     /**
@@ -1601,7 +1625,7 @@ class Matrix implements Tensor
      */
     public function max() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_reduce_max(this->a, this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_reduce_max(this->a, this->m, this->n));
     }
 
     /**
@@ -1611,7 +1635,7 @@ class Matrix implements Tensor
      */
     public function argmin() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_reduce_argmin(this->a, this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_reduce_argmin(this->a, this->m, this->n));
     }
 
     /**
@@ -1621,7 +1645,7 @@ class Matrix implements Tensor
      */
     public function argmax() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_reduce_argmax(this->a, this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_reduce_argmax(this->a, this->m, this->n));
     }
 
     /**
@@ -1641,7 +1665,7 @@ class Matrix implements Tensor
      */
     public function median() -> <ColumnVector>
     {
-        return new ColumnVector(tensor_median(this->a, this->n));
+        return ColumnVector::fromBuffer(tensor_median(this->a, this->n));
     }
 
     /**
@@ -1658,7 +1682,7 @@ class Matrix implements Tensor
                 . " 0 and 1, " . strval(q) . " given.");
         }
 
-        return new ColumnVector(tensor_quantile(this->a, this->n, q));
+        return ColumnVector::fromBuffer(tensor_quantile(this->a, this->n, q));
     }
 
     /**
@@ -2981,7 +3005,7 @@ class Matrix implements Tensor
                 . " bounds, " . (string) index . " given.");
         }
 
-        return new Vector(this->a->slice(index * this->n, this->n));
+        return Vector::fromBuffer(this->a->slice(index * this->n, this->n));
     }
 
     /**

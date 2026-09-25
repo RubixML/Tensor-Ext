@@ -48,7 +48,7 @@ class Ref
 
         let ref = (array) result;
 
-        var b = new Matrix(ref[0], a->m(), a->n());
+        var b = Matrix::fromBuffer(ref[0], a->m(), a->n());
         var swaps = (int) ref[1];
 
         return new self(b, swaps);

@@ -52,9 +52,9 @@ class Svd
 
         let usvT = (array) result;
 
-        var u = new Matrix(usvT[0], a->m(), a->m());
+        var u = Matrix::fromBuffer(usvT[0], a->m(), a->m());
         var singularValues = (array) usvT[1];
-        var vT = new Matrix(usvT[2], a->n(), a->n());
+        var vT = Matrix::fromBuffer(usvT[2], a->n(), a->n());
 
         return new self(u, singularValues, vT);
     }

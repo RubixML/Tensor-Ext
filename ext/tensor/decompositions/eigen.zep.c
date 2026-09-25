@@ -90,7 +90,7 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 	ZVAL_UNDEF(&_9);
 	ZVAL_UNDEF(&_11);
 	ZEND_PARSE_PARAMETERS_START(1, 2)
-		Z_PARAM_OBJECT_OF_CLASS(a, tensor_matrix_ce)
+		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
 		Z_PARAM_OPTIONAL
 		Z_PARAM_BOOL(symmetric)
 	ZEND_PARSE_PARAMETERS_END();
@@ -144,19 +144,17 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 	zephir_array_fetch_long(&_10, &eig, 0, PH_NOISY, "tensor/decompositions/eigen.zep", 67);
 	zephir_get_arrval(&_11, &_10);
 	ZEPHIR_CPY_WRT(&eigenvalues, &_11);
-	ZEPHIR_INIT_VAR(&_12);
-	object_init_ex(&_12, tensor_matrix_ce);
 	zephir_array_fetch_long(&_13, &eig, 1, PH_NOISY | PH_READONLY, "tensor/decompositions/eigen.zep", 68);
 	ZEPHIR_CALL_METHOD(&_14, a, "n", NULL, 0);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_15, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, &_12, "__construct", NULL, 14, &_13, &_14, &_15);
+	ZEPHIR_CALL_CE_STATIC(&_12, tensor_matrix_ce, "fromBuffer", NULL, 0, &_13, &_14, &_15);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&eigenvectors, &_12, "transpose", NULL, 20);
+	ZEPHIR_CALL_METHOD(&eigenvectors, &_12, "transpose", NULL, 0);
 	zephir_check_call_status();
 	object_init_ex(return_value, tensor_decompositions_eigen_ce);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 21, &eigenvalues, &eigenvectors);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 19, &eigenvalues, &eigenvectors);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -185,7 +183,7 @@ PHP_METHOD(Tensor_Decompositions_Eigen, __construct)
 
 	ZEND_PARSE_PARAMETERS_START(2, 2)
 		ZEPHIR_Z_PARAM_ARRAY(eigenvalues, eigenvalues_param)
-		Z_PARAM_OBJECT_OF_CLASS(eigenvectors, tensor_matrix_ce)
+		Z_PARAM_OBJECT_OF_CLASS(eigenvectors, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);

@@ -14,7 +14,10 @@ use Tensor\Statistical;
 use Tensor\ColumnVector;
 use Tensor\Trigonometric;
 use Tensor\Exceptions\DimensionalityMismatch;
+use Tensor\Buffer;
+use Tensor\TensorBuffer;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 /**
  * @covers \Tensor\ColumnVector
@@ -44,6 +47,29 @@ class ColumnVectorTest extends TestCase
         $this->assertInstanceOf(Trigonometric::class, $vector);
         $this->assertInstanceOf(Statistical::class, $vector);
         $this->assertInstanceOf(Reductions::class, $vector);
+    }
+
+    /**
+     * @test
+     */
+    public function fromBuffer() : void
+    {
+        $buffer = new TensorBuffer(Buffer::fromArray([-15.0, 25.0, 35.0]));
+
+        $vector = ColumnVector::fromBuffer($buffer);
+
+        $this->assertInstanceOf(ColumnVector::class, $vector);
+        $this->assertSame($buffer, $vector->asTensorBuffer());
+        $this->assertSame([3], $vector->shape());
+        $this->assertEqualsWithDelta([-15.0, 25.0, 35.0], $vector->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function constructorIsProtected() : void
+    {
+        $this->assertTrue((new ReflectionMethod(ColumnVector::class, '__construct'))->isProtected());
     }
 
     /**

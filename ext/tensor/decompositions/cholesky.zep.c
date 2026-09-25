@@ -69,7 +69,7 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 	ZVAL_UNDEF(&_2$$3);
 	ZVAL_UNDEF(&_3$$3);
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(a, tensor_matrix_ce)
+		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
@@ -100,15 +100,13 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 		return;
 	}
 	object_init_ex(return_value, tensor_decompositions_cholesky_ce);
-	ZEPHIR_INIT_VAR(&_6);
-	object_init_ex(&_6, tensor_matrix_ce);
 	ZEPHIR_CALL_METHOD(&_7, a, "n", NULL, 0);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_8, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, &_6, "__construct", NULL, 14, &l, &_7, &_8);
+	ZEPHIR_CALL_CE_STATIC(&_6, tensor_matrix_ce, "fromBuffer", NULL, 0, &l, &_7, &_8);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 19, &_6);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 18, &_6);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -128,7 +126,7 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, __construct)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(l, tensor_matrix_ce)
+		Z_PARAM_OBJECT_OF_CLASS(l, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
 	zephir_fetch_params_without_memory_grow(1, 0, &l);
 	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 5, l);

@@ -41,7 +41,7 @@ class ColumnVector extends Vector
      */
     public function transpose()
     {
-        return new Vector(this->a);
+        return Vector::fromBuffer(this->a);
     }
 
     /**
@@ -59,7 +59,7 @@ class ColumnVector extends Vector
 
         var product = tensor_outer(this->a, b->asTensorBuffer(), this->m(), b->n());
 
-        return new Matrix(product, this->m(), b->n());
+        return Matrix::fromBuffer(product, this->m(), b->n());
     }
 
     /**
@@ -83,7 +83,7 @@ class ColumnVector extends Vector
 
         let result = tensor_multiply_col(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -107,7 +107,7 @@ class ColumnVector extends Vector
 
         let result = tensor_divide_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -131,7 +131,7 @@ class ColumnVector extends Vector
 
         let result = tensor_add_col(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -155,7 +155,7 @@ class ColumnVector extends Vector
 
         let result = tensor_subtract_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -179,7 +179,7 @@ class ColumnVector extends Vector
 
         let result = tensor_pow_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
  
     /**
@@ -203,7 +203,7 @@ class ColumnVector extends Vector
 
         let result = tensor_mod_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -227,7 +227,7 @@ class ColumnVector extends Vector
 
         let result = tensor_equal_col(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -251,7 +251,7 @@ class ColumnVector extends Vector
 
         let result = tensor_not_equal_col(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -275,7 +275,7 @@ class ColumnVector extends Vector
 
         let result = tensor_greater_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -299,7 +299,7 @@ class ColumnVector extends Vector
 
         let result = tensor_greater_equal_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -323,7 +323,7 @@ class ColumnVector extends Vector
 
         let result = tensor_less_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 
     /**
@@ -347,6 +347,6 @@ class ColumnVector extends Vector
         
         let result = tensor_less_equal_col_reverse(bHat, this->a, b->n());
 
-        return new Matrix(result, b->m(), b->n());
+        return Matrix::fromBuffer(result, b->m(), b->n());
     }
 }

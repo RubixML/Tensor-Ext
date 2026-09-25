@@ -22,8 +22,11 @@ use Tensor\Exceptions\DimensionalityMismatch;
 use Tensor\Decompositions\SVD;
 use Tensor\Decompositions\Eigen;
 use Tensor\Decompositions\Cholesky;
+use Tensor\Buffer;
+use Tensor\TensorBuffer;
 use PHPUnit\Framework\TestCase;
 use Generator;
+use ReflectionMethod;
 
 /**
  * @covers \Tensor\Matrix
@@ -88,6 +91,47 @@ class MatrixTest extends TestCase
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ], $result, self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function fromBuffer() : void
+    {
+        $buffer = new TensorBuffer(Buffer::fromArray([
+            1.0, 2.0, 3.0,
+            4.0, 5.0, 6.0,
+        ]));
+
+        $matrix = Matrix::fromBuffer($buffer, 2, 3);
+
+        $this->assertInstanceOf(Matrix::class, $matrix);
+        $this->assertSame($buffer, $matrix->asTensorBuffer());
+        $this->assertSame([2, 3], $matrix->shape());
+        $this->assertEqualsWithDelta([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ], $matrix->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function fromBufferThrowsOnBufferSizeMismatch() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $buffer = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]));
+
+        Matrix::fromBuffer($buffer, 2, 2);
+    }
+
+    /**
+     * @test
+     */
+    public function constructorIsProtected() : void
+    {
+        $this->assertTrue((new ReflectionMethod(Matrix::class, '__construct'))->isProtected());
     }
 
     /**

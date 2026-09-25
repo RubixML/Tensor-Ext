@@ -36,7 +36,7 @@ class Rref
             throw new RuntimeException("Failed to reduce matrix.");
         }
 
-        return new self(new Matrix(result, a->m(), a->n()));
+        return new self(Matrix::fromBuffer(result, a->m(), a->n()));
     }
 
     /**

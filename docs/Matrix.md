@@ -17,13 +17,24 @@ Interface methods are implemented by Matrices with **row-wise** semantics:
 
 ## Constructors & Factories
 
-### `__construct(\Tensor\TensorBuffer $a, int $m, int $n)`
+### `__construct(\Tensor\TensorBuffer $a, int $m, int $n)` (protected)
 
-Instantiate a matrix from a row-major `TensorBuffer` of its elements and its target dimensions.
+Instantiate a matrix from a row-major `TensorBuffer` of its elements and its target dimensions. The constructor is **protected** — use one of the factories below instead.
 
 - **Parameters:**
   - `$a` — the row-major `TensorBuffer` of elements
   - `$m` — number of rows, `$n` — number of columns
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$m` or `$n` is negative
+
+### `Matrix::fromBuffer(\Tensor\TensorBuffer $a, int $m, int $n) : Matrix`
+
+Build a matrix from a row-major `TensorBuffer` of its elements and its target dimensions.
+
+- **Parameters:**
+  - `$a` — the row-major `TensorBuffer` of elements
+  - `$m` — number of rows, `$n` — number of columns
+- **Returns:** `Matrix`
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if the buffer does not contain exactly `$m * $n` elements
 
 ### `Matrix::fromArray(array $a, bool $validate = true) : Matrix`
 

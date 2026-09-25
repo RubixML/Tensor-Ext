@@ -65,7 +65,7 @@ class Eigen
         let eig = (array) result;
 
         var eigenvalues = (array) eig[0];
-        var eigenvectors = new Matrix(eig[1], a->n(), a->n())->transpose();
+        var eigenvectors = Matrix::fromBuffer(eig[1], a->n(), a->n())->transpose();
 
         return new self(eigenvalues, eigenvectors);
     }
