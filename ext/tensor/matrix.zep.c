@@ -9762,7 +9762,7 @@ PHP_METHOD(Tensor_Matrix, getIterator)
  * only the values, and not the object structure, appear in the
  * serialized form.
  *
- * @return array[]
+ * @return array<mixed>
  */
 PHP_METHOD(Tensor_Matrix, __serialize)
 {
@@ -9787,7 +9787,7 @@ PHP_METHOD(Tensor_Matrix, __serialize)
 	zephir_create_array(return_value, 3, 0);
 	ZEPHIR_CALL_METHOD(&_0, this_ptr, "asArray", NULL, 0);
 	zephir_check_call_status();
-	zephir_array_update_string(return_value, SL("data"), &_0, PH_COPY | PH_SEPARATE);
+	zephir_array_update_string(return_value, SL("a"), &_0, PH_COPY | PH_SEPARATE);
 	zephir_memory_observe(&_1);
 	zephir_read_property_cached(&_1, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC);
 	zephir_array_update_string(return_value, SL("m"), &_1, PH_COPY | PH_SEPARATE);
@@ -9801,7 +9801,7 @@ PHP_METHOD(Tensor_Matrix, __serialize)
  * Restore the matrix from the plain array of rows produced by
  * __serialize() by rebuilding its TensorBuffer and shape.
  *
- * @param array<array<float>> data
+ * @param array<mixed> data
  * @throws \Tensor\Exceptions\InvalidArgumentException
  */
 PHP_METHOD(Tensor_Matrix, __unserialize)
@@ -9839,7 +9839,7 @@ PHP_METHOD(Tensor_Matrix, __unserialize)
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &data_param);
 	zephir_get_arrval(&data, data_param);
-	zephir_array_fetch_string(&_0, &data, SL("data"), PH_NOISY | PH_READONLY, "tensor/matrix.zep", 3048);
+	zephir_array_fetch_string(&_0, &data, SL("a"), PH_NOISY | PH_READONLY, "tensor/matrix.zep", 3048);
 	ZVAL_BOOL(&_1, 0);
 	ZEPHIR_CALL_SELF(&rebuilt, "fromArray", NULL, 0, &_0, &_1);
 	zephir_check_call_status();

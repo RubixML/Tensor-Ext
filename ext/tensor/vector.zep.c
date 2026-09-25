@@ -6290,7 +6290,7 @@ PHP_METHOD(Tensor_Vector, getIterator)
  * Return the elements of the vector as a plain PHP array so that only the
  * values, and not the object structure, appear in the serialized form.
  *
- * @return list<float>
+ * @return array<mixed>
  */
 PHP_METHOD(Tensor_Vector, __serialize)
 {
@@ -6311,7 +6311,7 @@ PHP_METHOD(Tensor_Vector, __serialize)
 	zephir_create_array(return_value, 2, 0);
 	ZEPHIR_CALL_METHOD(&_0, this_ptr, "asArray", NULL, 0);
 	zephir_check_call_status();
-	zephir_array_update_string(return_value, SL("data"), &_0, PH_COPY | PH_SEPARATE);
+	zephir_array_update_string(return_value, SL("a"), &_0, PH_COPY | PH_SEPARATE);
 	zephir_memory_observe(&_1);
 	zephir_read_property_cached(&_1, this_ptr, _zephir_prop_0, 2, PH_NOISY_CC);
 	zephir_array_update_string(return_value, SL("n"), &_1, PH_COPY | PH_SEPARATE);
@@ -6322,14 +6322,14 @@ PHP_METHOD(Tensor_Vector, __serialize)
  * Restore the vector from the plain array of elements produced by
  * __serialize() by rebuilding its TensorBuffer.
  *
- * @param float[] data
+ * @param array<mixed> data
  * @throws \Tensor\Exceptions\InvalidArgumentException
  */
 PHP_METHOD(Tensor_Vector, __unserialize)
 {
 	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
 	zend_long ZEPHIR_LAST_CALL_STATUS;
-	zval *data_param = NULL, rebuilt, _0, _1, _2;
+	zval *data_param = NULL, rebuilt, _0, _1, _2, _3;
 	zval data;
 	zval *this_ptr = getThis();
 
@@ -6338,6 +6338,7 @@ PHP_METHOD(Tensor_Vector, __unserialize)
 	ZVAL_UNDEF(&_0);
 	ZVAL_UNDEF(&_1);
 	ZVAL_UNDEF(&_2);
+	ZVAL_UNDEF(&_3);
 	static zend_string *_zephir_prop_0 = NULL;
 	static zend_string *_zephir_prop_1 = NULL;
 	if (UNEXPECTED(!_zephir_prop_0)) {
@@ -6354,14 +6355,15 @@ PHP_METHOD(Tensor_Vector, __unserialize)
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &data_param);
 	zephir_get_arrval(&data, data_param);
-	zephir_array_fetch_string(&_0, &data, SL("data"), PH_NOISY | PH_READONLY, "tensor/vector.zep", 2133);
+	zephir_array_fetch_string(&_0, &data, SL("a"), PH_NOISY | PH_READONLY, "tensor/vector.zep", 2133);
 	ZVAL_BOOL(&_1, 0);
 	ZEPHIR_CALL_SELF(&rebuilt, "fromArray", NULL, 0, &_0, &_1);
 	zephir_check_call_status();
-	zephir_read_property_cached(&_1, &rebuilt, _zephir_prop_0, 0, PH_NOISY_CC | PH_READONLY);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 1, &_1);
-	zephir_array_fetch_string(&_2, &data, SL("n"), PH_NOISY | PH_READONLY, "tensor/vector.zep", 2136);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 2, &_2);
+	ZEPHIR_CALL_METHOD(&_2, &rebuilt, "asTensorBuffer", NULL, 0);
+	zephir_check_call_status();
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 1, &_2);
+	zephir_array_fetch_string(&_3, &data, SL("n"), PH_NOISY | PH_READONLY, "tensor/vector.zep", 2136);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 2, &_3);
 	ZEPHIR_MM_RESTORE();
 }
 

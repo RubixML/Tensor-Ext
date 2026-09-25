@@ -3023,12 +3023,12 @@ class Matrix implements Tensor
      * only the values, and not the object structure, appear in the
      * serialized form.
      *
-     * @return array[]
+     * @return array<mixed>
      */
     public function __serialize() -> array
     {
         return [
-            "data": this->asArray(),
+            "a": this->asArray(),
             "m": this->m,
             "n": this->n
         ];
@@ -3038,14 +3038,14 @@ class Matrix implements Tensor
      * Restore the matrix from the plain array of rows produced by
      * __serialize() by rebuilding its TensorBuffer and shape.
      *
-     * @param array<array<float>> data
+     * @param array<mixed> data
      * @throws \Tensor\Exceptions\InvalidArgumentException
      */
     public function __unserialize(const array data)
     {
         var rebuilt;
 
-        let rebuilt = Matrix::fromArray(data["data"], false);
+        let rebuilt = Matrix::fromArray(data["a"], false);
 
         let this->a = rebuilt->asTensorBuffer();
         let this->m = data["m"];
