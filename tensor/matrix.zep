@@ -1791,15 +1791,17 @@ class Matrix implements Tensor
      */
     public function augmentAbove(const <Matrix> b) -> <Matrix>
     {
-        if unlikely this->m > 0 && b->n() !== this->n {
+        if unlikely this->m > 0 && b->m() > 0 && b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A requires"
                 . (string) this->n . " columns but Matrix B has "
                 . (string) b->n() . ".");
         }
 
+        int n = this->n > 0 ? this->n : b->n();
+
         var buffer = b->a->concat([this->a]);
 
-        return new self(buffer, b->m() + this->m, this->n);
+        return new self(buffer, b->m() + this->m, n);
     }
 
     /**
@@ -1811,15 +1813,17 @@ class Matrix implements Tensor
      */
     public function augmentBelow(const <Matrix> b) -> <Matrix>
     {
-        if unlikely this->m > 0 && b->n() !== this->n {
+        if unlikely this->m > 0 && b->m() > 0 && b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A requires"
                 . (string) this->n . " columns but Matrix B has "
                 . (string) b->n() . ".");
         }
 
+        int n = this->n > 0 ? this->n : b->n();
+
         var buffer = this->a->concat([b->a]);
 
-        return new self(buffer, this->m + b->m(), this->n);
+        return new self(buffer, this->m + b->m(), n);
     }
 
     /**
@@ -1831,11 +1835,13 @@ class Matrix implements Tensor
      */
     public function augmentLeft(const <Matrix> b) -> <Matrix>
     {
-        if unlikely this->m > 0 && b->m() !== this->m {
+        if unlikely this->m > 0 && b->m() > 0 && b->m() !== this->m {
             throw new DimensionalityMismatch("Matrix A requires"
                 . (string) this->m . " rows but Matrix B has "
                 . (string) b->m() . ".");
         }
+
+        int m = this->m > 0 ? this->m : b->m();
 
         var i;
 
@@ -1843,7 +1849,7 @@ class Matrix implements Tensor
 
         array c = [];
 
-        for i in range(0, this->m - 1) {
+        for i in range(0, m - 1) {
             let bufferB = b->a->slice(i * b->n(), b->n());
 
             let bufferA = this->a->slice(i * this->n, this->n);
@@ -1851,7 +1857,7 @@ class Matrix implements Tensor
             let c[] = bufferB->concat([bufferA]);
         }
 
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n + b->n());
+        return new self(TensorBuffer::fromBuffers(c), m, this->n + b->n());
     }
 
     /**
@@ -1863,19 +1869,21 @@ class Matrix implements Tensor
      */
     public function augmentRight(const <Matrix> b) -> <Matrix>
     {
-        if unlikely this->m > 0 && b->m() !== this->m {
+        if unlikely this->m > 0 && b->m() > 0 && b->m() !== this->m {
             throw new DimensionalityMismatch("Matrix A requires"
                 . (string) this->m . " rows but Matrix B has "
                 . (string) b->m() . ".");
         }
-        
+
+        int m = this->m > 0 ? this->m : b->m();
+
         var i;
 
         var bufferA, bufferB;
 
         array c = [];
 
-        for i in range(0, this->m - 1) {
+        for i in range(0, m - 1) {
             let bufferA = this->a->slice(i * this->n, this->n);
 
             let bufferB = b->a->slice(i * b->n(), b->n());
@@ -1883,7 +1891,7 @@ class Matrix implements Tensor
             let c[] = bufferA->concat([bufferB]);
         }
 
-        return new self(TensorBuffer::fromBuffers(c), this->m, this->n + b->n());
+        return new self(TensorBuffer::fromBuffers(c), m, this->n + b->n());
     }
 
     /**

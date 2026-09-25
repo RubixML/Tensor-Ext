@@ -3313,6 +3313,94 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function augmentAboveWithEmptyMatrix() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ]);
+
+        $e = Matrix::fromArray([]);
+
+        $above = $a->augmentAbove($e);
+        $this->assertSame($a->asArray(), $above->asArray());
+        $this->assertSame(2, $above->m());
+        $this->assertSame(2, $above->n());
+
+        $aboveEmpty = $e->augmentAbove($a);
+        $this->assertSame($a->asArray(), $aboveEmpty->asArray());
+
+        $empty = $e->augmentAbove($e);
+        $this->assertSame(0, $empty->m());
+        $this->assertSame(0, $empty->n());
+    }
+
+    /**
+     * @test
+     */
+    public function augmentBelowWithEmptyMatrix() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ]);
+
+        $e = Matrix::fromArray([]);
+
+        $below = $a->augmentBelow($e);
+        $this->assertSame($a->asArray(), $below->asArray());
+
+        $belowEmpty = $e->augmentBelow($a);
+        $this->assertSame($a->asArray(), $belowEmpty->asArray());
+
+        $empty = $e->augmentBelow($e);
+        $this->assertSame(0, $empty->m());
+        $this->assertSame(0, $empty->n());
+    }
+
+    /**
+     * @test
+     */
+    public function augmentLeftWithEmptyMatrix() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ]);
+
+        $e = Matrix::fromArray([]);
+
+        $left = $e->augmentLeft($a);
+        $this->assertSame($a->asArray(), $left->asArray());
+
+        $empty = $e->augmentLeft($e);
+        $this->assertSame(0, $empty->m());
+        $this->assertSame(0, $empty->n());
+    }
+
+    /**
+     * @test
+     */
+    public function augmentRightWithEmptyMatrix() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ]);
+
+        $e = Matrix::fromArray([]);
+
+        $right = $e->augmentRight($a);
+        $this->assertSame($a->asArray(), $right->asArray());
+
+        $empty = $e->augmentRight($e);
+        $this->assertSame(0, $empty->m());
+        $this->assertSame(0, $empty->n());
+    }
+
+    /**
+     * @test
+     */
     public function repeat() : void
     {
         $a = Matrix::fromArray([
