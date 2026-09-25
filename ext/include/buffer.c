@@ -11,7 +11,6 @@
 #include "kernel/exception.h"
 #include "kernel/operators.h"
 #include "include/buffer.h"
-#include "../tensor/exceptions/invalidargumentexception.zep.h"
 
 #ifdef ZEPHIR_BUFFER_ENABLED
 
@@ -483,7 +482,7 @@ void tensor_buffer_repeat(zval * return_value, zval * obj, zval * times)
 	/* Reject before len * timesHat wraps; the product is then guaranteed to
 	 * fit, so every i * len destination offset stays in bounds. */
 	if (UNEXPECTED(len > 0 && timesHat > ZEND_LONG_MAX / len)) {
-		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Repeat count must not overflow the buffer length."));
 		return;
 	}

@@ -2198,6 +2198,16 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function quantileNaNThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (Vector::fromArray([1.0, 2.0, 3.0]))->quantile(NAN);
+    }
+
+    /**
+     * @test
+     */
     public function pNormNonPositiveThrows() : void
     {
         $this->expectException(InvalidArgumentException::class);

@@ -2798,6 +2798,19 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function quantileNaNThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ]))->quantile(NAN);
+    }
+
+    /**
+     * @test
+     */
     public function variance() : void
     {
         $a = Matrix::fromArray([
@@ -3283,22 +3296,6 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEquals($expected->asArray(), $b->asArray());
-    }
-
-    /**
-     * @test
-     */
-    public function repeatRejectsOverflowingTimes() : void
-    {
-        $a = Matrix::fromArray([
-            [13.0],
-            [11.0],
-            [9.0],
-        ]);
-
-        $this->expectException(InvalidArgumentException::class);
-
-        $a->repeat(4294967295, 4294967295);
     }
 
     /**

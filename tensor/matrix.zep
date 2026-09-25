@@ -1616,7 +1616,7 @@ class Matrix implements Tensor
      */
     public function quantile(const float q) -> <ColumnVector>
     {
-        if unlikely q < 0.0 || q > 1.0 {
+        if unlikely !is_finite(q) || q < 0.0 || q > 1.0 {
             throw new InvalidArgumentException("Q must be between"
                 . " 0 and 1, " . strval(q) . " given.");
         }
@@ -2978,15 +2978,19 @@ class Matrix implements Tensor
      * __serialize() by rebuilding its TensorBuffer and shape.
      *
      * @param array<mixed> data
-     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @throws \Tensor\Exceptions\RuntimeException
      */
     public function __unserialize(const array data)
     {
-        var rebuilt;
+        var a;
 
-        let rebuilt = Matrix::fromArray(data["a"], false);
+        let a = Matrix::fromArray(data["a"], false);
 
-        let this->a = rebuilt->asTensorBuffer();
+        if unlikely data["m"] != a->m() || data["n"] != a->n() {
+            throw new RuntimeException("Invalid matrix data.");
+        }
+
+        let this->a = a->asTensorBuffer();
         let this->m = data["m"];
         let this->n = data["n"];
     }

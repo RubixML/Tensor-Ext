@@ -113,7 +113,7 @@ PHP_METHOD(Tensor_Reductions_Ref, reduce)
 	swaps = zephir_get_intval(&_8);
 	object_init_ex(return_value, tensor_reductions_ref_ce);
 	ZVAL_LONG(&_9, swaps);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 26, &b, &_9);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 27, &b, &_9);
 	zephir_check_call_status();
 	RETURN_MM();
 }

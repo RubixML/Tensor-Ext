@@ -1209,7 +1209,7 @@ class Vector implements Tensor
      */
     public function quantile(const float q) -> float
     {
-        if unlikely q < 0.0 || q > 1.0 {
+        if unlikely !is_finite(q) || q < 0.0 || q > 1.0 {
             throw new InvalidArgumentException("Q must be"
                 . " between 0 and 1, " . strval(q) . " given.");
         }
@@ -2076,15 +2076,19 @@ class Vector implements Tensor
      * __serialize() by rebuilding its TensorBuffer.
      *
      * @param array<mixed> data
-     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @throws \Tensor\Exceptions\RuntimeException
      */
     public function __unserialize(const array data)
     {
-        var rebuilt;
+        var a;
 
-        let rebuilt = self::fromArray(data["a"], false);
+        let a = self::fromArray(data["a"], false);
 
-        let this->a = rebuilt->asTensorBuffer();
+        if unlikely data["n"] != a->size() {
+            throw new RuntimeException("Invalid vector data.");
+        }
+
+        let this->a = a->asTensorBuffer();
         let this->n = data["n"];
     }
 }

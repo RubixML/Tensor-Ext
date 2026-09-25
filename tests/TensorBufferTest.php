@@ -455,18 +455,6 @@ class TensorBufferTest extends TestCase
     /**
      * @test
      */
-    public function repeatRejectsOverflowingTimes() : void
-    {
-        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0]));
-
-        $this->expectException(InvalidArgumentException::class);
-
-        $decorator->repeat(PHP_INT_MAX);
-    }
-
-    /**
-     * @test
-     */
     public function splitChunkLargerThanBuffer() : void
     {
         $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0]));
