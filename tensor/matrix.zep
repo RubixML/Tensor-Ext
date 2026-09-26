@@ -905,7 +905,7 @@ class Matrix implements Tensor
     }
 
     /**
-     * Compute the singluar value decomposition of this matrix.
+     * Compute the singular value decomposition of this matrix.
      *
      * @return \Tensor\Decompositions\Svd
      */
@@ -935,7 +935,7 @@ class Matrix implements Tensor
     }
  
     /**
-     * Retrn the infinity norm of the matrix.
+     * Return the infinity norm of the matrix.
      *
      * @return float
      */

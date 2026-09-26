@@ -2654,7 +2654,7 @@ PHP_METHOD(Tensor_Matrix, eig)
 }
 
 /**
- * Compute the singluar value decomposition of this matrix.
+ * Compute the singular value decomposition of this matrix.
  *
  * @return \Tensor\Decompositions\Svd
  */
@@ -2728,7 +2728,7 @@ PHP_METHOD(Tensor_Matrix, l2Norm)
 }
 
 /**
- * Retrn the infinity norm of the matrix.
+ * Return the infinity norm of the matrix.
  *
  * @return float
  */
