@@ -43,6 +43,21 @@ class BufferReuseTest extends TestCase
     protected const UNDER_THRESHOLD = 100_000;
 
     /**
+     * Element counts used by the cache liveness tests. Both are deliberately
+     * odd so that neither can tie with a round-numbered block cached by an
+     * unrelated test, because an equal sized incumbent is kept rather than
+     * replaced.
+     *
+     * @var int
+     */
+    protected const CACHE_SMALL = 262_145;
+
+    /**
+     * @var int
+     */
+    protected const CACHE_LARGE = 8_388_609;
+
+    /**
      * The core aliasing case. Each result is retained while the next one is
      * built, so the cache is refilled and drained underneath live tensors. If
      * two of them ever shared a block, the later write would corrupt the
@@ -265,6 +280,52 @@ class BufferReuseTest extends TestCase
 
             unset($result);
         }
+    }
+
+    /**
+     * A block sitting in the cache is still emalloc()ed, so it keeps being
+     * accounted for by memory_get_usage(). Retention is therefore a direct
+     * read on whether the cache is live, with no timing involved and no
+     * dependence on how fast the machine happens to be.
+     *
+     * Only a block strictly larger than the cached incumbent can be observed
+     * this way, since a smaller one is released to keep the more useful
+     * incumbent. CACHE_LARGE is odd so that it can never tie with a
+     * round-numbered block cached by an unrelated test.
+     *
+     * The cache must additionally not be able to wedge itself shut.
+     *
+     * A block cached for a small allocation used to be left in place when a
+     * larger allocation arrived. The larger one was emalloc()ed, and its
+     * release then found the slot occupied and efree()d itself instead of
+     * caching, so the undersized block stayed forever. Every subsequent
+     * allocation in the request missed as well, leaving recycling silently
+     * disabled for the rest of the request while all the correctness tests
+     * still passed.
+     *
+     * This fails both if the cache never engages and if it wedges.
+     *
+     * @test
+     */
+    public function cacheStaysLiveWhenLargerAllocationsFollow() : void
+    {
+        $small = Vector::fill(1.0, self::CACHE_SMALL);
+
+        $scratch = $small->add($small);
+        unset($scratch, $small);
+
+        $baseline = memory_get_usage();
+
+        $large = Vector::fill(2.0, self::CACHE_LARGE);
+
+        $scratch = $large->add($large);
+        unset($scratch, $large);
+
+        $this->assertGreaterThan(
+            self::CACHE_LARGE * 8 / 2,
+            memory_get_usage() - $baseline,
+            'A large allocation was not cached, so the cache is not engaging or has wedged on the smaller block.'
+        );
     }
 
     /**

@@ -27,15 +27,22 @@ zend_class_entry * tensor_buffer_ce;
  * amount of memory resident until the request ends. */
 #define TENSOR_POOL_MAX_BYTES ((size_t) 256 * 1024 * 1024)
 
+/* Number of blocks kept per request. A single layer of a neural network emits
+ * two qualifying buffers back to back (the bias add, then the activation), and
+ * with one slot the second one always misses because the first is still live. */
+#ifndef TENSOR_POOL_SLOTS
+#define TENSOR_POOL_SLOTS 2
+#endif
+
 /* Set between RSHUTDOWN and the next RINIT. A release arriving while sealed
- * belongs to a request that is already being torn down, and the slot is about
+ * belongs to a request that is already being torn down, and the slots are about
  * to be discarded, so it has to go straight back to efree(). */
 static int tensor_pool_sealed = 1;
 
 static struct {
 	void * ptr;
 	size_t bytes;
-} tensor_pool = { NULL, 0 };
+} tensor_pool[TENSOR_POOL_SLOTS];
 
 /* NTS assumption, matching the feature cache in include/cpu.c. Under a ZTS
  * build this static would be shared by every thread, so the oversized buffer
@@ -58,28 +65,65 @@ static zend_always_inline int tensor_poolable(size_t bytes)
  */
 static void * tensor_pool_acquire(size_t bytes)
 {
-	if (EXPECTED(!tensor_pool_sealed) && tensor_pool.ptr != NULL && tensor_pool.bytes >= bytes) {
-		void * ptr = tensor_pool.ptr;
+	if (UNEXPECTED(tensor_pool_sealed)) {
+		return emalloc(bytes);
+	}
 
-		tensor_pool.ptr = NULL;
-		tensor_pool.bytes = 0;
+	for (int i = 0; i < TENSOR_POOL_SLOTS; ++i) {
+		if (tensor_pool[i].ptr != NULL && tensor_pool[i].bytes >= bytes) {
+			void * ptr = tensor_pool[i].ptr;
 
-		return ptr;
+			tensor_pool[i].ptr = NULL;
+			tensor_pool[i].bytes = 0;
+
+			return ptr;
+		}
 	}
 
 	return emalloc(bytes);
 }
 
 /**
- * Hand a block back, caching it when the slot is free and efree()ing it
- * otherwise. A block is a valid emalloc() allocation whether it was recycled
- * or freshly allocated, so no record of its origin is needed.
+ * Hand a block back. It takes a free slot, or displaces the smallest slot when
+ * that slot cannot serve as many future requests, and is efree()d when no slot
+ * can take it.
+ *
+ * Displacing a smaller block is what keeps a small allocation from wedging the
+ * cache shut. Leaving it in place would make the next larger release find every
+ * slot occupied and efree() itself instead, and the undersized block would then
+ * stay there for the rest of the request, silently disabling recycling.
+ *
+ * A block is a valid emalloc() allocation whether it was recycled or freshly
+ * allocated, so no record of its origin is needed.
  */
 static void tensor_pool_release(void * ptr, size_t bytes)
 {
-	if (EXPECTED(!tensor_pool_sealed) && tensor_pool.ptr == NULL && tensor_poolable(bytes)) {
-		tensor_pool.ptr = ptr;
-		tensor_pool.bytes = bytes;
+	if (UNEXPECTED(tensor_pool_sealed) || !tensor_poolable(bytes)) {
+		efree(ptr);
+
+		return;
+	}
+
+	int smallest = -1;
+
+	for (int i = 0; i < TENSOR_POOL_SLOTS; ++i) {
+		if (tensor_pool[i].ptr == NULL) {
+			tensor_pool[i].ptr = ptr;
+			tensor_pool[i].bytes = bytes;
+
+			return;
+		}
+
+		if (tensor_pool[i].bytes < bytes
+			&& (smallest < 0 || tensor_pool[i].bytes < tensor_pool[smallest].bytes)) {
+			smallest = i;
+		}
+	}
+
+	if (smallest >= 0) {
+		efree(tensor_pool[smallest].ptr);
+		tensor_pool[smallest].ptr = ptr;
+		tensor_pool[smallest].bytes = bytes;
 
 		return;
 	}
@@ -124,8 +168,11 @@ static void tensor_buffer_pool_free_object(zend_object * object)
  */
 void tensor_pool_activate(void)
 {
-	tensor_pool.ptr = NULL;
-	tensor_pool.bytes = 0;
+	for (int i = 0; i < TENSOR_POOL_SLOTS; ++i) {
+		tensor_pool[i].ptr = NULL;
+		tensor_pool[i].bytes = 0;
+	}
+
 	tensor_pool_sealed = 0;
 }
 
@@ -140,8 +187,11 @@ void tensor_pool_activate(void)
  */
 void tensor_pool_seal(void)
 {
-	tensor_pool.ptr = NULL;
-	tensor_pool.bytes = 0;
+	for (int i = 0; i < TENSOR_POOL_SLOTS; ++i) {
+		tensor_pool[i].ptr = NULL;
+		tensor_pool[i].bytes = 0;
+	}
+
 	tensor_pool_sealed = 1;
 }
 

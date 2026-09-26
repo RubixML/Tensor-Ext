@@ -5,10 +5,11 @@ namespace Tensor\Benchmarks\Buffer;
 use Tensor\Vector;
 
 /**
- * Output buffers at or above ZEND_MM_CHUNK_SIZE (2 MB) recycle one cached block
- * per request, see the oversized buffer cache in ext/include/buffer.c. Whether
- * that helps is entirely a question of what the caller does with the result, so
- * the subjects here cover both shapes rather than just the favourable one.
+ * Output buffers at or above ZEND_MM_CHUNK_SIZE (2 MB) recycle a small pool of
+ * cached blocks per request, see the oversized buffer cache in
+ * ext/include/buffer.c. Whether that helps is entirely a question of what the
+ * caller does with the result, so the subjects here cover both shapes rather
+ * than just the favourable one.
  *
  * @Groups({"Buffer"})
  * @BeforeMethods({"setUp"})
