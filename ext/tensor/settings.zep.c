@@ -24,8 +24,6 @@
 /**
  * Settings
  *
- * @internal
- *
  * @category    Scientific Computing
  * @package     Rubix/Tensor
  * @author      Andrew DalPino
@@ -71,7 +69,7 @@ PHP_METHOD(Tensor_Settings, setNumThreads)
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "The number of threads", " must be greater than 0, ", &_2$$3, " given.");
 		ZEPHIR_CALL_METHOD(NULL, &_0$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
-		zephir_throw_exception_debug(&_0$$3, "tensor/settings.zep", 26);
+		zephir_throw_exception_debug(&_0$$3, "tensor/settings.zep", 24);
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
@@ -97,18 +95,10 @@ PHP_METHOD(Tensor_Settings, numThreads)
  * Return the CPU features the extension detected at startup, along with the
  * route the elementwise kernels actually took.
  *
- * The feature flags describe the CPU. Only "avx" is acted on: the
- * elementwise add, subtract, multiply and divide kernels (and their scalar,
- * column and row forms), together with the unary abs, sqrt, negate, sign,
- * rad2deg, deg2rad, clip, clipLower and clipUpper kernels, are compiled a
- * second time with a 256-bit target attribute and are reached through a
- * function pointer that is switched over once during module
- * initialization. On a CPU without AVX the pointer keeps pointing at the
- * baseline, narrower kernels and "dispatch" reads "scalar".
- *
- * "avx2" is reported for diagnostics only. No kernel is compiled for AVX2,
- * so that the dispatched routes stay bit-for-bit identical to the baseline
- * ones.
+ * The returned array has four keys: "avx", "avx2" and "avx512" are the
+ * feature flags detected on the CPU, and "dispatch" is the route the
+ * elementwise kernels were installed on: "avx512" when that ISA is usable,
+ * otherwise "avx", and "scalar" when neither is.
  *
  * @return array
  */

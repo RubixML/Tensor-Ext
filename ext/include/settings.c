@@ -42,9 +42,10 @@ void tensor_get_num_threads(zval * return_value)
  */
 void tensor_get_cpu_features(zval * return_value)
 {
-    array_init_size(return_value, 3);
+    array_init_size(return_value, 4);
 
     add_assoc_bool(return_value, "avx", tensor_cpu_has_avx() ? 1 : 0);
     add_assoc_bool(return_value, "avx2", tensor_cpu_has_avx2() ? 1 : 0);
+    add_assoc_bool(return_value, "avx512", tensor_cpu_has_avx512() ? 1 : 0);
     add_assoc_string(return_value, "dispatch", tensor_cpu_dispatch_name());
 }

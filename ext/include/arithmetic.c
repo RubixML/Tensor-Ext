@@ -13,12 +13,14 @@
 
 /* Dispatched elementwise binary kernels.
  *
- * One body, compiled twice: once at the extension's baseline ISA and once under
- * TENSOR_TARGET_AVX so the loop is widened to four doubles per vector. Which one
- * runs is decided once, at module init, by the route pointer.
+ * One body, compiled three times: once at the extension's baseline ISA, once
+ * under TENSOR_TARGET_AVX, and once under TENSOR_TARGET_AVX512 so the loop is
+ * widened to four or eight doubles per vector. Which one runs is decided once,
+ * at module init, by the route pointer.
  *
  * The body is a macro rather than a shared helper so that the baseline and the
- * AVX copy are the same text -- there is no second definition that could drift.
+ * AVX and AVX-512 copies are the same text -- there is no second definition
+ * that could drift.
  *
  * All three buffers are marked restrict: the inputs are fixed-size Buffers that
  * are never reallocated and the output was allocated microseconds ago, so they
@@ -71,6 +73,12 @@
 		TENSOR_BINARY_BODY(op)                                                   \
 	}                                                                            \
 	                                                                             \
+	TENSOR_TARGET_AVX512                                                       \
+	static void tensor_##name##_avx512(zval * return_value, zval * a, zval * b) \
+	{                                                                            \
+		TENSOR_BINARY_BODY(op)                                                   \
+	}                                                                            \
+	                                                                             \
 	static tensor_binary_fn tensor_##name##_route = tensor_##name##_baseline;   \
 	                                                                             \
 	void tensor_##name(zval * return_value, zval * a, zval * b)                 \
@@ -83,9 +91,6 @@ TENSOR_BINARY_DISPATCH(divide, va[i] / vb[i])
 TENSOR_BINARY_DISPATCH(add, va[i] + vb[i])
 TENSOR_BINARY_DISPATCH(subtract, va[i] - vb[i])
 
-/* pow and fmod are per-element libm calls and there is no vector math library
- * behind them, so a 256-bit register would buy nothing. They reuse the same body
- * but keep a single route rather than being compiled twice. */
 #define TENSOR_BINARY(name, op)                                                   \
 	void tensor_##name(zval * return_value, zval * a, zval * b)                 \
 	{                                                                            \
@@ -134,6 +139,12 @@ TENSOR_BINARY(mod, fmod(va[i], vb[i]))
 	                                                                             \
 	TENSOR_TARGET_AVX                                                            \
 	static void tensor_##name##_avx(zval * return_value, zval * a, zval * b)     \
+	{                                                                            \
+		TENSOR_SCALAR_BODY(op)                                                   \
+	}                                                                            \
+	                                                                             \
+	TENSOR_TARGET_AVX512                                                       \
+	static void tensor_##name##_avx512(zval * return_value, zval * a, zval * b) \
 	{                                                                            \
 		TENSOR_SCALAR_BODY(op)                                                   \
 	}                                                                            \
@@ -208,9 +219,6 @@ void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      
 	zval_ptr_dtor(&c);                                                           \
 }
 
-/* Only the per-element libm operations live here. The plain floating point ones
- * are defined further down through TENSOR_COL_DISPATCH, which adds the AVX
- * variant; naming them here as well would define each kernel twice. */
 TENSOR_COL_APPLY(pow_col, pow(va[i * nHat + j], vb[i]))
 TENSOR_COL_APPLY(pow_col_reverse, pow(vb[i], va[i * nHat + j]))
 TENSOR_COL_APPLY(mod_col, fmod(va[i * nHat + j], vb[i]))
@@ -275,16 +283,6 @@ TENSOR_ROW_APPLY(mod_row_reverse, fmod(vb[j], va[i * nHat + j]))
 
 #undef TENSOR_ROW_APPLY
 
-/* Dispatched column and row variants.
- *
- * Same shape as the macros above, with the AVX copy added. The inner loop over
- * the columns is what gets widened: for the _col forms the row's scalar operand
- * is loop-invariant and is broadcast, and for the _row forms the operand is a
- * contiguous load, so the compiler turns both into 256-bit work. Only the plain
- * floating point operations are dispatched -- pow and fmod are per-element libm
- * calls with no vector math library behind them, so a wider register would buy
- * nothing and only duplicate code. */
-
 #define TENSOR_COL_DISPATCH_BODY(op)                                             \
 	zend_long n = 0, m = 0, total = 0;                                           \
 	int ok_a = 0, ok_b = 0;                                                      \
@@ -331,6 +329,13 @@ TENSOR_ROW_APPLY(mod_row_reverse, fmod(vb[j], va[i * nHat + j]))
 	                                                                             \
 	TENSOR_TARGET_AVX                                                            \
 	static void tensor_##name##_avx(                                             \
+		zval * return_value, zval * a, zval * b, zval * n_zval)                  \
+	{                                                                            \
+		TENSOR_COL_DISPATCH_BODY(op)                                             \
+	}                                                                            \
+	                                                                             \
+	TENSOR_TARGET_AVX512                                                       \
+	static void tensor_##name##_avx512(                                          \
 		zval * return_value, zval * a, zval * b, zval * n_zval)                  \
 	{                                                                            \
 		TENSOR_COL_DISPATCH_BODY(op)                                             \
@@ -407,6 +412,13 @@ TENSOR_COL_DISPATCH(subtract_col_reverse, vb[i] - va[i * nHat + j])
 		TENSOR_ROW_DISPATCH_BODY(op)                                             \
 	}                                                                            \
 	                                                                             \
+	TENSOR_TARGET_AVX512                                                       \
+	static void tensor_##name##_avx512(                                          \
+		zval * return_value, zval * a, zval * b, zval * n_zval)                  \
+	{                                                                            \
+		TENSOR_ROW_DISPATCH_BODY(op)                                             \
+	}                                                                            \
+	                                                                             \
 	static tensor_dim_fn tensor_##name##_route = tensor_##name##_baseline;      \
 	                                                                             \
 	void tensor_##name(                                                         \
@@ -464,4 +476,38 @@ void tensor_arithmetic_dispatch_avx_init(void)
 	tensor_divide_row_reverse_route = tensor_divide_row_reverse_avx;
 	tensor_subtract_row_route = tensor_subtract_row_avx;
 	tensor_subtract_row_reverse_route = tensor_subtract_row_reverse_avx;
+}
+
+/**
+ * Point every dispatched kernel in this file at its AVX-512 variant.
+ *
+ * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
+ * CPU actually supporting AVX-512 -- and on AVX, since only one of the two
+ * initializers runs. The effect is strictly an upgrade to the widest route.
+ */
+void tensor_arithmetic_dispatch_avx512_init(void)
+{
+	tensor_multiply_route = tensor_multiply_avx512;
+	tensor_divide_route = tensor_divide_avx512;
+	tensor_add_route = tensor_add_avx512;
+	tensor_subtract_route = tensor_subtract_avx512;
+
+	tensor_multiply_scalar_route = tensor_multiply_scalar_avx512;
+	tensor_divide_scalar_route = tensor_divide_scalar_avx512;
+	tensor_add_scalar_route = tensor_add_scalar_avx512;
+	tensor_subtract_scalar_route = tensor_subtract_scalar_avx512;
+
+	tensor_multiply_col_route = tensor_multiply_col_avx512;
+	tensor_add_col_route = tensor_add_col_avx512;
+	tensor_divide_col_route = tensor_divide_col_avx512;
+	tensor_divide_col_reverse_route = tensor_divide_col_reverse_avx512;
+	tensor_subtract_col_route = tensor_subtract_col_avx512;
+	tensor_subtract_col_reverse_route = tensor_subtract_col_reverse_avx512;
+
+	tensor_multiply_row_route = tensor_multiply_row_avx512;
+	tensor_add_row_route = tensor_add_row_avx512;
+	tensor_divide_row_route = tensor_divide_row_avx512;
+	tensor_divide_row_reverse_route = tensor_divide_row_reverse_avx512;
+	tensor_subtract_row_route = tensor_subtract_row_avx512;
+	tensor_subtract_row_reverse_route = tensor_subtract_row_reverse_avx512;
 }

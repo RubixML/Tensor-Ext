@@ -12,11 +12,12 @@
 
 int tensor_cpu_has_avx(void);
 int tensor_cpu_has_avx2(void);
+int tensor_cpu_has_avx512(void);
 
-/* The route the elementwise kernels actually took: "avx" or "scalar". */
+/* The route the elementwise kernels actually took: "avx512", "avx" or "scalar". */
 const char * tensor_cpu_dispatch_name(void);
 
-/* Install the AVX kernels where the CPU allows it. Called once from MINIT. */
+/* Install the widest set of kernels the CPU allows. Called once from MINIT. */
 void tensor_cpu_init(void);
 
 #endif

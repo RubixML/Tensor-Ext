@@ -9,7 +9,7 @@
     - Rename Special interface to `Reductions` and Algebraic to `Unary`
     - Moved `clip()`, `clipLower()`, and `clipUpper()` into `Unary` interface
     - Remove `poisson` factory method
-    - Add AVX2 dynamic dispatching to arithmetic and unary operations
+    - Add AVX-512 dynamic dispatching to arithmetic and unary operations (AVX as fallback); AVX2 reported for diagnostics
     - Fused `covariance()` into a single BLAS `syrk` kernel
     - Implemented 2-slot huge buffer memory pinning
 

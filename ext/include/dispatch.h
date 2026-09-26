@@ -8,22 +8,30 @@
  *
  * The extension is compiled with a plain -O3 and no ISA flags, so the baseline
  * code generation for x86-64 tops out at the SSE2 baseline: two doubles per
- * vector. AVX widens that to four. A global -mavx is not an option -- it would
- * let the compiler emit AVX anywhere in the extension and turn the load of a
- * non-AVX CPU into a SIGILL -- so the AVX kernels instead carry a per-function
- * target attribute, which confines the wider instructions to functions that are
- * only ever reached through a pointer that cpu.c installs when the CPU has been
- * found to support AVX.
+ * vector. AVX widens that to four doubles and AVX-512 to eight. A global
+ * -mavx (or -mavx512f) is not an option -- it would let the compiler emit the
+ * wider instructions anywhere in the extension and turn the load of a CPU that
+ * does not support them into a SIGILL -- so the wider kernels instead carry a
+ * per-function target attribute, which confines the wider instructions to
+ * functions that are only ever reached through a pointer that cpu.c installs
+ * when the CPU has been found to support the ISA.
  *
- * Each kernel is therefore compiled twice from one identical C body: once as
- * the plain baseline and once under TENSOR_TARGET_AVX. The two cannot drift
- * semantically because the compiler picks the instruction selection, not us.
+ * Each kernel is therefore compiled three times from one identical C body: once
+ * as the plain baseline, once under TENSOR_TARGET_AVX, and once under
+ * TENSOR_TARGET_AVX512. The copies cannot drift semantically because the
+ * compiler picks the instruction selection, not us.
+ *
+ * There is deliberately no AVX2 tier. These kernels are double-precision
+ * elementwise, and AVX2 offers the same 256-bit width as AVX for doubles --
+ * its new operations are 256-bit integer, gather and permute instructions that
+ * this code never uses. A second 256-bit route would be code-sized for no
+ * measurable speedup, so AVX2 is detected and reported for diagnostics only.
  *
  * One kernel needs a little help beyond the target attribute. The compiler
  * will not vectorize sqrt() because the libm function may set errno, and a
  * target attribute does not lift that restriction, so the build carries
  * -fno-math-errno (see extra-cflags in config.json). Nothing in the extension
- * ever reads errno, and vsqrtpd returns the same double sqrtsd does, so the two
+ * ever reads errno, and vsqrtpd returns the same double sqrtsd does, so the
  * routes remain bit-for-bit identical; it is worth checking that stays true if
  * the flag is ever dropped.
  *
@@ -59,15 +67,19 @@ typedef void (*tensor_unary_clip_fn)(zval * return_value, zval * a, zval * lo, z
 	(defined(__GNUC__) || defined(__clang__))
 #	define TENSOR_X86_DISPATCH 1
 #	define TENSOR_TARGET_AVX __attribute__((target("avx")))
+#	define TENSOR_TARGET_AVX512 __attribute__((target("avx512f")))
 #else
 #	define TENSOR_TARGET_AVX
+#	define TENSOR_TARGET_AVX512
 #endif
 
 /* Installed once from the module initializer in config.json. The hooks are
- * idempotent and only ever upgrade a kernel from its baseline to its AVX
- * variant, so an extension whose initializer never ran still computes the right
- * answers, just without the wider vectors. */
+ * idempotent and only ever upgrade a kernel from its baseline to its AVX or
+ * AVX-512 variant, so an extension whose initializer never ran still computes
+ * the right answers, just without the wider vectors. */
 void tensor_arithmetic_dispatch_avx_init(void);
 void tensor_unary_dispatch_avx_init(void);
+void tensor_arithmetic_dispatch_avx512_init(void);
+void tensor_unary_dispatch_avx512_init(void);
 
 #endif

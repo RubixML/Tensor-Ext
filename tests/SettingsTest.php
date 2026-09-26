@@ -30,31 +30,41 @@ class SettingsTest extends TestCase
         $this->assertIsArray($features);
         $this->assertArrayHasKey('avx', $features);
         $this->assertArrayHasKey('avx2', $features);
+        $this->assertArrayHasKey('avx512', $features);
         $this->assertArrayHasKey('dispatch', $features);
 
         $this->assertIsBool($features['avx']);
         $this->assertIsBool($features['avx2']);
+        $this->assertIsBool($features['avx512']);
         $this->assertIsString($features['dispatch']);
     }
 
     /**
-     * The dispatch route is chosen by, and only by, the AVX bit: the kernels
-     * are switched over when AVX is usable and left at their baseline otherwise.
+     * The dispatch route is the widest ISA the CPU supports: the kernels are
+     * switched over to AVX-512 where it is usable, else to AVX, else left at
+     * their baseline.
      *
      * @test
      */
-    public function cpuFeaturesDispatchFollowsAvx() : void
+    public function cpuFeaturesDispatchFollowsHighestTier() : void
     {
         $features = Settings::cpuFeatures();
 
-        $expected = $features['avx'] ? 'avx' : 'scalar';
+        if ($features['avx512']) {
+            $expected = 'avx512';
+        } elseif ($features['avx']) {
+            $expected = 'avx';
+        } else {
+            $expected = 'scalar';
+        }
 
         $this->assertSame($expected, $features['dispatch']);
     }
 
     /**
-     * AVX2 is an extension of AVX, so it cannot be present without it. A report
-     * claiming otherwise would mean the detection was wrong.
+     * Each wider set of instructions is an extension of the one below it, so it
+     * cannot be present without its predecessor. A report claiming otherwise
+     * would mean the detection was wrong.
      *
      * @test
      */
@@ -63,6 +73,10 @@ class SettingsTest extends TestCase
         $features = Settings::cpuFeatures();
 
         if ($features['avx2']) {
+            $this->assertTrue($features['avx']);
+        }
+
+        if ($features['avx512']) {
             $this->assertTrue($features['avx']);
         }
     }

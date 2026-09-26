@@ -41,6 +41,11 @@ class Settings
      * Return the CPU features the extension detected at startup, along with the
      * route the elementwise kernels actually took.
      *
+     * The returned array has four keys: "avx", "avx2" and "avx512" are the
+     * feature flags detected on the CPU, and "dispatch" is the route the
+     * elementwise kernels were installed on: "avx512" when that ISA is usable,
+     * otherwise "avx", and "scalar" when neither is.
+     *
      * @return array
      */
     public static function cpuFeatures() -> array

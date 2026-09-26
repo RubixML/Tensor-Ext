@@ -19,12 +19,13 @@
  * optimizer can vectorize the elementwise mapping instead of being blocked by
  * an indirect call.
  *
- * The mapping operations are dispatched between the two ISAs on the same terms
- * as the arithmetic kernels in include/arithmetic.c: one body compiled twice,
- * once at the extension's baseline ISA and once under TENSOR_TARGET_AVX so the
- * loop widens from two doubles per vector to four, with a route pointer
- * deciding which one runs.  The body is a macro rather than a shared helper so
- * that the baseline and the AVX copy are the same text -- there is no second
+ * The mapping operations are dispatched across the AVX and AVX-512 ISAs on the
+ * same terms as the arithmetic kernels in include/arithmetic.c: one body
+ * compiled three times, once at the extension's baseline ISA and once each
+ * under TENSOR_TARGET_AVX and TENSOR_TARGET_AVX512 so the loop widens from two
+ * doubles per vector to four or eight, with a route pointer deciding which one
+ * runs.  The body is a macro rather than a shared helper so that the baseline
+ * and the AVX and AVX-512 copies are the same text -- there is no second
  * definition that could drift.
  *
  * Both buffers are marked restrict: the input is a fixed-size Buffer that is
@@ -70,6 +71,12 @@
 		TENSOR_UNARY_BODY(expr)                                         \
 	}                                                                       \
                                                                                 \
+	TENSOR_TARGET_AVX512                                                    \
+	static void tensor_##name##_avx512(zval * return_value, zval * a)      \
+	{                                                                       \
+		TENSOR_UNARY_BODY(expr)                                         \
+	}                                                                       \
+                                                                                 \
 	static tensor_unary_fn tensor_##name##_route = tensor_##name##_baseline;\
                                                                                 \
 	void tensor_##name(zval * return_value, zval * a)                       \
@@ -395,7 +402,16 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 		const double hi = zephir_get_doubleval(hi_zval);                     \
 		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                   \
 	}                                                                            \
-                                                                                     \
+                                                                                      \
+	TENSOR_TARGET_AVX512                                                         \
+	static void tensor_##name##_avx512(                                          \
+		zval * return_value, zval * a, zval * lo_zval, zval * hi_zval)       \
+	{                                                                            \
+		const double lo = zephir_get_doubleval(lo_zval);                     \
+		const double hi = zephir_get_doubleval(hi_zval);                     \
+		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                   \
+	}                                                                            \
+                                                                                      \
 	static tensor_unary_clip_fn tensor_##name##_route = tensor_##name##_baseline;\
                                                                                      \
 	void tensor_##name(                                                          \
@@ -421,7 +437,14 @@ TENSOR_CLIP_DISPATCH(clip, va[i] > hi ? hi : (va[i] < lo ? lo : va[i]))
 		const double bound = zephir_get_doubleval(b);                         \
 		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                    \
 	}                                                                             \
-                                                                                      \
+                                                                                       \
+	TENSOR_TARGET_AVX512                                                          \
+	static void tensor_##name##_avx512(zval * return_value, zval * a, zval * b)  \
+	{                                                                             \
+		const double bound = zephir_get_doubleval(b);                         \
+		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                    \
+	}                                                                             \
+                                                                                       \
 	static tensor_unary_bound_fn tensor_##name##_route = tensor_##name##_baseline;\
                                                                                       \
 	void tensor_##name(zval * return_value, zval * a, zval * b)                   \
@@ -439,8 +462,10 @@ TENSOR_CLIP_BOUND_DISPATCH(clip_upper, va[i] > bound ? bound : va[i])
  * Point every dispatched kernel in this file at its AVX variant.
  *
  * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
- * CPU actually supporting AVX. The routes are all already pointing at the
- * baseline variants before this runs, so the effect is strictly an upgrade.
+ * CPU actually supporting AVX -- and runs it only when AVX-512 is not in use,
+ * since the two initializers are mutually exclusive. The routes are all already
+ * pointing at the baseline variants before this runs, so the effect is strictly
+ * an upgrade.
  *
  * floor and ceil are absent on purpose: see include/dispatch.h for why letting
  * the compiler see AVX makes them slower rather than faster.
@@ -457,4 +482,26 @@ void tensor_unary_dispatch_avx_init(void)
 	tensor_clip_route = tensor_clip_avx;
 	tensor_clip_lower_route = tensor_clip_lower_avx;
 	tensor_clip_upper_route = tensor_clip_upper_avx;
+}
+
+/**
+ * Point every dispatched kernel in this file at its AVX-512 variant.
+ *
+ * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
+ * CPU actually supporting AVX-512. The effect is strictly an upgrade to the
+ * widest route. The kernels excluded above (floor, ceil and the libm paths) stay
+ * excluded here for the same reasons.
+ */
+void tensor_unary_dispatch_avx512_init(void)
+{
+	tensor_abs_route = tensor_abs_avx512;
+	tensor_sqrt_route = tensor_sqrt_avx512;
+	tensor_negate_route = tensor_negate_avx512;
+	tensor_sign_route = tensor_sign_avx512;
+	tensor_rad2deg_route = tensor_rad2deg_avx512;
+	tensor_deg2rad_route = tensor_deg2rad_avx512;
+
+	tensor_clip_route = tensor_clip_avx512;
+	tensor_clip_lower_route = tensor_clip_lower_avx512;
+	tensor_clip_upper_route = tensor_clip_upper_avx512;
 }
