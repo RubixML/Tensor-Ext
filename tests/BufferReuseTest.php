@@ -289,34 +289,37 @@ class BufferReuseTest extends TestCase
      * dependence on how fast the machine happens to be.
      *
      * Only a block strictly larger than the cached incumbent can be observed
-     * this way, since a smaller one is released to keep the more useful
-     * incumbent. CACHE_LARGE is odd so that it can never tie with a
-     * round-numbered block cached by an unrelated test.
+     * this way, because a smaller one is released in order to keep the more
+     * useful incumbent. CACHE_LARGE is therefore odd, so that it cannot tie
+     * with a round-numbered block cached elsewhere, and this is the only test
+     * in the class that uses that size, so nothing here can tie with itself.
      *
-     * The cache must additionally not be able to wedge itself shut.
-     *
-     * A block cached for a small allocation used to be left in place when a
-     * larger allocation arrived. The larger one was emalloc()ed, and its
-     * release then found the slot occupied and efree()d itself instead of
-     * caching, so the undersized block stayed forever. Every subsequent
-     * allocation in the request missed as well, leaving recycling silently
-     * disabled for the rest of the request while all the correctness tests
-     * still passed.
-     *
-     * This fails both if the cache never engages and if it wedges.
+     * The sequence covers both ways the cache can fail to engage. A block
+     * cached for a small allocation used to be left in place when a larger
+     * allocation arrived: the larger one was emalloc()ed, and its release then
+     * found the slot occupied and efree()d itself instead of caching, so the
+     * undersized block stayed for the rest of the request and recycling was
+     * silently off from then on. That single-slot case is the same failure as
+     * the multi-slot one below, reached when every slot already holds something
+     * smaller.
      *
      * @test
      */
     public function cacheStaysLiveWhenLargerAllocationsFollow() : void
     {
-        $small = Vector::fill(1.0, self::CACHE_SMALL);
+        // Two results alive at once is what puts a block in every slot;
+        // freeing them one at a time would just refill the first slot.
+        $a = Vector::fill(1.0, self::CACHE_SMALL);
+        $b = Vector::fill(2.0, self::CACHE_SMALL);
 
-        $scratch = $small->add($small);
-        unset($scratch, $small);
+        $first = $a->add($b);
+        $second = $b->add($a);
+
+        unset($first, $second, $a, $b);
 
         $baseline = memory_get_usage();
 
-        $large = Vector::fill(2.0, self::CACHE_LARGE);
+        $large = Vector::fill(3.0, self::CACHE_LARGE);
 
         $scratch = $large->add($large);
         unset($scratch, $large);
@@ -324,7 +327,7 @@ class BufferReuseTest extends TestCase
         $this->assertGreaterThan(
             self::CACHE_LARGE * 8 / 2,
             memory_get_usage() - $baseline,
-            'A large allocation was not cached, so the cache is not engaging or has wedged on the smaller block.'
+            'A large allocation was not cached, so the cache is not engaging or is wedged on smaller blocks.'
         );
     }
 
