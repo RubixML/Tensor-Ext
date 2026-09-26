@@ -10,6 +10,7 @@
     - Moved `clip()`, `clipLower()`, and `clipUpper()` into `Unary` interface
     - Remove `poisson` factory method
     - Add AVX2 dynamic dispatching to arithmetic and unary operations
+    - Fused `covariance()` into a single BLAS `syrk` kernel
     - Implemented 2-slot huge buffer memory pinning
 
 - 3.1.0

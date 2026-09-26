@@ -146,6 +146,19 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function fromBufferRejectsIntegerBuffers() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Argument must wrap a buffer of type double.');
+
+        $buffer = new TensorBuffer(Buffer::fromArray([1, 2, 3, 4, 5], Buffer::TYPE_LONG));
+
+        Vector::fromBuffer($buffer);
+    }
+
+    /**
+     * @test
+     */
     public function constructorIsProtected() : void
     {
         $this->assertTrue((new ReflectionMethod(Vector::class, '__construct'))->isProtected());

@@ -9,7 +9,7 @@ Tensor Ext is a PHP extension that brings high-performance Matrix and Vector com
 - **Object-oriented API** — Matrix and Vector APIs are fluent and expressive.
 - **Low memory footprint** — Tensor objects are backed by contiguous C buffers.
 - **Native BLAS and LAPACK acceleration** — Highly-optimized multi-threaded linear algebra kernels.
-- **Universal element-wise functions** — Elementwise operations are broadcasted and vectorized.
+- **Universal element-wise functions** — Element-wise operations are broadcasted and vectorized.
 - **Dynamic kernel dispatching** — Optimized kernels are dispatched based on CPU architecture.
 
 ## Installation
@@ -24,7 +24,7 @@ $ pie install rubix/tensor_ext
 
 - [PHP](https://php.net) 8.1 or above
 - The PHP development package (source code and tooling)
-- A C compiler such as [GCC](https://gcc.gnu.org/), [Clang](https://clang.llvm.org/), or [Visual C++](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
+- A C compiler such as [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/)
 - A Fortran compiler such as [GFortran](https://gcc.gnu.org/wiki/GFortran)
 - [OpenBLAS](https://www.openblas.net/) development package
 - [LAPACKE](https://www.netlib.org/lapack/lapacke.html) C interface to [LAPACK](http://www.netlib.org/lapack/)

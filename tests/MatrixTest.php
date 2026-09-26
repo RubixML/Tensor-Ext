@@ -24,6 +24,8 @@ use Tensor\Decompositions\Eigen;
 use Tensor\Decompositions\Cholesky;
 use Tensor\Buffer;
 use Tensor\TensorBuffer;
+use InvalidArgumentException as SplInvalidArgumentException;
+use LengthException;
 use PHPUnit\Framework\TestCase;
 use Generator;
 use ReflectionMethod;
@@ -124,6 +126,39 @@ class MatrixTest extends TestCase
         $buffer = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]));
 
         Matrix::fromBuffer($buffer, 2, 2);
+    }
+
+    /**
+     * @test
+     */
+    public function fromBufferRejectsIntegerBuffers() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Argument must wrap a buffer of type double.');
+
+        $buffer = new TensorBuffer(Buffer::fromArray([1, 2, 3, 4, 5, 6], Buffer::TYPE_LONG));
+
+        Matrix::fromBuffer($buffer, 2, 3);
+    }
+
+    /**
+     * Integer buffers remain a valid *buffer* kind for the structural
+     * operations; only the numeric layer refuses them. This guards the
+     * distinction the two rejections above depend on.
+     *
+     * @test
+     */
+    public function integerBuffersRemainUsableForStructuralOperations() : void
+    {
+        $buffer = new TensorBuffer(Buffer::fromArray([3, 1, 2], Buffer::TYPE_LONG));
+
+        $this->assertSame(Buffer::TYPE_LONG, $buffer->type());
+        $this->assertEquals([3, 1], $buffer->slice(0, 2)->asBuffer()->toArray());
+        $this->assertEquals([3, 1, 2, 3, 1, 2], $buffer->repeat(2)->asBuffer()->toArray());
+
+        $buffer->sort();
+
+        $this->assertEquals([1, 2, 3], $buffer->asBuffer()->toArray());
     }
 
     /**
@@ -3052,6 +3087,161 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEqualsWithDelta($expectedC->asArray(), $d->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceSuppliedMean() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $expected = Matrix::fromArray([
+            [273.55555555555554, -65.55555555555556, 135.2222222222222],
+            [-65.55555555555556, 28.222222222222225, 3.4444444444444406],
+            [135.2222222222222, 3.4444444444444406, 169.55555555555554],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            $expected->asArray(),
+            $a->covariance($a->mean())->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceNonSquare() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+            [4.0, 3.0, 9.0, 2.0, 8.0, 1.0, 5.0],
+            [2.0, -5.0, 0.5, 6.0, 3.0, 2.0, -1.0],
+        ]);
+
+        $b = $a->covariance();
+
+        $this->assertEquals(3, $b->m());
+        $this->assertEquals(3, $b->n());
+
+        $result = $b->asArray();
+
+        $expected = [
+            [4.0, -0.28571428571428574, 1.0714285714285714],
+            [-0.28571428571428574, 7.673469387755102, -0.5408163265306123],
+            [1.0714285714285714, -0.5408163265306123, 10.173469387755102],
+        ];
+
+        $this->assertEqualsWithDelta($expected, $result, self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceSingleRow() : void
+    {
+        $a = Matrix::fromArray([[1.0, 2.0, 3.0, 4.0, 5.0]]);
+
+        $b = $a->covariance();
+
+        $this->assertEquals(1, $b->m());
+        $this->assertEquals(1, $b->n());
+        $this->assertEqualsWithDelta([[2.0]], $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceSingleColumn() : void
+    {
+        $a = Matrix::fromArray([[1.0], [2.0], [3.0]]);
+
+        $b = $a->covariance();
+
+        $this->assertEquals(3, $b->m());
+        $this->assertEquals(3, $b->n());
+        $this->assertEqualsWithDelta([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]], $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceIsSymmetric() : void
+    {
+        $a = Matrix::rand(24, 40);
+
+        $result = $a->covariance()->asArray();
+
+        for ($i = 0; $i < 24; ++$i) {
+            for ($j = 0; $j < 24; ++$j) {
+                $this->assertEqualsWithDelta(
+                    $result[$i][$j],
+                    $result[$j][$i],
+                    self::MAX_DELTA,
+                    "Covariance is not symmetric at [$i][$j]."
+                );
+            }
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceMatchesComposedOperations() : void
+    {
+        $a = Matrix::rand(9, 17);
+
+        $mean = $a->mean();
+        $centered = $a->subtractColumnVector($mean);
+
+        $composed = $centered->matmul($centered->transpose())->divideScalar($a->n());
+
+        $this->assertEqualsWithDelta(
+            $composed->asArray(),
+            $a->covariance($mean)->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceMeanLengthMismatchThrows() : void
+    {
+        $this->expectException(DimensionalityMismatch::class);
+
+        Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ])->covariance(ColumnVector::fromArray([1.0]));
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceEmptyThrows() : void
+    {
+        // A matrix with no rows leaves the fused kernel nothing to centre, and
+        // the failure is raised from the C layer as the SPL exception rather
+        // than the namespaced one.
+        $this->expectException(SplInvalidArgumentException::class);
+
+        Matrix::fromArray([])->covariance();
+    }
+
+    /**
+     * @test
+     */
+    public function covarianceEmptyRowsThrows() : void
+    {
+        $this->expectException(LengthException::class);
+
+        Matrix::fromArray([[], []])->covariance();
     }
 
     /**

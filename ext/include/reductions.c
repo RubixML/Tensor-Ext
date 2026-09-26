@@ -72,153 +72,117 @@ typedef enum {
 	TENSOR_REDUCE_ARGMAX
 } tensor_reduce_mode;
 
+/* Sum a contiguous run of `len` doubles. Elements are accumulated into eight
+ * independent partial sums so the floating point dependency chain no longer
+ * serializes the iterations, and the partials are merged in a small tree on the
+ * way out. The pairwise merge keeps the accumulated rounding error a fraction of
+ * the naive serial sum. */
+double tensor_sum_doubles(const double * data, zend_long len)
+{
+	double u0 = 0.0, u1 = 0.0, u2 = 0.0, u3 = 0.0;
+	double u4 = 0.0, u5 = 0.0, u6 = 0.0, u7 = 0.0;
+	double extra = 0.0;
+
+	zend_long i;
+
+	for (i = 0; i + 7 < len; i += 8) {
+		u0 += data[i];
+		u1 += data[i + 1];
+		u2 += data[i + 2];
+		u3 += data[i + 3];
+		u4 += data[i + 4];
+		u5 += data[i + 5];
+		u6 += data[i + 6];
+		u7 += data[i + 7];
+	}
+
+	for (; i < len; ++i) {
+		extra += data[i];
+	}
+
+	return ((u0 + u1) + (u2 + u3)) + ((u4 + u5) + (u6 + u7)) + extra;
+}
+
+/* Product of a contiguous run of `len` doubles. Elements are multiplied into
+ * eight independent partial products so the floating point dependency chain no
+ * longer serializes the iterations, and the partials are merged in a small tree
+ * on the way out.
+ *
+ * The lanes start at 1.0 rather than 0.0 so a zero-length run multiplies out to
+ * 1.0, the multiplicative identity tensor_reduce_product returns for a
+ * zero-width group. */
+double tensor_product_doubles(const double * data, zend_long len)
+{
+	double u0 = 1.0, u1 = 1.0, u2 = 1.0, u3 = 1.0;
+	double u4 = 1.0, u5 = 1.0, u6 = 1.0, u7 = 1.0;
+	double extra = 1.0;
+
+	zend_long i;
+
+	for (i = 0; i + 7 < len; i += 8) {
+		u0 *= data[i];
+		u1 *= data[i + 1];
+		u2 *= data[i + 2];
+		u3 *= data[i + 3];
+		u4 *= data[i + 4];
+		u5 *= data[i + 5];
+		u6 *= data[i + 6];
+		u7 *= data[i + 7];
+	}
+
+	for (; i < len; ++i) {
+		extra *= data[i];
+	}
+
+	return ((u0 * u1) * (u2 * u3)) * ((u4 * u5) * (u6 * u7)) * extra;
+}
+
 /* Reduce a single contiguous run of `len` elements down to a scalar. For the
  * sum and product modes a zero-length run yields the identity, mirroring the
  * previous whole-buffer behaviour on empty buffers. The arg- modes write the
  * index of the extreme into `*index`; the min/max- modes do too, which is
  * ignored by their callers. */
-static double tensor_group_reduce(const uint8_t kind, const void * data, const zend_long len, const int mode, zend_long * index)
+static double tensor_group_reduce(const void * data, const zend_long len, const int mode, zend_long * index)
 {
 	zend_long i;
 	zend_long best_index = 0;
 
 	if (mode == TENSOR_REDUCE_SUM) {
-		double acc = 0.0;
-		double u0 = 0.0, u1 = 0.0, u2 = 0.0, u3 = 0.0;
-		double u4 = 0.0, u5 = 0.0, u6 = 0.0, u7 = 0.0;
-
-		/* Accumulate into eight independent partial sums so the floating
-		 * point dependency chain no longer serializes the iterations, and
-		 * merge the partials in a small tree on the way out. The pairwise
-		 * merge also keeps the accumulated rounding error a fraction of the
-		 * naive serial sum. */
-		i = 0;
-
-		if (kind == ZEPHIR_BUFFER_LONG) {
-			const zend_long * ptr = (const zend_long *) data;
-
-			for (; i + 7 < len; i += 8) {
-				u0 += (double) ptr[i];
-				u1 += (double) ptr[i + 1];
-				u2 += (double) ptr[i + 2];
-				u3 += (double) ptr[i + 3];
-				u4 += (double) ptr[i + 4];
-				u5 += (double) ptr[i + 5];
-				u6 += (double) ptr[i + 6];
-				u7 += (double) ptr[i + 7];
-			}
-
-			for (; i < len; ++i) {
-				acc += (double) ptr[i];
-			}
-		} else {
-			const double * ptr = (const double *) data;
-
-			for (; i + 7 < len; i += 8) {
-				u0 += ptr[i];
-				u1 += ptr[i + 1];
-				u2 += ptr[i + 2];
-				u3 += ptr[i + 3];
-				u4 += ptr[i + 4];
-				u5 += ptr[i + 5];
-				u6 += ptr[i + 6];
-				u7 += ptr[i + 7];
-			}
-
-			for (; i < len; ++i) {
-				acc += ptr[i];
-			}
-		}
-
-		return ((u0 + u1) + (u2 + u3)) + ((u4 + u5) + (u6 + u7)) + acc;
+		return tensor_sum_doubles((const double *) data, len);
 	}
 
 	if (mode == TENSOR_REDUCE_PRODUCT) {
-		double acc = 1.0;
-		double u0 = 1.0, u1 = 1.0, u2 = 1.0, u3 = 1.0;
-		double u4 = 1.0, u5 = 1.0, u6 = 1.0, u7 = 1.0;
-
-		i = 0;
-
-		if (kind == ZEPHIR_BUFFER_LONG) {
-			const zend_long * ptr = (const zend_long *) data;
-
-			for (; i + 7 < len; i += 8) {
-				u0 *= (double) ptr[i];
-				u1 *= (double) ptr[i + 1];
-				u2 *= (double) ptr[i + 2];
-				u3 *= (double) ptr[i + 3];
-				u4 *= (double) ptr[i + 4];
-				u5 *= (double) ptr[i + 5];
-				u6 *= (double) ptr[i + 6];
-				u7 *= (double) ptr[i + 7];
-			}
-
-			for (; i < len; ++i) {
-				acc *= (double) ptr[i];
-			}
-		} else {
-			const double * ptr = (const double *) data;
-
-			for (; i + 7 < len; i += 8) {
-				u0 *= ptr[i];
-				u1 *= ptr[i + 1];
-				u2 *= ptr[i + 2];
-				u3 *= ptr[i + 3];
-				u4 *= ptr[i + 4];
-				u5 *= ptr[i + 5];
-				u6 *= ptr[i + 6];
-				u7 *= ptr[i + 7];
-			}
-
-			for (; i < len; ++i) {
-				acc *= ptr[i];
-			}
-		}
-
-		return ((u0 * u1) * (u2 * u3)) * ((u4 * u5) * (u6 * u7)) * acc;
+		return tensor_product_doubles((const double *) data, len);
 	}
 
 	int find_min = mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_ARGMIN;
+	const double * ptr = (const double *) data;
+	double best = ptr[0];
 
-	if (kind == ZEPHIR_BUFFER_LONG) {
-		const zend_long * ptr = (const zend_long *) data;
-		zend_long best = ptr[0];
-
-		for (i = 1; i < len; ++i) {
-			if (find_min ? ptr[i] < best : ptr[i] > best) {
-				best = ptr[i];
-				best_index = i;
-			}
+	for (i = 1; i < len; ++i) {
+		if (find_min ? ptr[i] < best : ptr[i] > best) {
+			best = ptr[i];
+			best_index = i;
 		}
-
-		if (index != NULL) {
-			*index = best_index;
-		}
-
-		return (double) best;
-	} else {
-		const double * ptr = (const double *) data;
-		double best = ptr[0];
-
-		for (i = 1; i < len; ++i) {
-			if (find_min ? ptr[i] < best : ptr[i] > best) {
-				best = ptr[i];
-				best_index = i;
-			}
-		}
-
-		if (index != NULL) {
-			*index = best_index;
-		}
-
-		return best;
 	}
+
+	if (index != NULL) {
+		*index = best_index;
+	}
+
+	return best;
 }
 
 /* Shared implementation backing all tensor_reduce_* operations. Unwraps the
  * underlying buffer and validates it against a `groups` x `length` logical
- * shape before writing one reduced value per group into a new TensorBuffer. */
+ * shape before writing one reduced value per group into a new TensorBuffer.
+ *
+ * Only a double buffer is accepted, matching every other numeric operation in
+ * the extension, which all reach their data through tensor_tensorbuffer_doubles()
+ * and reject a non-double buffer. The check has to happen here rather than
+ * letting the group reducer fall through to its double path: zend_long and
+ * double are both eight bytes, so an integer buffer would be silently
+ * reinterpreted as IEEE-754 data instead of faulting. */
 static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_zval, zval * length_zval, int mode)
 {
 	zval buffer;
@@ -235,6 +199,13 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
+		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	if (UNEXPECTED(kind != ZEPHIR_BUFFER_DOUBLE)) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Argument must wrap a buffer of type double."));
 		zval_ptr_dtor(&buffer);
 		return;
 	}
@@ -287,29 +258,15 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 	}
 
 	double * vc = zephir_buffer_doubles(&c);
+	const double * ptr = zephir_buffer_doubles(&buffer);
 
-	if (kind == ZEPHIR_BUFFER_LONG) {
-		const zend_long * ptr = zephir_buffer_longs(&buffer);
+	for (i = 0; i < groupsHat; ++i) {
+		zend_long index = 0;
 
-		for (i = 0; i < groupsHat; ++i) {
-			zend_long index = 0;
+		double value = tensor_group_reduce(ptr + i * lengthHat, lengthHat, mode, &index);
 
-			double value = tensor_group_reduce(kind, ptr + i * lengthHat, lengthHat, mode, &index);
-
-			vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
-				? (double) index : value;
-		}
-	} else {
-		const double * ptr = zephir_buffer_doubles(&buffer);
-
-		for (i = 0; i < groupsHat; ++i) {
-			zend_long index = 0;
-			
-			double value = tensor_group_reduce(kind, ptr + i * lengthHat, lengthHat, mode, &index);
-
-			vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
-				? (double) index : value;
-		}
+		vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
+			? (double) index : value;
 	}
 
 	zval_ptr_dtor(&buffer);

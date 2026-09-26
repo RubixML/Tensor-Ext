@@ -11,6 +11,7 @@
 #include "php_ext.h"
 #include "kernel/buffer.h"
 #include "include/buffer.h"
+#include "include/reductions.h"
 
 /**
  * Matrix-matrix multiplication i.e. linear transformation of matrices A and B.
@@ -1310,4 +1311,136 @@ void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
     zval_ptr_dtor(&buf);
 
     *return_value = product;
+}
+
+/**
+ * Shared implementation behind the two tensor_covariance* entry points. Reads a
+ * ma x na matrix A (read from a TensorBuffer) and returns its ma x ma covariance
+ * matrix as a TensorBuffer, treating the na columns as the samples and centring
+ * each of the ma rows.
+ *
+ * When `mean` is NULL the row means are computed here rather than by the caller,
+ * so they never become a PHP object. Passing them in lets a caller that has
+ * already computed them avoid a second pass over A.
+ */
+static void tensor_covariance_apply(zval * return_value, zval * a, zval * mean, zval * m_zval, zval * n_zval)
+{
+    zend_long i, j;
+    zend_long nbuf = 0, nmean = 0;
+    int ok_a = 0, ok_mean = 0;
+    double * vmean = NULL;
+
+    zend_long ma = zephir_get_intval(m_zval);
+    zend_long na = zephir_get_intval(n_zval);
+
+    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
+
+    if (UNEXPECTED(!ok_a)) {
+        return;
+    }
+
+    /* The composed implementation this replaces reached both of these failures
+     * by way of the row reduction and the column broadcast respectively, so the
+     * exception types and messages are reproduced exactly. */
+    if (UNEXPECTED(ma < 1)) {
+        zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+            SL("Number of groups must be greater than 0."));
+        return;
+    }
+
+    if (UNEXPECTED(na < 1 || nbuf != ma * na)) {
+        zephir_throw_exception_string(spl_ce_LengthException,
+            SL("Matrix and vector dimensions must agree."));
+        return;
+    }
+
+    if (mean != NULL) {
+        vmean = tensor_tensorbuffer_doubles(mean, &nmean, &ok_mean);
+
+        if (UNEXPECTED(!ok_mean)) {
+            return;
+        }
+
+        if (UNEXPECTED(nmean != ma)) {
+            zephir_throw_exception_string(spl_ce_LengthException,
+                SL("Mean buffer must have one element per row."));
+            return;
+        }
+    }
+
+    /* Centre the rows into a scratch block. This is a plain block rather than a
+     * TensorBuffer because it never escapes this call, and materialising the
+     * centred matrix up front also keeps the product free of the cancellation
+     * that folding the correction in as a rank-1 update would introduce. */
+    double * vb = safe_emalloc((size_t) ma * (size_t) na, sizeof(double), 0);
+
+    for (i = 0; i < ma; ++i) {
+        const double * src = va + i * na;
+        double * dst = vb + i * na;
+        double mu = vmean != NULL ? vmean[i] : tensor_sum_doubles(src, na) / (double) na;
+
+        for (j = 0; j < na; ++j) {
+            dst[j] = src[j] - mu;
+        }
+    }
+
+    zval c;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma * ma, &c) == FAILURE)) {
+        efree(vb);
+
+        return;
+    }
+
+    double * vc = zephir_buffer_doubles(&c);
+
+    /* B'B is symmetric, so dsyrk performs half the multiplies a dgemm would and
+     * the 1/n folds into the scale factor, leaving no separate division pass.
+     * B is already row-major and N x K as dsyrk wants it, and only the upper
+     * triangle of the output is written. */
+    cblas_dsyrk(CblasRowMajor, CblasUpper, CblasNoTrans, (blasint) ma, (blasint) na,
+        1.0 / (double) na, vb, (blasint) na, 0.0, vc, (blasint) ma);
+
+    /* Copy the untouched triangle across so the whole buffer is populated. Which
+     * triangle dsyrk filled is immaterial: the product is symmetric, so either
+     * half already holds a full set of pairwise covariances. */
+    for (i = 0; i < ma; ++i) {
+        for (j = i + 1; j < ma; ++j) {
+            vc[j * ma + i] = vc[i * ma + j];
+        }
+    }
+
+    efree(vb);
+
+    zval_ptr_dtor(&c);
+}
+
+/**
+ * Compute the covariance of matrix A over its columns, centring each row on that
+ * row's mean. The means are computed in a single pass and never materialised as
+ * a separate object.
+ *
+ * @param return_value
+ * @param a
+ * @param m
+ * @param n
+ */
+void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
+{
+    tensor_covariance_apply(return_value, a, NULL, m, n);
+}
+
+/**
+ * Compute the covariance of matrix A over its columns using row means the caller
+ * has already computed, skipping the pass that would otherwise derive them.
+ *
+ * @param return_value
+ * @param a
+ * @param mean
+ * @param m
+ * @param n
+ */
+void tensor_covariance_centered(zval * return_value, zval * a, zval * mean, zval * m, zval * n)
+{
+    tensor_covariance_apply(return_value, a, mean, m, n);
 }

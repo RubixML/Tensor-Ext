@@ -1,5 +1,6 @@
 namespace Tensor;
 
+use Tensor\Buffer;
 use Tensor\Reductions\Ref;
 use Tensor\Reductions\Rref;
 use Tensor\Decompositions\Lu;
@@ -380,6 +381,11 @@ class Matrix implements Tensor
      */
     protected function __construct(<TensorBuffer> a, const int m, const int n)
     {
+        if unlikely a->type() !== Buffer::TYPE_DOUBLE {
+            throw new InvalidArgumentException("Argument must wrap a buffer of"
+                . " type double.");
+        }
+
         if unlikely m < 0 || n < 0 {
             throw new InvalidArgumentException("Matrix dimensions must be"
                 . " non-negative.");
@@ -1679,20 +1685,27 @@ class Matrix implements Tensor
      * @return self
      */
     public function covariance(<ColumnVector> mean = null) -> <Matrix>
-    {   
+    {
+        var result;
+
         if !is_null(mean) {
-            if mean->m() !== this->m {
+            if unlikely mean->m() !== this->m {
                 throw new DimensionalityMismatch("Mean vector must"
                     . " have " . (string) this->m . " rows, "
                     . (string) mean->m() . " given.");
             }
+
+            let result = tensor_covariance_centered(
+                this->a,
+                mean->asTensorBuffer(),
+                this->m,
+                this->n
+            );
         } else {
-            let mean = this->mean();
+            let result = tensor_covariance(this->a, this->m, this->n);
         }
 
-        var b = this->subtractColumnVector(mean);
-
-        return b->matmul(b->transpose())->divideScalar(this->n);
+        return new self(result, this->m, this->m);
     }
 
     /**

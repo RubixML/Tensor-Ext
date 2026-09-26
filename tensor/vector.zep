@@ -1,5 +1,6 @@
 namespace Tensor;
 
+use Tensor\Buffer;
 use Tensor\Exceptions\InvalidArgumentException;
 use Tensor\Exceptions\DimensionalityMismatch;
 use Tensor\Exceptions\RuntimeException;
@@ -256,9 +257,15 @@ class Vector implements Tensor
      * Construct a new vector from a TensorBuffer holding its elements.
      *
      * @param \Tensor\TensorBuffer a
+     * @throws \Tensor\Exceptions\InvalidArgumentException
      */
     protected function __construct(<TensorBuffer> a)
     {
+        if unlikely a->type() !== Buffer::TYPE_DOUBLE {
+            throw new InvalidArgumentException("Argument must wrap a buffer of"
+                . " type double.");
+        }
+
         let this->a = a;
         let this->n = this->a->count();
     }

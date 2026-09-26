@@ -14,6 +14,7 @@ use Tensor\Statistical;
 use Tensor\ColumnVector;
 use Tensor\Trigonometric;
 use Tensor\Exceptions\DimensionalityMismatch;
+use Tensor\Exceptions\InvalidArgumentException;
 use Tensor\Buffer;
 use Tensor\TensorBuffer;
 use PHPUnit\Framework\TestCase;
@@ -62,6 +63,19 @@ class ColumnVectorTest extends TestCase
         $this->assertSame($buffer, $vector->asTensorBuffer());
         $this->assertSame([3], $vector->shape());
         $this->assertEqualsWithDelta([-15.0, 25.0, 35.0], $vector->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function fromBufferRejectsIntegerBuffers() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Argument must wrap a buffer of type double.');
+
+        $buffer = new TensorBuffer(Buffer::fromArray([-15, 25, 35], Buffer::TYPE_LONG));
+
+        ColumnVector::fromBuffer($buffer);
     }
 
     /**

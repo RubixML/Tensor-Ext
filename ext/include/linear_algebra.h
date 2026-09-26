@@ -21,4 +21,7 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n);
 void tensor_svd(zval * return_value, zval * a, zval * m, zval * n);
 void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb);
 
+void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n);
+void tensor_covariance_centered(zval * return_value, zval * a, zval * mean, zval * m, zval * n);
+
 #endif
