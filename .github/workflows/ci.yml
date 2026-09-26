@@ -49,7 +49,7 @@ jobs:
         run: pie repository:add path .
 
       - name: Build extension
-        run: pie install rubix/tensor:*@dev
+        run: pie install rubix/tensor_ext:*@dev
 
       - name: Enable PHP extension
         run: docker-php-ext-enable tensor
