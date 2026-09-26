@@ -86,7 +86,7 @@ PHP_METHOD(Tensor_Reductions_Rref, reduce)
 	zephir_check_call_status();
 	ZEPHIR_CALL_CE_STATIC(&_3, tensor_matrix_ce, "fromBuffer", NULL, 0, &result, &_4, &_5);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 28, &_3);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 29, &_3);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -110,7 +110,7 @@ PHP_METHOD(Tensor_Reductions_Rref, __construct)
 		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
 	zephir_fetch_params_without_memory_grow(1, 0, &a);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 19, a);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 27, a);
 }
 
 /**

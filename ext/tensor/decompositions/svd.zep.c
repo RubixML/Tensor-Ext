@@ -128,7 +128,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, decompose)
 	ZEPHIR_CALL_CE_STATIC(&vT, tensor_matrix_ce, "fromBuffer", NULL, 0, &_10, &_11, &_12);
 	zephir_check_call_status();
 	object_init_ex(return_value, tensor_decompositions_svd_ce);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 21, &u, &singularValues, &vT);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 22, &u, &singularValues, &vT);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -170,9 +170,9 @@ PHP_METHOD(Tensor_Decompositions_Svd, __construct)
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 3, 0, &u, &singularValues_param, &vT);
 	zephir_get_arrval(&singularValues, singularValues_param);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 11, u);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 12, &singularValues);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 13, vT);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 19, u);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 20, &singularValues);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 21, vT);
 	ZEPHIR_MM_RESTORE();
 }
 
@@ -218,7 +218,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, s)
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 
-	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 12, PH_NOISY_CC | PH_READONLY);
+	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 20, PH_NOISY_CC | PH_READONLY);
 	ZEPHIR_RETURN_CALL_CE_STATIC(tensor_matrix_ce, "diagonal", NULL, 0, &_0);
 	zephir_check_call_status();
 	RETURN_MM();
@@ -244,7 +244,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, v)
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 
-	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 13, PH_NOISY_CC | PH_READONLY);
+	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 21, PH_NOISY_CC | PH_READONLY);
 	ZEPHIR_RETURN_CALL_METHOD(&_0, "transpose", NULL, 0);
 	zephir_check_call_status();
 	RETURN_MM();

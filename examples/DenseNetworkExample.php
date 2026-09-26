@@ -1,5 +1,6 @@
 <?php
 
+use Tensor\Chain;
 use Tensor\Matrix;
 use Tensor\Settings;
 use Tensor\Vector;
@@ -8,8 +9,14 @@ use Tensor\Vector;
  * Forward pass through a 6-layer dense feed-forward network.
  *
  * Each layer is a 512-wide dense matmul, a learned bias (broadcast Vector
- *  add), and a SiLU activation composed from the primitives the extension
+ * add), and a SiLU activation composed from the primitives the extension
  * ships:  silu(x) = x / (1 + exp(-x)).
+ *
+ * The activation is written purely in the Chain DSL's primitives --
+ * fork(); negate(); exp(); add(1.0); combineDivide() -- and the C planner
+ * (ext/include/chain.c) recognises that exact composition and swaps it for
+ * the fused tensor_silu kernel. The user never names SiLU; the planner sees
+ * the primitive sequence and decides it can be fast.
  *
  * Run:
  *     php examples/DenseNetworkExample.php
@@ -25,9 +32,13 @@ use Tensor\Vector;
  */
 function silu(Matrix $x) : Matrix
 {
-    $den = $x->negate()->exp()->add(1.0);
-
-    return $x->divide($den);
+    return Chain::of($x)
+        ->fork()
+        ->negate()
+        ->exp()
+        ->add(1.0)
+        ->combineDivide()
+        ->done();
 }
 
 /**

@@ -38,6 +38,7 @@ zend_class_entry *tensor_tensor_ce;
 zend_class_entry *tensor_exceptions_invalidargumentexception_ce;
 zend_class_entry *tensor_exceptions_runtimeexception_ce;
 zend_class_entry *tensor_vector_ce;
+zend_class_entry *tensor_chain_ce;
 zend_class_entry *tensor_columnvector_ce;
 zend_class_entry *tensor_decompositions_cholesky_ce;
 zend_class_entry *tensor_decompositions_eigen_ce;
@@ -85,6 +86,7 @@ static PHP_MINIT_FUNCTION(tensor)
 	ZEPHIR_INIT(Tensor_Exceptions_InvalidArgumentException);
 	ZEPHIR_INIT(Tensor_Exceptions_RuntimeException);
 	ZEPHIR_INIT(Tensor_Vector);
+	ZEPHIR_INIT(Tensor_Chain);
 	ZEPHIR_INIT(Tensor_ColumnVector);
 	ZEPHIR_INIT(Tensor_Decompositions_Cholesky);
 	ZEPHIR_INIT(Tensor_Decompositions_Eigen);

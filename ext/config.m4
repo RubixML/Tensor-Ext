@@ -21,6 +21,7 @@ if test "$PHP_TENSOR" = "yes"; then
 	tensor/exceptions/invalidargumentexception.zep.c
 	tensor/exceptions/runtimeexception.zep.c
 	tensor/vector.zep.c
+	tensor/chain.zep.c
 	tensor/columnvector.zep.c
 	tensor/decompositions/cholesky.zep.c
 	tensor/decompositions/eigen.zep.c
@@ -34,6 +35,7 @@ if test "$PHP_TENSOR" = "yes"; then
 	tensor/settings.zep.c
 	tensor/tensorbuffer.zep.c include/arithmetic.c
 	include/buffer.c
+	include/chain.c
 	include/comparison.c
 	include/cpu.c
 	include/reductions.c

@@ -7,6 +7,7 @@ void tensor_abs(zval * return_value, zval * a);
 void tensor_sqrt(zval * return_value, zval * a);
 void tensor_exp(zval * return_value, zval * a);
 void tensor_expm1(zval * return_value, zval * a);
+void tensor_silu(zval * return_value, zval * a);
 void tensor_log(zval * return_value, zval * a);
 void tensor_log_base(zval * return_value, zval * a, zval * b);
 void tensor_log1p(zval * return_value, zval * a);

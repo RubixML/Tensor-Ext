@@ -154,7 +154,7 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 	ZEPHIR_CALL_METHOD(&eigenvectors, &_12, "transpose", NULL, 0);
 	zephir_check_call_status();
 	object_init_ex(return_value, tensor_decompositions_eigen_ce);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 19, &eigenvalues, &eigenvectors);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 20, &eigenvalues, &eigenvectors);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -189,8 +189,8 @@ PHP_METHOD(Tensor_Decompositions_Eigen, __construct)
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 2, 0, &eigenvalues_param, &eigenvectors);
 	zephir_get_arrval(&eigenvalues, eigenvalues_param);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 6, &eigenvalues);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 7, eigenvectors);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 14, &eigenvalues);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 15, eigenvectors);
 	ZEPHIR_MM_RESTORE();
 }
 

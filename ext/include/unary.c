@@ -124,6 +124,7 @@ TENSOR_UNARY_DISPATCH(deg2rad, (va[i] / 180.0) * M_PI)
 
 TENSOR_UNARY(exp, exp(va[i]))
 TENSOR_UNARY(expm1, expm1(va[i]))
+TENSOR_UNARY(silu, va[i] / (1.0 + exp(-va[i])))
 TENSOR_UNARY(log, log(va[i]))
 TENSOR_UNARY(log1p, log1p(va[i]))
 TENSOR_UNARY(sin, sin(va[i]))

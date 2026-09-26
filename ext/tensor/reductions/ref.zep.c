@@ -113,7 +113,7 @@ PHP_METHOD(Tensor_Reductions_Ref, reduce)
 	swaps = zephir_get_intval(&_8);
 	object_init_ex(return_value, tensor_reductions_ref_ce);
 	ZVAL_LONG(&_9, swaps);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 27, &b, &_9);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 28, &b, &_9);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -166,10 +166,10 @@ PHP_METHOD(Tensor_Reductions_Ref, __construct)
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 17, a);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 25, a);
 	ZVAL_UNDEF(&_4);
 	ZVAL_LONG(&_4, swaps);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 18, &_4);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 26, &_4);
 	ZEPHIR_MM_RESTORE();
 }
 
