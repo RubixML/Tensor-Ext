@@ -19,7 +19,7 @@ extern zend_class_entry * tensor_tensorbuffer_ce;
  *
  * The caller MUST write all `len` elements before reading any of them, otherwise
  * uninitialized heap memory is observable in the result. */
-int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer);
+int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer);
 
 /* Oversized buffer cache lifecycle, wired to PHP's RINIT and RSHUTDOWN through
  * the `initializers.request` and `destructors.request` hooks in config.json.

@@ -46,7 +46,7 @@ void tensor_matmul(zval * return_value, zval * a, zval * b, zval * m, zval * p, 
 
     zval c;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, ma * nb, &c) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma * nb, &c) == FAILURE)) {
         return;
     }
 
@@ -88,7 +88,7 @@ void tensor_matrix_dot(zval * return_value, zval * a, zval * b, zval * m, zval *
 
     zval c;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, ma, &c) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma, &c) == FAILURE)) {
         return;
     }
 
@@ -182,7 +182,7 @@ void tensor_inverse(zval * return_value, zval * a, zval * n)
 
     zval c;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
         efree(w);
         efree(pivots);
 
@@ -261,7 +261,7 @@ void tensor_pseudoinverse(zval * return_value, zval * a, zval * m, zval * n)
 
     zval c;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na * ma, &c) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na * ma, &c) == FAILURE)) {
         efree(w);
         efree(vu);
         efree(vs);
@@ -407,7 +407,7 @@ void tensor_ref(zval * return_value, zval * a, zval * m, zval * n)
 
     zval matrix, buf;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&matrix, (zend_long) ma * na, &buf) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&matrix, (zend_long) ma * na, &buf) == FAILURE)) {
         efree(w);
 
         return;
@@ -486,7 +486,7 @@ void tensor_cholesky(zval * return_value, zval * a, zval * n)
 
     zval l, buf;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&l, (zend_long) na * na, &buf) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&l, (zend_long) na * na, &buf) == FAILURE)) {
         efree(w);
 
         return;
@@ -603,7 +603,7 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
     zval l, u, p, tuple;
     zval bufL, bufU, bufP;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&l, (zend_long) na * na, &bufL) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&l, (zend_long) na * na, &bufL) == FAILURE)) {
         efree(perm);
         efree(lbuf);
         efree(ubuf);
@@ -624,7 +624,7 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
 
     zval_ptr_dtor(&bufL);
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&u, (zend_long) na * na, &bufU) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&u, (zend_long) na * na, &bufU) == FAILURE)) {
         zval_ptr_dtor(&l);
         
         efree(perm);
@@ -647,7 +647,7 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
 
     zval_ptr_dtor(&bufU);
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&p, (zend_long) na * na, &bufP) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&p, (zend_long) na * na, &bufP) == FAILURE)) {
         zval_ptr_dtor(&l);
         zval_ptr_dtor(&u);
 
@@ -743,7 +743,7 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
 
     zval eigenvectors, buf;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
         zval_ptr_dtor(&eigenvalues);
 
         efree(w);
@@ -831,7 +831,7 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
 
     zval eigenvectors, buf;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
         zval_ptr_dtor(&eigenvalues);
 
         efree(w);
@@ -913,7 +913,7 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
 
     zval u, bufU;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&u, (zend_long) ma * ma, &bufU) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&u, (zend_long) ma * ma, &bufU) == FAILURE)) {
         efree(w);
         efree(vu);
         efree(vs);
@@ -942,7 +942,7 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
 
     zval vt, bufVt;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&vt, (zend_long) na * na, &bufVt) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&vt, (zend_long) na * na, &bufVt) == FAILURE)) {
         zval_ptr_dtor(&u);
         zval_ptr_dtor(&s);
 
@@ -1143,7 +1143,7 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
 
     zval result, buf;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&result, (zend_long) ma * na, &buf) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&result, (zend_long) ma * na, &buf) == FAILURE)) {
         efree(w);
 
         return;
@@ -1292,7 +1292,7 @@ void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
 
     zval product, buf;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(&product, (zend_long) naHat * nbHat, &buf) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(&product, (zend_long) naHat * nbHat, &buf) == FAILURE)) {
         return;
     }
 

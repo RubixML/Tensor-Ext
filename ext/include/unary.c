@@ -32,7 +32,7 @@ void tensor_##name(zval * return_value, zval * a)                               
 	                                                                             \
 	zval b;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, n, &b) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -84,7 +84,7 @@ void tensor_log_base(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, n, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
 		return;
 	}
 
@@ -259,7 +259,7 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, n, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
 		return;
 	}
 
@@ -289,7 +289,7 @@ void tensor_clip(zval * return_value, zval * a, zval * min, zval * max)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, n, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
 		return;
 	}
 
@@ -318,7 +318,7 @@ void tensor_clip_lower(zval * return_value, zval * a, zval * min)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, n, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
 		return;
 	}
 
@@ -347,7 +347,7 @@ void tensor_clip_upper(zval * return_value, zval * a, zval * max)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, n, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
 		return;
 	}
 

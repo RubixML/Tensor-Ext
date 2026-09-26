@@ -47,7 +47,7 @@
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -114,7 +114,7 @@ TENSOR_BINARY(mod, fmod(va[i], vb[i]))
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -191,7 +191,7 @@ void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, total, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -250,7 +250,7 @@ void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, total, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -306,7 +306,7 @@ TENSOR_ROW_APPLY(mod_row_reverse, fmod(vb[j], va[i * nHat + j]))
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, total, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -377,7 +377,7 @@ TENSOR_COL_DISPATCH(subtract_col_reverse, vb[i] - va[i * nHat + j])
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, total, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \

@@ -210,7 +210,7 @@ void tensor_pool_seal(void)
  * Buffers at or above ZEND_MM_CHUNK_SIZE additionally recycle a single cached
  * block per request; see the oversized buffer cache above.
  */
-int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer)
+int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
 {
 	if (UNEXPECTED(len < 0)) {
 		ZVAL_NULL(buffer);

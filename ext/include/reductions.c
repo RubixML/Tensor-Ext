@@ -281,7 +281,7 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, groupsHat, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, groupsHat, &c) == FAILURE)) {
 		zval_ptr_dtor(&buffer);
 		return;
 	}
@@ -481,7 +481,7 @@ void tensor_median(zval * return_value, zval * obj, zval * n)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, m, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
 		efree(copy);
 
 		return;
@@ -539,7 +539,7 @@ void tensor_quantile(zval * return_value, zval * obj, zval * n, zval * q)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, m, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, m, &c) == FAILURE)) {
 		efree(copy);
 
 		return;
@@ -644,7 +644,7 @@ void tensor_matrix_repeat(zval * return_value, zval * obj, zval * n, zval * time
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, rows * cols, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, rows * cols, &c) == FAILURE)) {
 		return;
 	}
 

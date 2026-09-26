@@ -77,7 +77,7 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, nout, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, nout, &c) == FAILURE)) {
 		return;
 	}
 
@@ -180,7 +180,7 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 
     zval c;
 
-    if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, nout, &c) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create(return_value, nout, &c) == FAILURE)) {
         return;
     }
 
