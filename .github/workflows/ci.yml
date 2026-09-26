@@ -49,10 +49,10 @@ jobs:
         run: pie repository:add path .
 
       - name: Build extension
-        run: pie install rubix/tensor_ext:*@dev
+        run: pie install rubix/tensor:*@dev
 
       - name: Enable PHP extension
-        run: docker-php-ext-enable tensor_ext
+        run: docker-php-ext-enable tensor
 
       - name: Check for PHP startup warnings
         run: |
