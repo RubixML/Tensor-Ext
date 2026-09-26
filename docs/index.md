@@ -12,6 +12,7 @@ Tensor \
 ├── Matrix
 ├── Buffer (kernel class)
 ├── TensorBuffer (decorates Buffer)
+├── Settings (static API)
 │
 ├── ArrayLike (interface)
 ├── Arithmetic (interface)
@@ -41,6 +42,7 @@ Tensor \
 | [ColumnVector](ColumnVector.md) | A vertical one dimensional tensor; extends `Vector` with matrix-facing operations. |
 | [Matrix](Matrix.md) | A two dimensional (rank 2) tensor with integer and/or floating point elements. |
 | [TensorBuffer](TensorBuffer.md) | A decorator that wraps the kernel `Buffer` class and adds sorting, slicing, reductions, and structural operations. |
+| [Settings](Settings.md) | Global runtime settings: the OpenBLAS thread pool and CPU feature detection. |
 
 ## Interfaces
 
