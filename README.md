@@ -10,7 +10,7 @@ Tensor Ext is a PHP extension that brings fast Matrix and Vector computing to th
 - **Low memory footprint** — Tensor objects are backed by contiguous C buffers.
 - **Native BLAS and LAPACK acceleration** — Highly-optimized multi-threaded linear algebra kernels.
 - **Universal element-wise functions** — Elementwise operations are broadcast and vectorized.
-- **Dynamic kernel dispatching** — Operations are dispatched at runtime based on CPU architecture.
+- **Dynamic kernel dispatching** — Optimized kernels are dispatched based on CPU architecture.
 
 ## Installation
 
