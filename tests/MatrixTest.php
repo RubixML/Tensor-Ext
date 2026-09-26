@@ -1363,6 +1363,144 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * An even-sized kernel has no single centre sample, so the "same" method
+     * anchors its second sample rather than its third. This pins the alignment
+     * used here, which the previous mb / 2 centring differed from by one
+     * element in both dimensions.
+     *
+     * @test
+     */
+    public function convolveEvenKernelMatchesNumpyAlignment() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0],
+        ]);
+
+        $b = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ]);
+
+        $c = $a->convolve($b);
+
+        $expected = Matrix::fromArray([
+            [1.0, 4.0, 7.0],
+            [7.0, 23.0, 33.0],
+            [19.0, 53.0, 63.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A stride at least as large as either dimension collapses the "same"
+     * output to a single element, while a stride below it keeps the rounded-up
+     * sub-sampled shape.
+     *
+     * @test
+     */
+    public function convolveStrideLargerThanResultReturnsSingleElement() : void
+    {
+        $a = Matrix::fill(1.0, 4, 3);
+
+        $b = Matrix::fromArray([[1.0]]);
+
+        foreach ([4, 5, PHP_INT_MAX, PHP_INT_MAX - 1] as $stride) {
+            $c = $a->convolve($b, $stride);
+
+            $this->assertSame([1, 1], $c->shape(), "stride = {$stride}");
+
+            $this->assertEqualsWithDelta([[1.0]], $c->asArray(), self::MAX_DELTA);
+        }
+
+        // ceil(4 / 3) = 2 rows, ceil(3 / 3) = 1 column.
+        $this->assertSame([2, 1], $a->convolve($b, 3)->shape());
+    }
+
+    /**
+     * Regression test for the segmentation fault caused by a signed integer
+     * overflow in the output shape. Computing ceil(ma / stride) as
+     * (ma + stride - 1) / stride overflowed near PHP_INT_MAX and produced a
+     * shape of 0, i.e. a NULL data pointer, while the convolve loop still
+     * emitted one element and wrote through it.
+     *
+     * @test
+     */
+    public function convolveHugeStrideDoesNotCrash() : void
+    {
+        foreach ([[4, 2], [5, 3], [6, 2], [8, 8]] as [$m, $n]) {
+            $a = Matrix::fill(1.0, $m, $n);
+
+            $b = Matrix::fromArray([[1.0]]);
+
+            foreach ([PHP_INT_MAX, PHP_INT_MAX - 1, PHP_INT_MAX - 2, PHP_INT_MAX - 4] as $stride) {
+                $c = $a->convolve($b, $stride);
+
+                $this->assertSame([1, 1], $c->shape(), "{$m} x {$n}, stride = {$stride}");
+
+                $this->assertEqualsWithDelta([[1.0]], $c->asArray(), self::MAX_DELTA);
+            }
+        }
+    }
+
+    /**
+     * Cross-check the kernel against a straightforward reference implementation
+     * over a wide range of shapes, kernel sizes and strides, including
+     * even-sized kernels.
+     *
+     * @test
+     */
+    public function convolveMatchesReference() : void
+    {
+        mt_srand(4321);
+
+        for ($trial = 0; $trial < 150; ++$trial) {
+            $m = mt_rand(1, 9);
+            $n = mt_rand(1, 9);
+            $mb = mt_rand(1, min($m, 4));
+            $nb = mt_rand(1, min($n, 4));
+            $stride = mt_rand(1, 4);
+
+            $a = [];
+            $b = [];
+
+            for ($i = 0; $i < $m; ++$i) {
+                $row = [];
+
+                for ($j = 0; $j < $n; ++$j) {
+                    $row[] = mt_rand(-500, 500) / 7.0;
+                }
+
+                $a[] = $row;
+            }
+
+            for ($i = 0; $i < $mb; ++$i) {
+                $row = [];
+
+                for ($j = 0; $j < $nb; ++$j) {
+                    $row[] = mt_rand(-500, 500) / 7.0;
+                }
+
+                $b[] = $row;
+            }
+
+            $expected = $this->referenceConvolve2d($a, $b, $stride);
+
+            $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), $stride);
+
+            $this->assertSame(
+                [count($expected), count($expected[0])],
+                $actual->shape(),
+                "{$m} x {$n} by {$mb} x {$nb}, stride = {$stride}"
+            );
+
+            $this->assertEqualsWithDelta($expected, $actual->asArray(), self::MAX_DELTA);
+        }
+    }
+
+    /**
      * @test
      * @dataProvider multiplyProvider
      *
@@ -3823,5 +3961,55 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $a->pseudoinverse()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * Naive "same" convolution sub-sampled every $stride elements, with the
+     * kernel anchored by its second sample for even sizes, used as the oracle
+     * for convolveMatchesReference().
+     *
+     * @param list<list<float>> $a
+     * @param list<list<float>> $b
+     * @param int $stride
+     *
+     * @return list<list<float>>
+     */
+    private function referenceConvolve2d(array $a, array $b, int $stride) : array
+    {
+        $m = count($a);
+        $n = count($a[0]);
+        $mb = count($b);
+        $nb = count($b[0]);
+        $p = ($mb - 1) >> 1;
+        $q = ($nb - 1) >> 1;
+        $om = intdiv($m, $stride) + ($m % $stride ? 1 : 0);
+        $on = intdiv($n, $stride) + ($n % $stride ? 1 : 0);
+        $out = array_fill(0, $om, array_fill(0, $on, 0.0));
+
+        for ($i = 0, $r = 0; $i < $m; $i += $stride, ++$r) {
+            for ($j = 0, $c = 0; $j < $n; $j += $stride, ++$c) {
+                $sigma = 0.0;
+
+                for ($k = 0; $k < $mb; ++$k) {
+                    $x = $i + $p - $k;
+
+                    if ($x < 0 || $x >= $m) {
+                        continue;
+                    }
+
+                    for ($l = 0; $l < $nb; ++$l) {
+                        $y = $j + $q - $l;
+
+                        if ($y >= 0 && $y < $n) {
+                            $sigma += $a[$x][$y] * $b[$k][$l];
+                        }
+                    }
+                }
+
+                $out[$r][$c] = $sigma;
+            }
+        }
+
+        return $out;
     }
 }

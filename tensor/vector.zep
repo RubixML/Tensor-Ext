@@ -438,6 +438,9 @@ class Vector implements Tensor
     /**
      * Return the 1D convolution of this vector and a kernel vector with given stride.
      *
+     * The result is a "full" convolution sampled every `stride` samples and
+     * therefore holds ceil((n + nB - 1) / stride) elements.
+     *
      * @param \Tensor\Vector b
      * @param int stride
      * @throws \Tensor\Exceptions\InvalidArgumentException
@@ -445,6 +448,10 @@ class Vector implements Tensor
      */
     public function convolve(const <Vector> b, const int stride = 1) -> <Vector>
     {
+        if unlikely b->size() < 1 {
+            throw new InvalidArgumentException("Vector B cannot be empty.");
+        }
+
         if unlikely b->size() > this->n {
             throw new InvalidArgumentException("Vector B cannot be"
                 . " larger than Vector A.");

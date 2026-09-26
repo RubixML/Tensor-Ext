@@ -11,6 +11,9 @@
     - Remove `poisson` factory method
     - Add AVX2 dynamic dispatching to arithmetic operations
     - Implemented 2-slot huge buffer memory pinning
+    - Fixed segmentation fault in `convolve()` for strides near `PHP_INT_MAX`, caused by an integer overflow in the output length
+    - 2D `convolve()` now anchors even-sized kernels as `numpy`/`scipy` `mode='same'` does
+    - `convolve()` on a `Vector` now rejects an empty kernel instead of returning a zero-filled result of arbitrary length
 
 - 3.1.0
 

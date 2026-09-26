@@ -826,6 +826,11 @@ class Matrix implements Tensor
     /**
      * Return the 2D convolution of this matrix and a kernel matrix with given stride using the "same" method for zero padding.
      *
+     * The result holds the "same" shape as this matrix, i.e. ceil(m / stride) x
+     * ceil(n / stride) elements. The kernel's centre sample is aligned with each
+     * output sample, matching numpy and scipy's `mode='same'` for even-sized
+     * kernels as well as odd ones.
+     *
      * @param \Tensor\Matrix b
      * @param int stride
      * @throws \Tensor\Exceptions\InvalidArgumentException
@@ -845,8 +850,19 @@ class Matrix implements Tensor
 
         var result = tensor_convolve_2d(this->a, b->a, stride, this->m, this->n, b->m(), b->n());
 
-        int outM = (int) intdiv(this->m + stride - 1, stride);
-        int outN = (int) intdiv(this->n + stride - 1, stride);
+        /* Rounded up without adding the stride, which would overflow for a
+         * stride near the maximum integer and disagree with the shape the
+         * kernel computed. Must stay in step with tensor_convolve_2d. */
+        var outM = intdiv(this->m, stride);
+        var outN = intdiv(this->n, stride);
+
+        if unlikely this->m % stride !== 0 {
+            let outM = outM + 1;
+        }
+
+        if unlikely this->n % stride !== 0 {
+            let outN = outN + 1;
+        }
 
         return new self(result, outM, outN);
     }

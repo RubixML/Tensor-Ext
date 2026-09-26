@@ -673,6 +673,115 @@ class VectorTest extends TestCase
     }
 
     /**
+     * A stride at least as large as the length of the full convolution samples
+     * exactly one output element, and a stride just below it samples two.
+     *
+     * @test
+     */
+    public function convolveStrideLargerThanResultReturnsSingleElement() : void
+    {
+        $a = Vector::fromArray([5.0, 2.0, 7.0]);
+
+        $b = Vector::fromArray([1.0, 2.0]);
+
+        // Full convolution has 3 + 2 - 1 = 4 samples, so strides of 4 and above
+        // emit only the first one, a[0] * b[0].
+        $this->assertEqualsWithDelta([5.0], $a->convolve($b, 4)->asArray(), self::MAX_DELTA);
+
+        $this->assertEqualsWithDelta([5.0], $a->convolve($b, 5)->asArray(), self::MAX_DELTA);
+
+        // Stride 3 emits samples 0 and 3, i.e. a[0] * b[0] and a[2] * b[1].
+        $this->assertEqualsWithDelta([5.0, 14.0], $a->convolve($b, 3)->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * Regression test for the segmentation fault caused by a signed integer
+     * overflow in the output length. Computing the length as
+     * (na + nb - 1 + stride - 1) / stride overflowed near PHP_INT_MAX and
+     * produced a length of 0, i.e. a NULL data pointer, while the convolve
+     * loop still emitted one sample and wrote through it.
+     *
+     * @test
+     */
+    public function convolveHugeStrideDoesNotCrash() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0, 3.0]);
+
+        $b = Vector::fromArray([1.0, 1.0]);
+
+        foreach ([PHP_INT_MAX, PHP_INT_MAX - 1, PHP_INT_MAX - 2, intdiv(PHP_INT_MAX, 2)] as $stride) {
+            $c = $a->convolve($b, $stride);
+
+            $this->assertCount(1, $c);
+            $this->assertEqualsWithDelta([1.0], $c->asArray(), self::MAX_DELTA);
+        }
+    }
+
+    /**
+     * An empty kernel has no samples to accumulate, so it is rejected rather
+     * than silently returning a zero-filled result of an arbitrary length.
+     *
+     * @test
+     */
+    public function convolveEmptyKernelThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (Vector::fromArray([1.0, 2.0, 3.0]))->convolve(Vector::fromArray([]));
+    }
+
+    /**
+     * Convolving two empty vectors is rejected with the reason for it rather
+     * than reaching the constructor with an unset result buffer, which used to
+     * surface as a TypeError about the protected constructor.
+     *
+     * @test
+     */
+    public function convolveEmptyVectorsThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Vector B cannot be empty.');
+
+        (Vector::fromArray([]))->convolve(Vector::fromArray([]));
+    }
+
+    /**
+     * Cross-check the kernel against a straightforward reference implementation
+     * over a wide range of lengths, kernel sizes and strides.
+     *
+     * @test
+     */
+    public function convolveMatchesReference() : void
+    {
+        mt_srand(4321);
+
+        for ($trial = 0; $trial < 200; ++$trial) {
+            $na = mt_rand(1, 12);
+            $nb = mt_rand(1, min($na, 6));
+            $stride = mt_rand(1, 5);
+
+            $a = [];
+            $b = [];
+
+            for ($i = 0; $i < $na; ++$i) {
+                $a[] = mt_rand(-500, 500) / 7.0;
+            }
+
+            for ($i = 0; $i < $nb; ++$i) {
+                $b[] = mt_rand(-500, 500) / 7.0;
+            }
+
+            $expected = $this->referenceConvolve1d($a, $b, $stride);
+
+            $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), $stride)->asArray();
+
+            $this->assertCount(count($expected), $actual, "na = {$na}, nb = {$nb}, stride = {$stride}");
+
+            $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA);
+        }
+    }
+
+    /**
      * @test
      * @dataProvider multiplyProvider
      *
@@ -2405,5 +2514,39 @@ class VectorTest extends TestCase
         $a = Vector::fromArray([1.0, 2.0, 3.0]);
 
         $this->assertEquals(0.0, $a[10]);
+    }
+
+    /**
+     * Naive "full" convolution sampled every $stride samples, used as the
+     * oracle for convolveMatchesReference().
+     *
+     * @param list<float> $a
+     * @param list<float> $b
+     * @param int $stride
+     *
+     * @return list<float>
+     */
+    private function referenceConvolve1d(array $a, array $b, int $stride) : array
+    {
+        $na = count($a);
+        $nb = count($b);
+        $nc = $na + $nb - 1;
+        $out = [];
+
+        for ($i = 0; $i < $nc; $i += $stride) {
+            $sigma = 0.0;
+
+            for ($j = 0; $j < $na; ++$j) {
+                $k = $i - $j;
+
+                if ($k >= 0 && $k < $nb) {
+                    $sigma += $a[$j] * $b[$k];
+                }
+            }
+
+            $out[] = $sigma;
+        }
+
+        return $out;
     }
 }

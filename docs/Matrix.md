@@ -227,6 +227,9 @@ Compute the dot product of this matrix and a vector.
 
 Return the 2D convolution of this matrix and a kernel matrix with the given stride, using the "same" method for zero padding.
 
+- **Parameters:** `$b` — the kernel matrix, `$stride` — the stride (default `1`)
+- **Returns:** `Matrix` of shape `ceil(m / $stride)` x `ceil(n / $stride)`, i.e. the "same" shape as `$this`, sub-sampled every `$stride` elements
+- **Alignment:** each output sample is anchored on the kernel's centre sample. For odd-sized kernels that is the middle element; for even-sized kernels the second element is used, so results agree with `numpy` and `scipy`'s `mode='same'`
 - **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$b` is larger than this matrix or `$stride < 1`
 
 ### `ref() : REF`

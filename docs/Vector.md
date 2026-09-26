@@ -157,8 +157,8 @@ Transpose the vector, i.e. rotate it into a `ColumnVector`.
 Return the 1D convolution of this vector and a kernel vector with the given stride.
 
 - **Parameters:** `$b` — the kernel vector, `$stride` — the stride (default `1`)
-- **Returns:** `Vector` of length `n + nB - 1` (sampled by stride)
-- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$b` is larger than this vector or `$stride < 1`
+- **Returns:** `Vector` of length `ceil((n + nB - 1) / $stride)`, i.e. a "full" convolution sampled every `$stride` samples
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$b` is empty, larger than this vector, or `$stride < 1`
 
 ### `count() : int`
 
