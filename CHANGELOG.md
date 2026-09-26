@@ -10,6 +10,8 @@
     - Moved `clip()`, `clipLower()`, and `clipUpper()` into `Unary` interface
     - Remove `poisson` factory method
     - Add AVX2 dynamic dispatching to arithmetic operations
+    - Add AVX dynamic dispatching to the unary `abs`, `sqrt`, `negate`, `sign`, `rad2deg`, `deg2rad`, `clip`, `clipLower`, and `clipUpper` operations
+    - Build with `-fno-math-errno` so `sqrt()` can be vectorized; the results are unchanged because nothing reads `errno`
     - Implemented 2-slot huge buffer memory pinning
     - Fixed segmentation fault in `convolve()` for strides near `PHP_INT_MAX`, caused by an integer overflow in the output length
     - 2D `convolve()` now anchors even-sized kernels as `numpy`/`scipy` `mode='same'` does

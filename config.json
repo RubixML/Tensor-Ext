@@ -6,7 +6,7 @@
     "author": "The Rubix ML Community",
     "version": "4.0.0",
     "verbose": true,
-    "extra-cflags": "-O3",
+    "extra-cflags": "-O3 -fno-math-errno",
     "extra-libs": "-lopenblas -llapacke -lgfortran",
     "extra-sources": [
         "include/arithmetic.c",

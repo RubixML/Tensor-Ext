@@ -11,44 +11,117 @@
 #include "php_ext.h"
 #include "kernel/buffer.h"
 #include "include/buffer.h"
+#include "include/dispatch.h"
 
 /* Values wrapped up by the kernel Buffer used in the unary operations below.
  * Returns a reference to a newly created `Tensor\TensorBuffer` holding the
  * mapped doubles.  Each operation expands into its own dedicated loop so the
  * optimizer can vectorize the elementwise mapping instead of being blocked by
- * an indirect call. */
+ * an indirect call.
+ *
+ * The mapping operations are dispatched between the two ISAs on the same terms
+ * as the arithmetic kernels in include/arithmetic.c: one body compiled twice,
+ * once at the extension's baseline ISA and once under TENSOR_TARGET_AVX so the
+ * loop widens from two doubles per vector to four, with a route pointer
+ * deciding which one runs.  The body is a macro rather than a shared helper so
+ * that the baseline and the AVX copy are the same text -- there is no second
+ * definition that could drift.
+ *
+ * Both buffers are marked restrict: the input is a fixed-size Buffer that is
+ * never reallocated and the output was allocated microseconds ago, so they
+ * cannot overlap, and telling the compiler so spares it a runtime alias check
+ * on every call.
+ */
 
-#define TENSOR_UNARY(name, expr)                                                 \
-void tensor_##name(zval * return_value, zval * a)                               \
-{                                                                                \
+#define TENSOR_UNARY_BODY(expr)                                                      \
+	zend_long i;                                                                 \
 	zend_long n = 0;                                                             \
 	int ok = 0;                                                                  \
-	                                                                             \
-	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);                       \
-	                                                                             \
+                                                                                     \
+	double * restrict va = tensor_tensorbuffer_doubles(a, &n, &ok);              \
+                                                                                     \
 	if (UNEXPECTED(!ok)) {                                                       \
-		return;                                                                  \
+		return;                                                              \
 	}                                                                            \
-	                                                                             \
+                                                                                     \
 	zval b;                                                                      \
-	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) { \
-		return;                                                                  \
+                                                                                     \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) {\
+		return;                                                              \
 	}                                                                            \
-	                                                                             \
-	double * vb = zephir_buffer_doubles(&b);                                     \
-	                                                                             \
-	zend_long i;                                                                 \
-	                                                                             \
+                                                                                     \
+	double * restrict vb = zephir_buffer_doubles(&b);                            \
+                                                                                     \
 	for (i = 0; i < n; ++i) {                                                    \
-		vb[i] = expr;                                                            \
+		vb[i] = expr;                                                        \
 	}                                                                            \
-	                                                                             \
-	zval_ptr_dtor(&b);                                                           \
-}
+                                                                                     \
+	zval_ptr_dtor(&b);
 
-TENSOR_UNARY(abs, fabs(va[i]))
-TENSOR_UNARY(sqrt, sqrt(va[i]))
+#define TENSOR_UNARY_DISPATCH(name, expr)                                       \
+	static void tensor_##name##_baseline(zval * return_value, zval * a)     \
+	{                                                                       \
+		TENSOR_UNARY_BODY(expr)                                         \
+	}                                                                       \
+                                                                                \
+	TENSOR_TARGET_AVX                                                       \
+	static void tensor_##name##_avx(zval * return_value, zval * a)          \
+	{                                                                       \
+		TENSOR_UNARY_BODY(expr)                                         \
+	}                                                                       \
+                                                                                \
+	static tensor_unary_fn tensor_##name##_route = tensor_##name##_baseline;\
+                                                                                \
+	void tensor_##name(zval * return_value, zval * a)                       \
+	{                                                                       \
+		tensor_##name##_route(return_value, a);                         \
+	}
+
+TENSOR_UNARY_DISPATCH(abs, fabs(va[i]))
+TENSOR_UNARY_DISPATCH(sqrt, sqrt(va[i]))
+TENSOR_UNARY_DISPATCH(negate, -va[i])
+TENSOR_UNARY_DISPATCH(sign, va[i] > 0.0 ? 1.0 : (va[i] < 0.0 ? -1.0 : 0.0))
+TENSOR_UNARY_DISPATCH(rad2deg, (va[i] / M_PI) * 180.0)
+TENSOR_UNARY_DISPATCH(deg2rad, (va[i] / 180.0) * M_PI)
+
+#undef TENSOR_UNARY_DISPATCH
+#undef TENSOR_UNARY_BODY
+
+/* floor and ceil, plus every operation whose cost sits inside a libm call, keep
+ * the single body the whole file used before there was any dispatching.  The
+ * reasons are spelled out in include/dispatch.h: widening the register does not
+ * help a scalar library call, and for these two the compiler actually gives up
+ * on vectorizing once AVX is in scope, so dispatching them would be slower. */
+
+#define TENSOR_UNARY(name, expr)                                                             \
+	void tensor_##name(zval * return_value, zval * a)                                    \
+	{                                                                                    \
+		zend_long n = 0;                                                             \
+		int ok = 0;                                                                  \
+                                                                                             \
+		double * va = tensor_tensorbuffer_doubles(a, &n, &ok);                       \
+                                                                                             \
+		if (UNEXPECTED(!ok)) {                                                       \
+			return;                                                              \
+		}                                                                            \
+                                                                                             \
+		zval b;                                                                      \
+                                                                                             \
+		if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) {\
+			return;                                                              \
+		}                                                                            \
+                                                                                             \
+		double * vb = zephir_buffer_doubles(&b);                                     \
+                                                                                             \
+		zend_long i;                                                                 \
+                                                                                             \
+		for (i = 0; i < n; ++i) {                                                    \
+			vb[i] = expr;                                                        \
+		}                                                                            \
+                                                                                             \
+		zval_ptr_dtor(&b);                                                           \
+	}
+
 TENSOR_UNARY(exp, exp(va[i]))
 TENSOR_UNARY(expm1, expm1(va[i]))
 TENSOR_UNARY(log, log(va[i]))
@@ -59,14 +132,11 @@ TENSOR_UNARY(cos, cos(va[i]))
 TENSOR_UNARY(acos, acos(va[i]))
 TENSOR_UNARY(tan, tan(va[i]))
 TENSOR_UNARY(atan, atan(va[i]))
-TENSOR_UNARY(rad2deg, (va[i] / M_PI) * 180.0)
-TENSOR_UNARY(deg2rad, (va[i] / 180.0) * M_PI)
 TENSOR_UNARY(floor, floor(va[i]))
 TENSOR_UNARY(ceil, ceil(va[i]))
-TENSOR_UNARY(negate, -va[i])
-TENSOR_UNARY(sign, va[i] > 0.0 ? 1.0 : (va[i] < 0.0 ? -1.0 : 0.0))
 
 #undef TENSOR_UNARY
+
 
 void tensor_log_base(zval * return_value, zval * a, zval * b)
 {
@@ -272,90 +342,119 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 	zval_ptr_dtor(&c);
 }
 
-void tensor_clip(zval * return_value, zval * a, zval * min, zval * max)
-{
-	zend_long i;
-	zend_long n = 0;
-	int ok = 0;
+/* Clamping. The three kernels take a different number of bounds, so each gets
+ * its own route signature and its own body, in the same spirit as the separate
+ * column and row macros in include/arithmetic.c. The bounds are loop invariant
+ * and get broadcast into a register, leaving a per-lane compare and select. */
 
-	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);
+/* Note on the parameter names below: the body macros are parameterised on
+ * TENSOR_CLIP_EXPR rather than on something like `hi`, because a macro argument
+ * is substituted for every occurrence of the parameter in the invoking macro's
+ * body -- naming it `hi` would rewrite the `const double hi` that reads the
+ * bound out of the zval. */
 
-	if (UNEXPECTED(!ok)) {
-		return;
-	}
-
-	double lo = zephir_get_doubleval(min);
-	double hi = zephir_get_doubleval(max);
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < n; ++i) {
-		vc[i] = va[i] > hi ? hi : (va[i] < lo ? lo : va[i]);
-	}
-
+#define TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                           \
+	zend_long i;                                                                 \
+	zend_long n = 0;                                                             \
+	int ok = 0;                                                                  \
+                                                                                     \
+	double * restrict va = tensor_tensorbuffer_doubles(a, &n, &ok);              \
+                                                                                     \
+	if (UNEXPECTED(!ok)) {                                                       \
+		return;                                                              \
+	}                                                                            \
+                                                                                     \
+	zval c;                                                                      \
+                                                                                     \
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {\
+		return;                                                              \
+	}                                                                            \
+                                                                                     \
+	double * restrict vc = zephir_buffer_doubles(&c);                            \
+                                                                                     \
+	for (i = 0; i < n; ++i) {                                                    \
+		vc[i] = TENSOR_CLIP_EXPR;                                            \
+	}                                                                            \
+                                                                                     \
 	zval_ptr_dtor(&c);
-}
 
-void tensor_clip_lower(zval * return_value, zval * a, zval * min)
+#define TENSOR_CLIP_DISPATCH(name, TENSOR_CLIP_EXPR)                                 \
+	static void tensor_##name##_baseline(                                        \
+		zval * return_value, zval * a, zval * lo_zval, zval * hi_zval)       \
+	{                                                                            \
+		const double lo = zephir_get_doubleval(lo_zval);                     \
+		const double hi = zephir_get_doubleval(hi_zval);                     \
+		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                   \
+	}                                                                            \
+                                                                                     \
+	TENSOR_TARGET_AVX                                                            \
+	static void tensor_##name##_avx(                                             \
+		zval * return_value, zval * a, zval * lo_zval, zval * hi_zval)       \
+	{                                                                            \
+		const double lo = zephir_get_doubleval(lo_zval);                     \
+		const double hi = zephir_get_doubleval(hi_zval);                     \
+		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                   \
+	}                                                                            \
+                                                                                     \
+	static tensor_unary_clip_fn tensor_##name##_route = tensor_##name##_baseline;\
+                                                                                     \
+	void tensor_##name(                                                          \
+		zval * return_value, zval * a, zval * lo_zval, zval * hi_zval)       \
+	{                                                                            \
+		tensor_##name##_route(return_value, a, lo_zval, hi_zval);            \
+	}
+
+TENSOR_CLIP_DISPATCH(clip, va[i] > hi ? hi : (va[i] < lo ? lo : va[i]))
+
+#undef TENSOR_CLIP_DISPATCH
+
+#define TENSOR_CLIP_BOUND_DISPATCH(name, TENSOR_CLIP_EXPR)                            \
+	static void tensor_##name##_baseline(zval * return_value, zval * a, zval * b) \
+	{                                                                             \
+		const double bound = zephir_get_doubleval(b);                         \
+		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                    \
+	}                                                                             \
+                                                                                      \
+	TENSOR_TARGET_AVX                                                             \
+	static void tensor_##name##_avx(zval * return_value, zval * a, zval * b)      \
+	{                                                                             \
+		const double bound = zephir_get_doubleval(b);                         \
+		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                    \
+	}                                                                             \
+                                                                                      \
+	static tensor_unary_bound_fn tensor_##name##_route = tensor_##name##_baseline;\
+                                                                                      \
+	void tensor_##name(zval * return_value, zval * a, zval * b)                   \
+	{                                                                             \
+		tensor_##name##_route(return_value, a, b);                            \
+	}
+
+TENSOR_CLIP_BOUND_DISPATCH(clip_lower, va[i] < bound ? bound : va[i])
+TENSOR_CLIP_BOUND_DISPATCH(clip_upper, va[i] > bound ? bound : va[i])
+
+#undef TENSOR_CLIP_BOUND_DISPATCH
+#undef TENSOR_CLIP_BODY
+
+/**
+ * Point every dispatched kernel in this file at its AVX variant.
+ *
+ * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
+ * CPU actually supporting AVX. The routes are all already pointing at the
+ * baseline variants before this runs, so the effect is strictly an upgrade.
+ *
+ * floor and ceil are absent on purpose: see include/dispatch.h for why letting
+ * the compiler see AVX makes them slower rather than faster.
+ */
+void tensor_unary_dispatch_avx_init(void)
 {
-	zend_long i;
-	zend_long n = 0;
-	int ok = 0;
+	tensor_abs_route = tensor_abs_avx;
+	tensor_sqrt_route = tensor_sqrt_avx;
+	tensor_negate_route = tensor_negate_avx;
+	tensor_sign_route = tensor_sign_avx;
+	tensor_rad2deg_route = tensor_rad2deg_avx;
+	tensor_deg2rad_route = tensor_deg2rad_avx;
 
-	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);
-
-	if (UNEXPECTED(!ok)) {
-		return;
-	}
-
-	double lo = zephir_get_doubleval(min);
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < n; ++i) {
-		vc[i] = va[i] < lo ? lo : va[i];
-	}
-
-	zval_ptr_dtor(&c);
-}
-
-void tensor_clip_upper(zval * return_value, zval * a, zval * max)
-{
-	zend_long i;
-	zend_long n = 0;
-	int ok = 0;
-
-	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);
-
-	if (UNEXPECTED(!ok)) {
-		return;
-	}
-
-	double hi = zephir_get_doubleval(max);
-
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	for (i = 0; i < n; ++i) {
-		vc[i] = va[i] > hi ? hi : va[i];
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_clip_route = tensor_clip_avx;
+	tensor_clip_lower_route = tensor_clip_lower_avx;
+	tensor_clip_upper_route = tensor_clip_upper_avx;
 }

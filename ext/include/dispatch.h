@@ -19,13 +19,27 @@
  * the plain baseline and once under TENSOR_TARGET_AVX. The two cannot drift
  * semantically because the compiler picks the instruction selection, not us.
  *
- * No intrinsic is used anywhere in this file or in the kernels it serves; the
- * target attribute alone is enough for the compiler to widen these loops, which
- * keeps <immintrin.h> -- and the portability caveats that come with it -- out of
- * the build entirely.
+ * One kernel needs a little help beyond the target attribute. The compiler
+ * will not vectorize sqrt() because the libm function may set errno, and a
+ * target attribute does not lift that restriction, so the build carries
+ * -fno-math-errno (see extra-cflags in config.json). Nothing in the extension
+ * ever reads errno, and vsqrtpd returns the same double sqrtsd does, so the two
+ * routes remain bit-for-bit identical; it is worth checking that stays true if
+ * the flag is ever dropped.
  *
- * Scope is the arithmetic kernels in include/arithmetic.c only. The unary
- * kernels in include/unary.c are deliberately *not* dispatched.
+ * No intrinsic is used anywhere in this file or in the kernels it serves; the
+ * target attribute alone is enough for the compiler to widen every loop we
+ * dispatch, which keeps <immintrin.h> -- and the portability caveats that come
+ * with it -- out of the build entirely.
+ *
+ * Two sets of kernels are dispatched: the arithmetic kernels in
+ * include/arithmetic.c and the elementwise unary kernels in include/unary.c.
+ * The remaining kernels in those files keep a single baseline route, for two
+ * distinct reasons.
+ *
+ * Per-element libm calls -- pow, fmod, and exp, log, sin and the rest of the
+ * transcendental unary operations -- are scalar no matter which ISA is
+ * enabled. These are left alone deliberately, not overlooked.
  */
 
 /* Signatures shared by the dispatched kernels. `_scalar` operations take the
@@ -33,6 +47,12 @@
  * tensor_add_scalar is a tensor_binary_fn just like tensor_add. */
 typedef void (*tensor_binary_fn)(zval * return_value, zval * a, zval * b);
 typedef void (*tensor_dim_fn)(zval * return_value, zval * a, zval * b, zval * n);
+
+/* The unary signatures. A plain unary op carries only its input; clipLower and
+ * clipUpper take one bound and clip takes two, so each arity gets its own. */
+typedef void (*tensor_unary_fn)(zval * return_value, zval * a);
+typedef void (*tensor_unary_bound_fn)(zval * return_value, zval * a, zval * bound);
+typedef void (*tensor_unary_clip_fn)(zval * return_value, zval * a, zval * lo, zval * hi);
 
 /* True when the target attribute below expands to a real ISA override. */
 #if (defined(__x86_64__) || defined(__i386__)) && \
@@ -43,10 +63,11 @@ typedef void (*tensor_dim_fn)(zval * return_value, zval * a, zval * b, zval * n)
 #	define TENSOR_TARGET_AVX
 #endif
 
-/* Installed once from the module initializer in config.json. The hook is
- * idempotent and only ever upgrades a kernel from its baseline to its AVX
+/* Installed once from the module initializer in config.json. The hooks are
+ * idempotent and only ever upgrade a kernel from its baseline to its AVX
  * variant, so an extension whose initializer never ran still computes the right
  * answers, just without the wider vectors. */
 void tensor_arithmetic_dispatch_avx_init(void);
+void tensor_unary_dispatch_avx_init(void);
 
 #endif

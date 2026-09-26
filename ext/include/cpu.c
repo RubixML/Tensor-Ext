@@ -132,5 +132,6 @@ void tensor_cpu_init(void)
 {
 	if (tensor_cpu_has_avx()) {
 		tensor_arithmetic_dispatch_avx_init();
+		tensor_unary_dispatch_avx_init();
 	}
 }
