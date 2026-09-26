@@ -11,12 +11,26 @@ extern zend_class_entry * tensor_buffer_ce;
 /* The `Tensor\TensorBuffer` decorator class. */
 extern zend_class_entry * tensor_tensorbuffer_ce;
 
+/* Allocate a new `Tensor\TensorBuffer` wrapping a fresh double buffer of `len`
+ * elements whose contents are NOT zeroed. The exposed `Buffer` is written to
+ * `buffer` so callers can fill it through a raw pointer. Returns FAILURE (and
+ * throws) on allocation failure; on SUCCESS the caller owns a reference to
+ * `buffer` and must release it with zval_ptr_dtor() when done.
+ *
+ * The caller MUST write all `len` elements before reading any of them, otherwise
+ * uninitialized heap memory is observable in the result. */
+int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer);
+
 /* Allocate a new `Tensor\TensorBuffer` wrapping a fresh zero-filled double
  * buffer of `len` elements. The exposed `Buffer` is written to `buffer` so
  * callers can fill it through a raw pointer. Returns FAILURE (and throws) on
  * allocation failure; on SUCCESS the caller owns a reference to `buffer` and
- * must release it with zval_ptr_dtor() when done. */
-int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer);
+ * must release it with zval_ptr_dtor() when done.
+ *
+ * Zero-fills because some callers hand the buffer to BLAS with `beta = 0.0`,
+ * which must not read uninitialized bytes. Prefer the _uninit variant
+ * everywhere the caller fully overwrites the buffer. */
+int tensor_tensorbuffer_zeros(zval * ret, zend_long len, zval * buffer);
 
 /* Unwrap the double buffer hidden inside a `Tensor\TensorBuffer` object,
  * returning a raw pointer into it. Sets `*success` to 1 on success and 0 on

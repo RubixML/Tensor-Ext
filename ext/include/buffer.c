@@ -17,10 +17,59 @@
 zend_class_entry * tensor_buffer_ce;
 
 /**
+ * Allocate a new `Tensor\TensorBuffer` wrapping a fresh double buffer of `len`
+ * elements whose contents are NOT zeroed (see include/buffer.h).
+ *
+ * PHP's `ecalloc()` always memsets, even for freshly mmap()ed pages, so every
+ * elementwise operation paid a full extra write pass over its output only to
+ * overwrite it immediately. Callers using this variant MUST overwrite all
+ * `len` elements before any of them is read.
+ *
+ * Teardown is unaffected: `zephir_buffer_free_object()` efree()s `data.raw`
+ * regardless of how it was allocated, so there is no leak and no double free.
+ */
+int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer)
+{
+	if (UNEXPECTED(len < 0)) {
+		ZVAL_NULL(buffer);
+		return FAILURE;
+	}
+
+	object_init_ex(buffer, zephir_buffer_ce);
+
+	zephir_buffer_object * b = ZEPHIR_BUFFER_P(buffer);
+
+	b->len       = len;
+	b->kind      = ZEPHIR_BUFFER_DOUBLE;
+	b->data.raw  = len > 0 ? emalloc((size_t) len * sizeof(double)) : NULL;
+
+	object_init_ex(ret, tensor_tensorbuffer_ce);
+
+	/* zend_update_property() sets the engine's fake scope to the owner class
+	 * so protected property writes from C pass the PHP 8.4 access check. */
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "buffer", sizeof("buffer") - 1, buffer);
+
+	if (UNEXPECTED(EG(exception))) {
+		zval_ptr_dtor(ret);
+		ZVAL_UNDEF(ret);
+		zval_ptr_dtor(buffer);
+		ZVAL_UNDEF(buffer);
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+/**
  * Allocate a new `Tensor\TensorBuffer` wrapping a fresh zero-filled double
  * buffer of `len` elements (see include/buffer.h).
+ *
+ * The zero-fill is load-bearing for the callers that need it: matmul and matvec
+ * hand the output buffer straight to BLAS with `beta = 0.0`, and uninitialized
+ * bytes decoding to Inf would give `Inf * 0 = NaN` and contaminate the result.
+ * Everywhere else, prefer tensor_tensorbuffer_create_uninit().
  */
-int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
+int tensor_tensorbuffer_zeros(zval * ret, zend_long len, zval * buffer)
 {
 	if (UNEXPECTED(zephir_buffer_create(buffer, len, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
 		ZVAL_UNDEF(buffer);

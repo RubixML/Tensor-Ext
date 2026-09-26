@@ -30,7 +30,7 @@ void tensor_equal(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -64,7 +64,7 @@ void tensor_not_equal(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -98,7 +98,7 @@ void tensor_greater(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -132,7 +132,7 @@ void tensor_greater_equal(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -166,7 +166,7 @@ void tensor_less(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -200,7 +200,7 @@ void tensor_less_equal(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -229,7 +229,7 @@ void tensor_equal_scalar(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -258,7 +258,7 @@ void tensor_not_equal_scalar(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -287,7 +287,7 @@ void tensor_greater_scalar(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -316,7 +316,7 @@ void tensor_greater_equal_scalar(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -345,7 +345,7 @@ void tensor_less_scalar(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -374,7 +374,7 @@ void tensor_less_equal_scalar(zval * return_value, zval * a, zval * b)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, na, &c) == FAILURE)) {
 		return;
 	}
 
@@ -417,7 +417,7 @@ void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, total, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -480,7 +480,7 @@ void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, total, &c) == FAILURE)) { \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \

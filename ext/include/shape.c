@@ -50,7 +50,7 @@ void tensor_matrix_transpose(zval * return_value, zval * a, zval * m, zval * n)
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create_uninit(return_value, total, &c) == FAILURE)) {
 		return;
 	}
 
