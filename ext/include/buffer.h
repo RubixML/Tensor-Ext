@@ -30,7 +30,7 @@ int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer);
  * Zero-fills because some callers hand the buffer to BLAS with `beta = 0.0`,
  * which must not read uninitialized bytes. Prefer the _uninit variant
  * everywhere the caller fully overwrites the buffer. */
-int tensor_tensorbuffer_zeros(zval * ret, zend_long len, zval * buffer);
+int tensor_tensorbuffer_create_zeros(zval * ret, zend_long len, zval * buffer);
 
 /* Unwrap the double buffer hidden inside a `Tensor\TensorBuffer` object,
  * returning a raw pointer into it. Sets `*success` to 1 on success and 0 on

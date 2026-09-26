@@ -46,7 +46,7 @@ void tensor_matmul(zval * return_value, zval * a, zval * b, zval * m, zval * p, 
 
     zval c;
 
-    if (UNEXPECTED(tensor_tensorbuffer_zeros(return_value, ma * nb, &c) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create_zeros(return_value, ma * nb, &c) == FAILURE)) {
         return;
     }
 
@@ -88,7 +88,7 @@ void tensor_matrix_dot(zval * return_value, zval * a, zval * b, zval * m, zval *
 
     zval c;
 
-    if (UNEXPECTED(tensor_tensorbuffer_zeros(return_value, ma, &c) == FAILURE)) {
+    if (UNEXPECTED(tensor_tensorbuffer_create_zeros(return_value, ma, &c) == FAILURE)) {
         return;
     }
 

@@ -69,7 +69,7 @@ int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer)
  * bytes decoding to Inf would give `Inf * 0 = NaN` and contaminate the result.
  * Everywhere else, prefer tensor_tensorbuffer_create_uninit().
  */
-int tensor_tensorbuffer_zeros(zval * ret, zend_long len, zval * buffer)
+int tensor_tensorbuffer_create_zeros(zval * ret, zend_long len, zval * buffer)
 {
 	if (UNEXPECTED(zephir_buffer_create(buffer, len, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
 		ZVAL_UNDEF(buffer);

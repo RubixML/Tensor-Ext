@@ -1,8 +1,15 @@
-# Tensor: A PHP Extension for Scientific Computing
+# Tensor: Scientific Computing for [PHP](https://php.net)
 
 [![PHP from Packagist](https://img.shields.io/packagist/php-v/rubix/tensor_ext.svg?style=flat&colorB=8892BF)](https://www.php.net/) [![Latest Stable Version](https://img.shields.io/packagist/v/rubix/tensor_ext.svg?style=flat&colorB=orange)](https://packagist.org/packages/rubix/tensor_ext) [![Code Checks](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml/badge.svg)](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml) [![Downloads from Packagist](https://img.shields.io/packagist/dt/rubix/tensor_ext.svg?style=flat&colorB=red)](https://packagist.org/packages/rubix/tensor_ext) [![GitHub](https://img.shields.io/github/license/RubixML/Tensor-Ext)](https://github.com/RubixML/Tensor-Ext/blob/master/LICENSE.md)
 
-Scientific Computing for the [PHP](https://php.net) language.
+Tensor Ext is a PHP extension that brings fast Matrix and Vector computing to the PHP language. The object-oriented API is written in [Zephir](https://zephir-lang.com) and backed by native C kernels.
+
+## Features
+
+- **Object-oriented API** — Matrix and Vector APIs are fluent and expressive.
+- **Native BLAS and LAPACK acceleration** — Highly-optimized multi-threaded linear algebra kernels.
+- **Universal element-wise functions** — Elementwise operations are broadcast and vectorized.
+- **Dynamic kernel dispatching** — Operations are dispatched at runtime based on CPU architecture.
 
 ## Installation
 
@@ -15,9 +22,9 @@ $ pie install rubix/tensor_ext
 ## Requirements
 
 - [PHP](https://php.net) 8.1 or above
+- The PHP development package (source code and tooling)
 - A C compiler such as [GCC](https://gcc.gnu.org/), [Clang](https://clang.llvm.org/), or [Visual C++](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
 - A Fortran compiler such as [GFortran](https://gcc.gnu.org/wiki/GFortran)
-- The PHP development package (source code and tooling)
 - [OpenBLAS](https://www.openblas.net/) development package
 - [LAPACKE](https://www.netlib.org/lapack/lapacke.html) C interface to [LAPACK](http://www.netlib.org/lapack/)
 - [re2c](https://re2c.org/) 0.13.6 or later
