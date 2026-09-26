@@ -22,6 +22,7 @@
 #include "kernel/memory.h"
 
 
+#include "include/buffer.h"
 #include "include/cpu.h"
 #include "cblas.h"
 
@@ -162,13 +163,13 @@ static PHP_RINIT_FUNCTION(tensor)
 	zephir_ini_activate_globals(zephir_request_ini_entries);
 	zephir_initialize_memory(tensor_globals_ptr);
 
-	
+	tensor_pool_activate();
 	return SUCCESS;
 }
 
 static PHP_RSHUTDOWN_FUNCTION(tensor)
 {
-	
+	tensor_pool_seal();
 	zephir_deinitialize_memory();
 	return SUCCESS;
 }

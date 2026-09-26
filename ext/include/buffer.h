@@ -32,6 +32,17 @@ int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer);
  * everywhere the caller fully overwrites the buffer. */
 int tensor_tensorbuffer_create_zeros(zval * ret, zend_long len, zval * buffer);
 
+/* Oversized buffer cache lifecycle, wired to PHP's RINIT and RSHUTDOWN through
+ * the `initializers.request` and `destructors.request` hooks in config.json.
+ * Both discard the cached pointer without freeing it: the block belongs to a
+ * Zend MM heap that is being reclaimed, and Zend MM frees every request
+ * allocation itself, so freeing it here would be a double free.
+ *
+ * Not thread safe: the cache is a plain static, matching the assumption in
+ * include/cpu.c. It is only valid for non-thread-safe builds. */
+void tensor_pool_activate(void);
+void tensor_pool_seal(void);
+
 /* Unwrap the double buffer hidden inside a `Tensor\TensorBuffer` object,
  * returning a raw pointer into it. Sets `*success` to 1 on success and 0 on
  * failure (throwing an InvalidArgumentException). An empty buffer yields

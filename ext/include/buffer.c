@@ -4,6 +4,8 @@
 
 #include <php.h>
 #include <stdlib.h>
+#include <string.h>
+#include <Zend/zend_alloc_sizes.h>
 #include <ext/spl/spl_exceptions.h>
 #include "kernel/main.h"
 #include "php_ext.h"
@@ -16,6 +18,133 @@
 
 zend_class_entry * tensor_buffer_ce;
 
+/* Requests at or above this are individually mmap()ed by Zend MM, so they are
+ * the ones worth recycling. Smaller allocations come from Zend MM's own run
+ * caches and are left strictly alone. */
+#define TENSOR_POOL_THRESHOLD ((size_t) ZEND_MM_CHUNK_SIZE)
+
+/* Never pin more than this, so one outsized operation cannot hold an unbounded
+ * amount of memory resident until the request ends. */
+#define TENSOR_POOL_MAX_BYTES ((size_t) 256 * 1024 * 1024)
+
+/* Set between RSHUTDOWN and the next RINIT. A release arriving while sealed
+ * belongs to a request that is already being torn down, and the slot is about
+ * to be discarded, so it has to go straight back to efree(). */
+static int tensor_pool_sealed = 1;
+
+static struct {
+	void * ptr;
+	size_t bytes;
+} tensor_pool = { NULL, 0 };
+
+/* NTS assumption, matching the feature cache in include/cpu.c. Under a ZTS
+ * build this static would be shared by every thread, so the oversized buffer
+ * cache is only correct for non-thread-safe builds. */
+
+/**
+ * Whether a block of `bytes` is large enough to be worth recycling and small
+ * enough that keeping it resident is acceptable.
+ */
+static zend_always_inline int tensor_poolable(size_t bytes)
+{
+	return bytes >= TENSOR_POOL_THRESHOLD && bytes <= TENSOR_POOL_MAX_BYTES;
+}
+
+/**
+ * Take a recycled block when the slot holds one at least as large as `bytes`,
+ * otherwise allocate. A cached block larger than requested is fine: readers
+ * only ever look at b->len elements, so a stale tail past that length is
+ * indistinguishable from a fresh one.
+ */
+static void * tensor_pool_acquire(size_t bytes)
+{
+	if (EXPECTED(!tensor_pool_sealed) && tensor_pool.ptr != NULL && tensor_pool.bytes >= bytes) {
+		void * ptr = tensor_pool.ptr;
+
+		tensor_pool.ptr = NULL;
+		tensor_pool.bytes = 0;
+
+		return ptr;
+	}
+
+	return emalloc(bytes);
+}
+
+/**
+ * Hand a block back, caching it when the slot is free and efree()ing it
+ * otherwise. A block is a valid emalloc() allocation whether it was recycled
+ * or freshly allocated, so no record of its origin is needed.
+ */
+static void tensor_pool_release(void * ptr, size_t bytes)
+{
+	if (EXPECTED(!tensor_pool_sealed) && tensor_pool.ptr == NULL && tensor_poolable(bytes)) {
+		tensor_pool.ptr = ptr;
+		tensor_pool.bytes = bytes;
+
+		return;
+	}
+
+	efree(ptr);
+}
+
+/* zephir_buffer_object_handlers is static to the generated kernel/buffer.c, so
+ * the class entry cannot be used as a source: Zephir fills that static in and
+ * assigns it per object from create_object(), but never publishes it as
+ * ce->default_object_handlers, which is left as the stock std handlers with a
+ * zero offset. Copying from there would silently misplace every field read.
+ *
+ * The object just created is therefore the only faithful source. create_object
+ * has already installed the fully populated struct on it, and every Buffer
+ * shares that one struct, so snapshotting it once and swapping free_obj is
+ * enough: all of read_dimension, write_dimension, clone_obj, get_debug_info
+ * and the rest are inherited unchanged. */
+static zend_object_handlers tensor_pool_handlers;
+static int tensor_pool_handlers_ready = 0;
+
+static void tensor_buffer_pool_free_object(zend_object * object)
+{
+	zephir_buffer_object * b = zephir_buffer_fetch(object);
+
+	if (b->data.raw) {
+		void * raw = b->data.raw;
+		b->data.raw = NULL;
+
+		tensor_pool_release(raw, (size_t) b->len * sizeof(double));
+	}
+
+	zend_object_std_dtor(&b->std);
+}
+
+/**
+ * Reset the cache at RINIT; see the `initializers.request` hook in config.json.
+ *
+ * A pointer left over from the previous request is dropped WITHOUT being
+ * freed. That block came from the previous request's Zend MM heap, which has
+ * already been reclaimed, so efree() on it would corrupt the current heap.
+ */
+void tensor_pool_activate(void)
+{
+	tensor_pool.ptr = NULL;
+	tensor_pool.bytes = 0;
+	tensor_pool_sealed = 0;
+}
+
+/**
+ * Seal the cache at RSHUTDOWN; see the `destructors.request` hook in
+ * config.json.
+ *
+ * Objects are force destroyed during request teardown, so releases can still
+ * arrive after this point, and sealing sends them straight to efree(). The
+ * cached block itself is deliberately left to Zend MM, which reclaims every
+ * request allocation in zend_deactivate().
+ */
+void tensor_pool_seal(void)
+{
+	tensor_pool.ptr = NULL;
+	tensor_pool.bytes = 0;
+	tensor_pool_sealed = 1;
+}
+
 /**
  * Allocate a new `Tensor\TensorBuffer` wrapping a fresh double buffer of `len`
  * elements whose contents are NOT zeroed (see include/buffer.h).
@@ -27,6 +156,9 @@ zend_class_entry * tensor_buffer_ce;
  *
  * Teardown is unaffected: `zephir_buffer_free_object()` efree()s `data.raw`
  * regardless of how it was allocated, so there is no leak and no double free.
+ *
+ * Buffers at or above ZEND_MM_CHUNK_SIZE additionally recycle a single cached
+ * block per request; see the oversized buffer cache above.
  */
 int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer)
 {
@@ -35,13 +167,34 @@ int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer)
 		return FAILURE;
 	}
 
+	size_t bytes = (size_t) len * sizeof(double);
+
 	object_init_ex(buffer, zephir_buffer_ce);
 
 	zephir_buffer_object * b = ZEPHIR_BUFFER_P(buffer);
 
 	b->len       = len;
 	b->kind      = ZEPHIR_BUFFER_DOUBLE;
-	b->data.raw  = len > 0 ? emalloc((size_t) len * sizeof(double)) : NULL;
+	b->data.raw  = NULL;
+
+	if (len > 0) {
+		if (tensor_poolable(bytes)) {
+			if (!tensor_pool_handlers_ready) {
+				memcpy(&tensor_pool_handlers, Z_OBJ_P(buffer)->handlers, sizeof(zend_object_handlers));
+				tensor_pool_handlers.free_obj = tensor_buffer_pool_free_object;
+				tensor_pool_handlers_ready = 1;
+			}
+
+			/* Installed for every oversized buffer, recycled or not. The
+			 * point is to route the free into the slot, and a block that was
+			 * freshly emalloc()ed still deserves the chance to be kept. */
+			Z_OBJ_P(buffer)->handlers = &tensor_pool_handlers;
+
+			b->data.raw = tensor_pool_acquire(bytes);
+		} else {
+			b->data.raw = emalloc(bytes);
+		}
+	}
 
 	object_init_ex(ret, tensor_tensorbuffer_ce);
 
