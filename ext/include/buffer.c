@@ -264,39 +264,6 @@ int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer)
 }
 
 /**
- * Allocate a new `Tensor\TensorBuffer` wrapping a fresh zero-filled double
- * buffer of `len` elements (see include/buffer.h).
- *
- * The zero-fill is load-bearing for the callers that need it: matmul and matvec
- * hand the output buffer straight to BLAS with `beta = 0.0`, and uninitialized
- * bytes decoding to Inf would give `Inf * 0 = NaN` and contaminate the result.
- * Everywhere else, prefer tensor_tensorbuffer_create_uninit().
- */
-int tensor_tensorbuffer_create_zeros(zval * ret, zend_long len, zval * buffer)
-{
-	if (UNEXPECTED(zephir_buffer_create(buffer, len, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
-		ZVAL_UNDEF(buffer);
-		return FAILURE;
-	}
-
-	object_init_ex(ret, tensor_tensorbuffer_ce);
-
-	/* zend_update_property() sets the engine's fake scope to the owner class
-	 * so protected property writes from C pass the PHP 8.4 access check. */
-	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "buffer", sizeof("buffer") - 1, buffer);
-
-	if (UNEXPECTED(EG(exception))) {
-		zval_ptr_dtor(ret);
-		ZVAL_UNDEF(ret);
-		zval_ptr_dtor(buffer);
-		ZVAL_UNDEF(buffer);
-		return FAILURE;
-	}
-
-	return SUCCESS;
-}
-
-/**
  * Allocate a new `Tensor\TensorBuffer` decorator wrapping a `Tensor\Buffer`
  * built from a PHP array of values, casting every element to a double (see
  * include/buffer.h).

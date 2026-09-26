@@ -21,17 +21,6 @@ extern zend_class_entry * tensor_tensorbuffer_ce;
  * uninitialized heap memory is observable in the result. */
 int tensor_tensorbuffer_create_uninit(zval * ret, zend_long len, zval * buffer);
 
-/* Allocate a new `Tensor\TensorBuffer` wrapping a fresh zero-filled double
- * buffer of `len` elements. The exposed `Buffer` is written to `buffer` so
- * callers can fill it through a raw pointer. Returns FAILURE (and throws) on
- * allocation failure; on SUCCESS the caller owns a reference to `buffer` and
- * must release it with zval_ptr_dtor() when done.
- *
- * Zero-fills because some callers hand the buffer to BLAS with `beta = 0.0`,
- * which must not read uninitialized bytes. Prefer the _uninit variant
- * everywhere the caller fully overwrites the buffer. */
-int tensor_tensorbuffer_create_zeros(zval * ret, zend_long len, zval * buffer);
-
 /* Oversized buffer cache lifecycle, wired to PHP's RINIT and RSHUTDOWN through
  * the `initializers.request` and `destructors.request` hooks in config.json.
  * Both discard the cached pointer without freeing it: the block belongs to a

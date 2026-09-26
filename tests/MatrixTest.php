@@ -3506,6 +3506,101 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * tensor_matmul() hands its output to cblas_dgemm() with `beta = 0.0`,
+     * which overwrites C and so never reads it. That is what allows the output
+     * to come from the oversized buffer cache instead of being zeroed first,
+     * but the optimisation is only valid for as long as BLAS keeps ignoring C.
+     * If it ever read C, a recycled block still holding a non-finite value
+     * would leak into the result, because 0.0 * NaN is NaN.
+     *
+     * So rather than trust that, this parks a non-finite block in the cache at
+     * exactly the size of the product and checks the answer is still exact. A
+     * single contaminated element anywhere would fail it.
+     *
+     * The poisons are built with arithmetic rather than Matrix::fill() because
+     * only the arithmetic path allocates through the cache; a filled matrix
+     * would never be handed to it.
+     *
+     * The output size is odd so that it cannot tie with an equally sized block
+     * cached elsewhere, since an equal sized incumbent is kept rather than
+     * replaced.
+     *
+     * @test
+     */
+    public function matmulIgnoresARecycledOutputBuffer() : void
+    {
+        $rows = 521;
+        $inner = 503;
+        $cols = 509;
+
+        $a = Matrix::ones($rows, $inner);
+        $b = Matrix::ones($inner, $cols);
+
+        // Ones times ones is exactly $inner in every position, so the expected
+        // result is exact and any contamination stands out immediately.
+        $expected = Matrix::fill((float) $inner, $rows, $cols)->asArray();
+
+        $inf = Vector::ones($rows * $cols)->divide(0.0);
+        $nan = Vector::ones($rows * $cols)->divide(0.0)->multiply(0.0);
+
+        $this->assertTrue(is_infinite($inf[0]), 'The Inf poison was not built.');
+        $this->assertNan($nan[0], 'The NaN poison was not built.');
+
+        unset($inf, $nan);
+
+        foreach (['Inf', 'NaN'] as $label) {
+            $product = $a->matmul($b);
+            unset($product);
+
+            $actual = $a->matmul($b)->asArray();
+
+            $this->assertEqualsWithDelta(
+                $expected,
+                $actual,
+                self::MAX_DELTA,
+                "A recycled block still holding {$label} contaminated the matmul result, so BLAS is reading C."
+            );
+        }
+    }
+
+    /**
+     * The same guarantee as matmulIgnoresARecycledOutputBuffer(), for the
+     * matrix-vector product, which reaches cblas_dgemv() with `beta = 0.0` and
+     * recycles its output for the same reason.
+     *
+     * @test
+     */
+    public function dotVectorIgnoresARecycledOutputBuffer() : void
+    {
+        $rows = 262_145;
+
+        $a = Matrix::ones($rows, 1);
+        $b = Vector::ones(1);
+
+        $inf = Vector::ones($rows)->divide(0.0);
+        $nan = Vector::ones($rows)->divide(0.0)->multiply(0.0);
+
+        $this->assertTrue(is_infinite($inf[0]), 'The Inf poison was not built.');
+        $this->assertNan($nan[0], 'The NaN poison was not built.');
+
+        unset($inf, $nan);
+
+        foreach (['Inf', 'NaN'] as $label) {
+            $product = $a->dot($b);
+            unset($product);
+
+            $actual = $a->dot($b)->asArray();
+
+            $this->assertEqualsWithDelta(
+                array_fill(0, $rows, 1.0),
+                $actual,
+                self::MAX_DELTA,
+                "A recycled block still holding {$label} contaminated the matrix-vector result, so BLAS is reading C."
+            );
+        }
+    }
+
+    /**
      * @test
      */
     public function matmulDimensionMismatchThrows() : void
