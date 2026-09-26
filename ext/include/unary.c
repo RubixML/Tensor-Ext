@@ -80,7 +80,7 @@ void tensor_log_base(zval * return_value, zval * a, zval * b)
 		return;
 	}
 
-	double base = zephir_get_doubleval(b);
+	double log_base = log(zephir_get_doubleval(b));
 
 	zval c;
 
@@ -91,7 +91,7 @@ void tensor_log_base(zval * return_value, zval * a, zval * b)
 	double * vc = zephir_buffer_doubles(&c);
 
 	for (i = 0; i < n; ++i) {
-		vc[i] = log(va[i]) / log(base);
+		vc[i] = log(va[i]) / log_base;
 	}
 
 	zval_ptr_dtor(&c);
