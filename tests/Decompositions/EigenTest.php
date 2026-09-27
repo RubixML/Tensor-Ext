@@ -3,6 +3,7 @@
 namespace Tensor\Tests\Decompositions;
 
 use Tensor\Matrix;
+use Tensor\Vector;
 use Tensor\Decompositions\Eigen;
 use Tensor\Exceptions\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +41,7 @@ class EigenTest extends TestCase
             25.10870652045,
         ];
 
-        $eigenvalues = $eig->eigenvalues();
+        $eigenvalues = $eig->eigenvalues()->asArray();
 
         sort($eigenvalues);
 
@@ -64,9 +65,9 @@ class EigenTest extends TestCase
 
         $expectedEigenvalues = [1.0, 3.0, 4.0];
 
-        $this->assertEqualsWithDelta($expectedEigenvalues, $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expectedEigenvalues, $eig->eigenvalues()->asArray(), self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta([0.0, 0.0, 0.0], $eig->eigenvaluesImaginary(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([0.0, 0.0, 0.0], $eig->eigenvaluesImaginary()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -83,8 +84,8 @@ class EigenTest extends TestCase
 
         $this->assertEigenpairIdentity($a, $eig);
 
-        $this->assertEqualsWithDelta([3.3944487241610, 10.605551275464], $eig->eigenvalues(), self::MAX_DELTA);
-        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([3.3944487241610, 10.605551275464], $eig->eigenvalues()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -101,8 +102,8 @@ class EigenTest extends TestCase
         $general = Eigen::decompose($a);
         $symmetric = Eigen::decompose($a, true);
 
-        $generalEigenvalues = $general->eigenvalues();
-        $symmetricEigenvalues = $symmetric->eigenvalues();
+        $generalEigenvalues = $general->eigenvalues()->asArray();
+        $symmetricEigenvalues = $symmetric->eigenvalues()->asArray();
 
         sort($generalEigenvalues);
         sort($symmetricEigenvalues);
@@ -121,7 +122,7 @@ class EigenTest extends TestCase
 
         $this->assertEigenpairIdentity($a, $eig);
 
-        $this->assertEquals([9.0], $eig->eigenvalues());
+        $this->assertEquals([9.0], $eig->eigenvalues()->asArray());
 
         $this->assertEqualsWithDelta(Matrix::fromArray([[1.0]])->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
@@ -141,7 +142,7 @@ class EigenTest extends TestCase
 
         $this->assertEigenpairIdentity($a, $eig);
 
-        $this->assertEqualsWithDelta([2.0, 3.0, 5.0], $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([2.0, 3.0, 5.0], $eig->eigenvalues()->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -162,9 +163,9 @@ class EigenTest extends TestCase
      */
     public function constructAndAccess() : void
     {
-        $eigenvalues = [1.0, 2.0, 3.0];
+        $eigenvalues = Vector::fromArray([1.0, 2.0, 3.0]);
 
-        $eigenvaluesImaginary = [0.0, 1.0, 0.0];
+        $eigenvaluesImaginary = Vector::fromArray([0.0, 1.0, 0.0]);
 
         $eigenvectors = Matrix::fromArray([
             [1.0, 0.0, 0.0],
@@ -174,15 +175,17 @@ class EigenTest extends TestCase
 
         $eig = new Eigen($eigenvalues, $eigenvectors, $eigenvaluesImaginary);
 
-        $this->assertEquals($eigenvalues, $eig->eigenvalues());
-        $this->assertEqualsWithDelta($eigenvaluesImaginary, $eig->eigenvaluesImaginary(), self::MAX_DELTA);
+        $this->assertEquals($eigenvalues->asArray(), $eig->eigenvalues()->asArray());
+        $this->assertEqualsWithDelta($eigenvaluesImaginary->asArray(), $eig->eigenvaluesImaginary()->asArray(), self::MAX_DELTA);
         $this->assertEqualsWithDelta($eigenvectors->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
 
-        // The third constructor argument is optional and defaults to an
-        // empty list.
-        $eigDefault = new Eigen($eigenvalues, $eigenvectors);
+        // The third constructor argument is required; an empty vector
+        // represents "no imaginary parts".
+        $eigenvaluesEmptyImaginary = Vector::fromArray([]);
 
-        $this->assertEquals($eigenvalues, $eigDefault->eigenvalues());
+        $eigDefault = new Eigen($eigenvalues, $eigenvectors, $eigenvaluesEmptyImaginary);
+
+        $this->assertEquals($eigenvalues->asArray(), $eigDefault->eigenvalues()->asArray());
         $this->assertCount(0, $eigDefault->eigenvaluesImaginary());
         $this->assertEqualsWithDelta($eigenvectors->asArray(), $eigDefault->eigenvectors()->asArray(), self::MAX_DELTA);
     }
@@ -205,7 +208,7 @@ class EigenTest extends TestCase
 
         $this->assertCount(2, $eigenvalues);
 
-        $this->assertEqualsWithDelta([0.0, 0.0], $eigenvalues, self::MAX_DELTA);
+        $this->assertEqualsWithDelta([0.0, 0.0], $eigenvalues->asArray(), self::MAX_DELTA);
 
         $eigenvaluesImaginary = $eig->eigenvaluesImaginary();
 
@@ -260,7 +263,7 @@ class EigenTest extends TestCase
 
         $originalEigenvalues = $eig->eigenvalues();
 
-        $eigenvalues = $originalEigenvalues;
+        $eigenvalues = $originalEigenvalues->asArray();
 
         sort($eigenvalues);
 

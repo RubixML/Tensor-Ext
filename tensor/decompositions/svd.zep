@@ -1,6 +1,7 @@
 namespace Tensor\Decompositions;
 
 use Tensor\Matrix;
+use Tensor\Vector;
 use Tensor\Exceptions\RuntimeException;
 
 /**
@@ -22,7 +23,7 @@ class Svd
     /**
      * The singular values of the matrix A.
      *
-     * @var array<float>
+     * @var \Tensor\Vector
      */
     protected singularValues;
 
@@ -42,29 +43,25 @@ class Svd
      */
     public static function decompose(const <Matrix> a) -> <Svd>
     {
-        var result = tensor_svd(a->buffer(), a->m(), a->n());
+        var result = (array) tensor_svd(a->buffer(), a->m(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to decompose matrix.");
         }
 
-        array usvT = [];
-
-        let usvT = (array) result;
-
-        var u = Matrix::fromBuffer(usvT[0], a->m(), a->m());
-        var singularValues = (array) usvT[1];
-        var vT = Matrix::fromBuffer(usvT[2], a->n(), a->n());
+        var u = Matrix::fromBuffer(result[0], a->m(), a->m());
+        var singularValues = Vector::fromBuffer(result[1]);
+        var vT = Matrix::fromBuffer(result[2], a->n(), a->n());
 
         return new self(u, singularValues, vT);
     }
 
     /**
      * @param \Tensor\Matrix u
-     * @param array<float> singularValues
+     * @param \Tensor\Vector singularValues
      * @param \Tensor\Matrix vT
      */
-    public function __construct(const <Matrix> u, const array singularValues, const <Matrix> vT)
+    public function __construct(const <Matrix> u, const <Vector> singularValues, const <Matrix> vT)
     {
         let this->u = u;
         let this->singularValues = singularValues;
@@ -84,13 +81,13 @@ class Svd
     /**
      * Return the singular values of matrix A.
      *
-     * @return array<float>
+     * @return \Tensor\Vector
      */
-    public function singularValues() -> array
+    public function singularValues() -> <Vector>
     {
         return this->singularValues;
     }
- 
+  
     /**
      * Return the singular value matrix.
      *
@@ -98,7 +95,7 @@ class Svd
      */
     public function s() -> <Matrix>
     {
-        return Matrix::diagonal(this->singularValues);
+        return Matrix::diagonal(this->singularValues->asArray());
     }
 
     /**

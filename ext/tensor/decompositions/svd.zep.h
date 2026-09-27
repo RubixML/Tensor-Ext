@@ -17,14 +17,14 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_decompositions_svd___construct, 0, 0, 3)
 	ZEND_ARG_OBJ_INFO(0, u, Tensor\\Matrix, 0)
-	ZEND_ARG_ARRAY_INFO(0, singularValues, 0)
+	ZEND_ARG_OBJ_INFO(0, singularValues, Tensor\\Vector, 0)
 	ZEND_ARG_OBJ_INFO(0, vT, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_decompositions_svd_u, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_tensor_decompositions_svd_singularvalues, 0, 0, IS_ARRAY, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_decompositions_svd_singularvalues, 0, 0, Tensor\\Vector, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_decompositions_svd_s, 0, 0, Tensor\\Matrix, 0)

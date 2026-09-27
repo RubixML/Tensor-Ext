@@ -4,6 +4,7 @@
 
 #include <php.h>
 #include <math.h>
+#include <string.h>
 #include <ext/spl/spl_exceptions.h>
 #include <cblas.h>
 #include <lapacke.h>
@@ -690,9 +691,10 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
 
 /**
  * Compute the eigendecomposition of a general matrix A and return the real part of the
- * eigenvalues, the eigenvectors, and the imaginary part of the eigenvalues in a tuple.
- * For a complex conjugate pair the two eigenvector columns are the real and imaginary
- * parts of a single complex eigenvector.
+ * eigenvalues (TensorBuffer), the imaginary part of the eigenvalues (TensorBuffer), and
+ * the eigenvectors (TensorBuffer) in a 3-element tuple, in that order. For a complex
+ * conjugate pair the two eigenvector columns are the real and imaginary parts of a
+ * single complex eigenvector.
  *
  * @param return_value
  * @param a
@@ -737,21 +739,49 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
         RETURN_NULL();
     }
 
-    zval eigenvalues;
+    zval eigenvalues, bufRe;
 
-    array_init_size(&eigenvalues, na);
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvalues, (zend_long) na, &bufRe) == FAILURE)) {
+        efree(w);
+        efree(wr);
+        efree(wi);
+        efree(vr);
 
-    for (i = 0; i < na; ++i) {
-        add_next_index_double(&eigenvalues, wr[i]);
+        return;
     }
 
-    zval eigenvaluesImaginary;
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufRe);
 
-    array_init_size(&eigenvaluesImaginary, na);
-
-    for (i = 0; i < na; ++i) {
-        add_next_index_double(&eigenvaluesImaginary, wi[i]);
+        for (i = 0; i < na; ++i) {
+            vc[i] = wr[i];
+        }
     }
+
+    zval_ptr_dtor(&bufRe);
+
+    zval eigenvaluesImaginary, bufIm;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvaluesImaginary, (zend_long) na, &bufIm) == FAILURE)) {
+        zval_ptr_dtor(&eigenvalues);
+
+        efree(w);
+        efree(wr);
+        efree(wi);
+        efree(vr);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufIm);
+
+        for (i = 0; i < na; ++i) {
+            vc[i] = wi[i];
+        }
+    }
+
+    zval_ptr_dtor(&bufIm);
 
     zval eigenvectors, buf;
 
@@ -837,21 +867,43 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
         RETURN_NULL();
     }
 
-    zval eigenvalues;
+    zval eigenvalues, bufRe;
 
-    array_init_size(&eigenvalues, na);
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvalues, (zend_long) na, &bufRe) == FAILURE)) {
+        efree(w);
+        efree(wr);
 
-    for (i = 0; i < na; ++i) {
-        add_next_index_double(&eigenvalues, wr[i]);
+        return;
     }
 
-    zval eigenvaluesImaginary;
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufRe);
 
-    array_init_size(&eigenvaluesImaginary, na);
-
-    for (i = 0; i < na; ++i) {
-        add_next_index_double(&eigenvaluesImaginary, 0.0);
+        for (i = 0; i < na; ++i) {
+            vc[i] = wr[i];
+        }
     }
+
+    zval_ptr_dtor(&bufRe);
+
+    zval eigenvaluesImaginary, bufIm;
+
+    if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvaluesImaginary, (zend_long) na, &bufIm) == FAILURE)) {
+        zval_ptr_dtor(&eigenvalues);
+
+        efree(w);
+        efree(wr);
+
+        return;
+    }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufIm);
+
+        memset(vc, 0, na * sizeof(double));
+    }
+
+    zval_ptr_dtor(&bufIm);
 
     zval eigenvectors, buf;
 
@@ -958,13 +1010,28 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
 
     zval_ptr_dtor(&bufU);
 
-    zval s;
+    zval s, bufS;
 
-    array_init_size(&s, k);
+    if (UNEXPECTED(tensor_tensorbuffer_create(&s, (zend_long) k, &bufS) == FAILURE)) {
+        zval_ptr_dtor(&u);
 
-    for (i = 0; i < k; ++i) {
-        add_next_index_double(&s, vs[i]);
+        efree(w);
+        efree(vu);
+        efree(vs);
+        efree(vvt);
+
+        return;
     }
+
+    {
+        double * vc = (double *) zephir_buffer_doubles(&bufS);
+
+        for (i = 0; i < k; ++i) {
+            vc[i] = vs[i];
+        }
+    }
+
+    zval_ptr_dtor(&bufS);
 
     zval vt, bufVt;
 

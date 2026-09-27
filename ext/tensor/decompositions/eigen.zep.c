@@ -26,16 +26,16 @@
  * Eigen
  *
  * The Eigendecompositon or (Spectral decomposition) is a matrix factorization resulting in a
- * matrix of eigenvectors and a corresponding array of eigenvalues.
+ * matrix of eigenvectors and a corresponding vector of eigenvalues.
  *
  * For non-symmetric real matrices the eigenvalues come in complex conjugate pairs.
- * This class returns the real and imaginary parts as parallel lists, see
+ * This class returns the real and imaginary parts as parallel `Vector` objects, see
  * `eigenvalues()` and `eigenvaluesImaginary()`. For a complex conjugate pair,
  * the two corresponding eigenvector columns are the real and imaginary parts
  * of a single complex eigenvector.
  *
  * For symmetric matrices (`symmetric === true`), all eigenvalues are real and
- * `eigenvaluesImaginary()` returns a zero-filled list matching the size.
+ * `eigenvaluesImaginary()` returns a zero-filled vector matching the size.
  *
  * @category    Scientific Computing
  * @package     Rubix/Tensor
@@ -48,22 +48,22 @@ ZEPHIR_INIT_CLASS(Tensor_Decompositions_Eigen)
 	/**
 	 * The computed eigenvalues (real parts).
 	 *
-	 * @var array<float>
+	 * @var \Tensor\Vector
 	 */
 	zend_declare_property_null(tensor_decompositions_eigen_ce, SL("eigenvalues"), ZEND_ACC_PROTECTED);
-	/**
-	 * The imaginary parts of the computed eigenvalues, in the same order as
-	 * `eigenvalues`. Zero-filled when the input is symmetric.
-	 *
-	 * @var array<float>
-	 */
-	zend_declare_property_null(tensor_decompositions_eigen_ce, SL("eigenvaluesImaginary"), ZEND_ACC_PROTECTED);
 	/**
 	 * The eigenvectors of the eigendecomposition.
 	 *
 	 * @var \Tensor\Matrix
 	 */
 	zend_declare_property_null(tensor_decompositions_eigen_ce, SL("eigenvectors"), ZEND_ACC_PROTECTED);
+	/**
+	 * The imaginary parts of the computed eigenvalues, in the same order as
+	 * `eigenvalues`. Zero-filled when the input is symmetric.
+	 *
+	 * @var \Tensor\Vector
+	 */
+	zend_declare_property_null(tensor_decompositions_eigen_ce, SL("eigenvaluesImaginary"), ZEND_ACC_PROTECTED);
 	return SUCCESS;
 }
 
@@ -78,25 +78,23 @@ ZEPHIR_INIT_CLASS(Tensor_Decompositions_Eigen)
  */
 PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 {
-	zval eig, _9, _11, _13;
 	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
 	zend_long ZEPHIR_LAST_CALL_STATUS;
 	zend_bool symmetric;
-	zval *a, a_sub, *symmetric_param = NULL, _0, result, _8, eigenvalues, _10, eigenvaluesImaginary, _12, eigenvectors, _14, _15, _16, _17, _1$$3, _2$$3, _3$$3, _4$$4, _5$$4, _6$$5, _7$$5;
+	zval *a, a_sub, *symmetric_param = NULL, _0, result, eigenvalues, _8, eigenvaluesImaginary, _9, eigenvectors, _10, _11, _12, _13, _1$$3, _2$$3, _3$$3, _4$$4, _5$$4, _6$$5, _7$$5;
 
 	ZVAL_UNDEF(&a_sub);
 	ZVAL_UNDEF(&_0);
 	ZVAL_UNDEF(&result);
-	ZVAL_UNDEF(&_8);
 	ZVAL_UNDEF(&eigenvalues);
-	ZVAL_UNDEF(&_10);
+	ZVAL_UNDEF(&_8);
 	ZVAL_UNDEF(&eigenvaluesImaginary);
-	ZVAL_UNDEF(&_12);
+	ZVAL_UNDEF(&_9);
 	ZVAL_UNDEF(&eigenvectors);
-	ZVAL_UNDEF(&_14);
-	ZVAL_UNDEF(&_15);
-	ZVAL_UNDEF(&_16);
-	ZVAL_UNDEF(&_17);
+	ZVAL_UNDEF(&_10);
+	ZVAL_UNDEF(&_11);
+	ZVAL_UNDEF(&_12);
+	ZVAL_UNDEF(&_13);
 	ZVAL_UNDEF(&_1$$3);
 	ZVAL_UNDEF(&_2$$3);
 	ZVAL_UNDEF(&_3$$3);
@@ -104,10 +102,6 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 	ZVAL_UNDEF(&_5$$4);
 	ZVAL_UNDEF(&_6$$5);
 	ZVAL_UNDEF(&_7$$5);
-	ZVAL_UNDEF(&eig);
-	ZVAL_UNDEF(&_9);
-	ZVAL_UNDEF(&_11);
-	ZVAL_UNDEF(&_13);
 	ZEND_PARSE_PARAMETERS_START(1, 2)
 		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
 		Z_PARAM_OPTIONAL
@@ -131,7 +125,7 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "Matrix must be", " square, ", &_2$$3, " given.");
 		ZEPHIR_CALL_METHOD(NULL, &_1$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
-		zephir_throw_exception_debug(&_1$$3, "tensor/decompositions/eigen.zep", 65);
+		zephir_throw_exception_debug(&_1$$3, "tensor/decompositions/eigen.zep", 64);
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
@@ -151,30 +145,26 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 		tensor_eig(&result, &_6$$5, &_7$$5);
 	}
 	if (Z_TYPE_P(&result) == IS_NULL) {
-		ZEPHIR_THROW_EXCEPTION_DEBUG_STR(tensor_exceptions_runtimeexception_ce, "Failed to decompose matrix.", "tensor/decompositions/eigen.zep", 77);
+		ZEPHIR_THROW_EXCEPTION_DEBUG_STR(tensor_exceptions_runtimeexception_ce, "Failed to decompose matrix.", "tensor/decompositions/eigen.zep", 76);
 		return;
 	}
-	ZEPHIR_INIT_VAR(&eig);
-	array_init(&eig);
-	ZEPHIR_CPY_WRT(&_8, &result);
-	zephir_get_arrval(&_9, &_8);
-	ZEPHIR_CPY_WRT(&eig, &_9);
-	zephir_memory_observe(&_10);
-	zephir_array_fetch_long(&_10, &eig, 0, PH_NOISY, "tensor/decompositions/eigen.zep", 84);
-	zephir_get_arrval(&_11, &_10);
-	ZEPHIR_CPY_WRT(&eigenvalues, &_11);
-	zephir_memory_observe(&_12);
-	zephir_array_fetch_long(&_12, &eig, 1, PH_NOISY, "tensor/decompositions/eigen.zep", 85);
-	zephir_get_arrval(&_13, &_12);
-	ZEPHIR_CPY_WRT(&eigenvaluesImaginary, &_13);
-	zephir_array_fetch_long(&_15, &eig, 2, PH_NOISY | PH_READONLY, "tensor/decompositions/eigen.zep", 86);
-	ZEPHIR_CALL_METHOD(&_16, a, "n", NULL, 0);
+	zephir_memory_observe(&_8);
+	zephir_array_fetch_long(&_8, &result, 0, PH_NOISY, "tensor/decompositions/eigen.zep", 79);
+	ZEPHIR_CALL_CE_STATIC(&eigenvalues, tensor_vector_ce, "fromBuffer", NULL, 0, &_8);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&_17, a, "n", NULL, 0);
+	zephir_memory_observe(&_9);
+	zephir_array_fetch_long(&_9, &result, 1, PH_NOISY, "tensor/decompositions/eigen.zep", 80);
+	ZEPHIR_CALL_CE_STATIC(&eigenvaluesImaginary, tensor_vector_ce, "fromBuffer", NULL, 0, &_9);
 	zephir_check_call_status();
-	ZEPHIR_CALL_CE_STATIC(&_14, tensor_matrix_ce, "fromBuffer", NULL, 0, &_15, &_16, &_17);
+	zephir_memory_observe(&_11);
+	zephir_array_fetch_long(&_11, &result, 2, PH_NOISY, "tensor/decompositions/eigen.zep", 81);
+	ZEPHIR_CALL_METHOD(&_12, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&eigenvectors, &_14, "transpose", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_13, a, "n", NULL, 0);
+	zephir_check_call_status();
+	ZEPHIR_CALL_CE_STATIC(&_10, tensor_matrix_ce, "fromBuffer", NULL, 0, &_11, &_12, &_13);
+	zephir_check_call_status();
+	ZEPHIR_CALL_METHOD(&eigenvectors, &_10, "transpose", NULL, 0);
 	zephir_check_call_status();
 	object_init_ex(return_value, tensor_decompositions_eigen_ce);
 	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 19, &eigenvalues, &eigenvectors, &eigenvaluesImaginary);
@@ -183,20 +173,18 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 }
 
 /**
- * @param array<float> eigenvalues
+ * @param \Tensor\Vector eigenvalues
  * @param \Tensor\Matrix eigenvectors
- * @param array<float> eigenvaluesImaginary
+ * @param \Tensor\Vector eigenvaluesImaginary
  */
 PHP_METHOD(Tensor_Decompositions_Eigen, __construct)
 {
-	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
-	zval *eigenvalues_param = NULL, *eigenvectors, eigenvectors_sub, *eigenvaluesImaginary_param = NULL;
-	zval eigenvalues, eigenvaluesImaginary;
+	zval *eigenvalues, eigenvalues_sub, *eigenvectors, eigenvectors_sub, *eigenvaluesImaginary, eigenvaluesImaginary_sub;
 	zval *this_ptr = getThis();
 
-	ZVAL_UNDEF(&eigenvalues);
-	ZVAL_UNDEF(&eigenvaluesImaginary);
+	ZVAL_UNDEF(&eigenvalues_sub);
 	ZVAL_UNDEF(&eigenvectors_sub);
+	ZVAL_UNDEF(&eigenvaluesImaginary_sub);
 	static zend_string *_zephir_prop_0 = NULL;
 	static zend_string *_zephir_prop_1 = NULL;
 	static zend_string *_zephir_prop_2 = NULL;
@@ -210,51 +198,26 @@ PHP_METHOD(Tensor_Decompositions_Eigen, __construct)
 		_zephir_prop_2 = zend_string_init("eigenvaluesImaginary", 20, 1);
 	}
 
-	ZEND_PARSE_PARAMETERS_START(2, 3)
-		ZEPHIR_Z_PARAM_ARRAY(eigenvalues, eigenvalues_param)
+	ZEND_PARSE_PARAMETERS_START(3, 3)
+		Z_PARAM_OBJECT_OF_CLASS(eigenvalues, zephir_get_internal_ce(SL("tensor\\vector")))
 		Z_PARAM_OBJECT_OF_CLASS(eigenvectors, zephir_get_internal_ce(SL("tensor\\matrix")))
-		Z_PARAM_OPTIONAL
-		ZEPHIR_Z_PARAM_ARRAY(eigenvaluesImaginary, eigenvaluesImaginary_param)
+		Z_PARAM_OBJECT_OF_CLASS(eigenvaluesImaginary, zephir_get_internal_ce(SL("tensor\\vector")))
 	ZEND_PARSE_PARAMETERS_END();
-	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
-	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
-	zephir_fetch_params(1, 2, 1, &eigenvalues_param, &eigenvectors, &eigenvaluesImaginary_param);
-	zephir_get_arrval(&eigenvalues, eigenvalues_param);
-	if (!eigenvaluesImaginary_param) {
-		ZEPHIR_INIT_VAR(&eigenvaluesImaginary);
-		array_init(&eigenvaluesImaginary);
-	} else {
-		zephir_get_arrval(&eigenvaluesImaginary, eigenvaluesImaginary_param);
-	}
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 6, &eigenvalues);
+	zephir_fetch_params_without_memory_grow(3, 0, &eigenvalues, &eigenvectors, &eigenvaluesImaginary);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 6, eigenvalues);
 	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 7, eigenvectors);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 8, &eigenvaluesImaginary);
-	ZEPHIR_MM_RESTORE();
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 8, eigenvaluesImaginary);
 }
 
 /**
  * Return the eigenvalues.
  *
- * @return array<float>
+ * @return \Tensor\Vector
  */
 PHP_METHOD(Tensor_Decompositions_Eigen, eigenvalues)
 {
 
-	RETURN_MEMBER_TYPED(getThis(), "eigenvalues", IS_ARRAY);
-}
-
-/**
- * Return the imaginary parts of the eigenvalues, in the same order as
- * `eigenvalues()`. The i'th complex eigenvalue is
- * `eigenvalues()[i] + i * eigenvaluesImaginary()[i]`. Zero-filled for
- * symmetric inputs.
- *
- * @return array<float>
- */
-PHP_METHOD(Tensor_Decompositions_Eigen, eigenvaluesImaginary)
-{
-
-	RETURN_MEMBER_TYPED(getThis(), "eigenvaluesImaginary", IS_ARRAY);
+	RETURN_MEMBER(getThis(), "eigenvalues");
 }
 
 /**
@@ -268,5 +231,19 @@ PHP_METHOD(Tensor_Decompositions_Eigen, eigenvectors)
 {
 
 	RETURN_MEMBER(getThis(), "eigenvectors");
+}
+
+/**
+ * Return the imaginary parts of the eigenvalues, in the same order as
+ * `eigenvalues()`. The i'th complex eigenvalue is
+ * `eigenvalues()[i] + i * eigenvaluesImaginary()[i]`. Zero-filled for
+ * symmetric inputs.
+ *
+ * @return \Tensor\Vector
+ */
+PHP_METHOD(Tensor_Decompositions_Eigen, eigenvaluesImaginary)
+{
+
+	RETURN_MEMBER(getThis(), "eigenvaluesImaginary");
 }
 

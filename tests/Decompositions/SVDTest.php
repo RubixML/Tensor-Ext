@@ -3,6 +3,7 @@
 namespace Tensor\Tests\Decompositions;
 
 use Tensor\Matrix;
+use Tensor\Vector;
 use Tensor\Decompositions\SVD;
 use PHPUnit\Framework\TestCase;
 
@@ -122,7 +123,7 @@ class SVDTest extends TestCase
 
         $svd = SVD::decompose($a);
 
-        $this->assertEqualsWithDelta([9.0], $svd->singularValues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([9.0], $svd->singularValues()->asArray(), self::MAX_DELTA);
 
         $this->assertEqualsWithDelta($a->asArray(), $this->reconstruct($svd, 1, 1)->asArray(), self::MAX_DELTA);
     }
@@ -182,7 +183,7 @@ class SVDTest extends TestCase
             [0.0, 1.0],
         ]);
 
-        $singularValues = [5.0, 3.0];
+        $singularValues = Vector::fromArray([5.0, 3.0]);
 
         $vT = Matrix::fromArray([
             [1.0, 0.0],
@@ -192,7 +193,7 @@ class SVDTest extends TestCase
         $svd = new SVD($u, $singularValues, $vT);
 
         $this->assertEqualsWithDelta($u->asArray(), $svd->u()->asArray(), self::MAX_DELTA);
-        $this->assertEquals($singularValues, $svd->singularValues());
+        $this->assertEquals($singularValues->asArray(), $svd->singularValues()->asArray());
         $this->assertEqualsWithDelta($vT->asArray(), $svd->vT()->asArray(), self::MAX_DELTA);
 
         // v is the transpose of vT.

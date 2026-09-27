@@ -1168,10 +1168,10 @@ class MatrixTest extends TestCase
     {
         $eig = $matrix->eig(false);
 
-        $this->assertEqualsWithDelta($expected->eigenvalues(), $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvalues()->asArray(), $eig->eigenvalues()->asArray(), self::MAX_DELTA);
 
         // The test matrix has real eigenvalues, so the imaginary parts must be zero.
-        $this->assertEqualsWithDelta(array_fill(0, $matrix->n(), 0.0), $eig->eigenvaluesImaginary(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(array_fill(0, $matrix->n(), 0.0), $eig->eigenvaluesImaginary()->asArray(), self::MAX_DELTA);
 
         $this->assertEqualsWithDelta($expected->eigenvectors()->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
@@ -1188,13 +1188,16 @@ class MatrixTest extends TestCase
                 [20.0, -6.0, -9.0],
             ]),
             new Eigen(
-                [
+                Vector::fromArray([
                     -15.096331148319537, 25.108706520450326, 13.9876246278692,
-                ],
+                ]),
                 Matrix::fromArray([
                     [0.25848694820886425, -0.11314537870318066, -0.9593657388523845],
                     [-0.8622719261400653, -0.17721179605718698, -0.47442924101375483],
                     [-0.6684472200177011, -0.6126879076802705, -0.42165369894378907],
+                ]),
+                Vector::fromArray([
+                    0.0, 0.0, 0.0,
                 ])
             ),
         ];
@@ -1213,7 +1216,7 @@ class MatrixTest extends TestCase
 
         $eig = $matrix->matmul($matrix)->eig(true);
 
-        $values = [-366.30071669298195, 335.92000012383926, 1084.3807165691428];
+        $values = Vector::fromArray([-366.30071669298195, 335.92000012383926, 1084.3807165691428]);
 
         $vectors = Matrix::fromArray([
             [0.5423765325213931, 0.8162941265260668, -0.19872492538460218],
@@ -1221,9 +1224,9 @@ class MatrixTest extends TestCase
             [-0.8388380862654284, 0.5130304137961217, -0.1820726765627782],
         ]);
 
-        $expected = new Eigen($values, $vectors);
+        $expected = new Eigen($values, $vectors, Vector::fromArray([0.0, 0.0, 0.0]));
 
-        $this->assertEqualsWithDelta($expected->eigenvalues(), $eig->eigenvalues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($expected->eigenvalues()->asArray(), $eig->eigenvalues()->asArray(), self::MAX_DELTA);
         $this->assertEqualsWithDelta($expected->eigenvectors()->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
@@ -1246,9 +1249,9 @@ class MatrixTest extends TestCase
             [-0.5307027843302525, -0.7533052009276842, 0.38844025146657923],
         ]);
 
-        $singularValues = [
+        $singularValues = Vector::fromArray([
             34.66917512262571, 17.12630582468919, 8.929610580306822,
-        ];
+        ]);
 
         $vT = Matrix::fromArray([
             [-0.8320393250771425, 0.531457514846513, -0.15894486917903863],
@@ -1259,7 +1262,7 @@ class MatrixTest extends TestCase
         $expected = new SVD($u, $singularValues, $vT);
 
         $this->assertEqualsWithDelta($u->asArray(), $svd->u()->asArray(), self::MAX_DELTA);
-        $this->assertEqualsWithDelta($singularValues, $svd->singularValues(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta($singularValues->asArray(), $svd->singularValues()->asArray(), self::MAX_DELTA);
         $this->assertEqualsWithDelta($vT->asArray(), $svd->vT()->asArray(), self::MAX_DELTA);
     }
 
@@ -4112,7 +4115,7 @@ class MatrixTest extends TestCase
         $eigenvectors = $eig->eigenvectors()->asArray();
 
         // This matrix has real eigenvalues, so the imaginary parts must be zero.
-        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary(), 1e-8);
+        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary()->asArray(), 1e-8);
 
         $aa = $a->asArray();
 
@@ -4139,8 +4142,8 @@ class MatrixTest extends TestCase
 
         $this->assertInstanceOf(Eigen::class, $eig);
 
-        $this->assertEqualsWithDelta([3.3944487241610, 10.605551275464], $eig->eigenvalues(), 1e-8);
-        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary(), 1e-8);
+        $this->assertEqualsWithDelta([3.3944487241610, 10.605551275464], $eig->eigenvalues()->asArray(), 1e-8);
+        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary()->asArray(), 1e-8);
     }
 
     /**
