@@ -1169,6 +1169,10 @@ class MatrixTest extends TestCase
         $eig = $matrix->eig(false);
 
         $this->assertEqualsWithDelta($expected->eigenvalues(), $eig->eigenvalues(), self::MAX_DELTA);
+
+        // The test matrix has real eigenvalues, so the imaginary parts must be zero.
+        $this->assertEqualsWithDelta(array_fill(0, $matrix->n(), 0.0), $eig->eigenvaluesImaginary(), self::MAX_DELTA);
+
         $this->assertEqualsWithDelta($expected->eigenvectors()->asArray(), $eig->eigenvectors()->asArray(), self::MAX_DELTA);
     }
 
@@ -4107,6 +4111,9 @@ class MatrixTest extends TestCase
 
         $eigenvectors = $eig->eigenvectors()->asArray();
 
+        // This matrix has real eigenvalues, so the imaginary parts must be zero.
+        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary(), 1e-8);
+
         $aa = $a->asArray();
 
         for ($j = 0; $j < 2; ++$j) {
@@ -4133,6 +4140,7 @@ class MatrixTest extends TestCase
         $this->assertInstanceOf(Eigen::class, $eig);
 
         $this->assertEqualsWithDelta([3.3944487241610, 10.605551275464], $eig->eigenvalues(), 1e-8);
+        $this->assertEqualsWithDelta([0.0, 0.0], $eig->eigenvaluesImaginary(), 1e-8);
     }
 
     /**

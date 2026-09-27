@@ -190,9 +190,9 @@ PHP_METHOD(Tensor_Decompositions_Lu, __construct)
 		Z_PARAM_OBJECT_OF_CLASS(p, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
 	zephir_fetch_params_without_memory_grow(3, 0, &l, &u, &p);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 8, l);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 9, u);
-	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 10, p);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 9, l);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_1, 10, u);
+	zephir_update_property_zval_cached(this_ptr, _zephir_prop_2, 11, p);
 }
 
 /**

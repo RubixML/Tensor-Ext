@@ -22,7 +22,7 @@ class Svd
     /**
      * The singular values of the matrix A.
      *
-     * @var (int|float)[]
+     * @var array<float>
      */
     protected singularValues;
 
@@ -61,7 +61,7 @@ class Svd
 
     /**
      * @param \Tensor\Matrix u
-     * @param list<int|float> singularValues
+     * @param array<float> singularValues
      * @param \Tensor\Matrix vT
      */
     public function __construct(const <Matrix> u, const array singularValues, const <Matrix> vT)
@@ -84,7 +84,7 @@ class Svd
     /**
      * Return the singular values of matrix A.
      *
-     * @return list<float>
+     * @return array<float>
      */
     public function singularValues() -> array
     {

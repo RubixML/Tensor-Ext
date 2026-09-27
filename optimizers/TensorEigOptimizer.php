@@ -67,6 +67,11 @@ class TensorEigOptimizer extends OptimizerAbstract
             "tensor_eig($symbol, {$resolvedParams[0]}, {$resolvedParams[1]});"
         );
 
+        // The function above returns a 3-tuple: [eigenvalues (real),
+        // eigenvaluesImaginary, eigenvectors]. For complex conjugate pairs the
+        // two corresponding eigenvector columns are the real and imaginary
+        // parts of a single complex eigenvector.
+
         return new CompiledExpression(
             'variable',
             $symbolVariable->getRealName(),

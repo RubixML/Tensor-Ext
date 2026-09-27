@@ -919,6 +919,13 @@ class Matrix implements Tensor
     /**
      * Compute the eigenvalues and eigenvectors of the matrix and return them in a tuple.
      *
+     * For non-symmetric inputs, eigenvalues may come in complex conjugate pairs.
+     * The real parts are returned by `eigenvalues()`, the imaginary parts by
+     * `eigenvaluesImaginary()`. For a complex conjugate pair the two
+     * corresponding eigenvector columns are the real and imaginary parts of a
+     * single complex eigenvector. For `symmetric === true` the imaginary parts
+     * are zero.
+     *
      * @param bool symmetric
      * @return \Tensor\Decompositions\Eigen
      */

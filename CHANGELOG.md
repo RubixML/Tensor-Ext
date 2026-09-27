@@ -1,17 +1,21 @@
 # Change Log
 
 - 4.0.0
+    - Data are now backed by a contiguous C buffer instead of PHP array
     - Added `fromArray()` factory method to build from PHP array
     - Removed `build()` and `quick()` factory methods
     - Tensor constructors are no longer public
+    - Added dynamic kernel dispatching based on CPU architecture
+    - Added AVX/AVX2 and AVX512 element-wise and unary kernels
+    - Implemented 2-slot huge buffer memory pinning
     - Modulus results no longer rounded to nearest integer
     - Standardized serial representation with extension
     - Rename Special interface to `Reductions` and Algebraic to `Unary`
     - Moved `clip()`, `clipLower()`, and `clipUpper()` into `Unary` interface
     - Remove `poisson` factory method
-    - Add AVX-512 dynamic dispatching to arithmetic and unary operations (AVX as fallback); AVX2 reported for diagnostics
     - Fused `covariance()` into a single BLAS `syrk` kernel
-    - Implemented 2-slot huge buffer memory pinning
+    - Add `Eigen::eigenvaluesImaginary()` exposes imaginary part of each eigenvalue
+    - `Matrix::eig()` no longer discards imaginary part of complex eigenvalue pairs
 
 - 3.1.0
 

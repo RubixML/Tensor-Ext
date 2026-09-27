@@ -12,6 +12,15 @@ use Tensor\Exceptions\RuntimeException;
  * The Eigendecompositon or (Spectral decomposition) is a matrix factorization resulting in a
  * matrix of eigenvectors and a corresponding array of eigenvalues.
  *
+ * For non-symmetric real matrices the eigenvalues come in complex conjugate pairs.
+ * This class returns the real and imaginary parts as parallel lists, see
+ * `eigenvalues()` and `eigenvaluesImaginary()`. For a complex conjugate pair,
+ * the two corresponding eigenvector columns are the real and imaginary parts
+ * of a single complex eigenvector.
+ *
+ * For symmetric matrices (`symmetric === true`), all eigenvalues are real and
+ * `eigenvaluesImaginary()` returns a zero-filled list matching the size.
+ *
  * @category    Scientific Computing
  * @package     Rubix/Tensor
  * @author      Andrew DalPino
@@ -19,11 +28,19 @@ use Tensor\Exceptions\RuntimeException;
 class Eigen
 {
     /**
-     * The computed eigenvalues.
+     * The computed eigenvalues (real parts).
      *
-     * @var (int|float)[]
+     * @var array<float>
      */
     protected eigenvalues;
+
+    /**
+     * The imaginary parts of the computed eigenvalues, in the same order as
+     * `eigenvalues`. Zero-filled when the input is symmetric.
+     *
+     * @var array<float>
+     */
+    protected eigenvaluesImaginary;
 
     /**
      * The eigenvectors of the eigendecomposition.
@@ -65,25 +82,28 @@ class Eigen
         let eig = (array) result;
 
         var eigenvalues = (array) eig[0];
-        var eigenvectors = Matrix::fromBuffer(eig[1], a->n(), a->n())->transpose();
+        var eigenvaluesImaginary = (array) eig[1];
+        var eigenvectors = Matrix::fromBuffer(eig[2], a->n(), a->n())->transpose();
 
-        return new self(eigenvalues, eigenvectors);
+        return new self(eigenvalues, eigenvectors, eigenvaluesImaginary);
     }
 
     /**
-     * @param list<int|float> eigenvalues
+     * @param array<float> eigenvalues
      * @param \Tensor\Matrix eigenvectors
+     * @param array<float> eigenvaluesImaginary
      */
-    public function __construct(const array eigenvalues, const <Matrix> eigenvectors)
+    public function __construct(const array eigenvalues, const <Matrix> eigenvectors, const array eigenvaluesImaginary = [])
     {
         let this->eigenvalues = eigenvalues;
         let this->eigenvectors = eigenvectors;
+        let this->eigenvaluesImaginary = eigenvaluesImaginary;
     }
 
     /**
      * Return the eigenvalues.
      *
-     * @return list<int|float>
+     * @return array<float>
      */
     public function eigenvalues() -> array
     {
@@ -91,7 +111,22 @@ class Eigen
     }
 
     /**
-     * Return the eigenvectors.
+     * Return the imaginary parts of the eigenvalues, in the same order as
+     * `eigenvalues()`. The i'th complex eigenvalue is
+     * `eigenvalues()[i] + i * eigenvaluesImaginary()[i]`. Zero-filled for
+     * symmetric inputs.
+     *
+     * @return array<float>
+     */
+    public function eigenvaluesImaginary() -> array
+    {
+        return this->eigenvaluesImaginary;
+    }
+
+    /**
+     * Return the eigenvectors. For a complex conjugate eigenvalue pair the
+     * two corresponding columns are the real and imaginary parts of a single
+     * complex eigenvector.
      *
      * @return \Tensor\Matrix
      */

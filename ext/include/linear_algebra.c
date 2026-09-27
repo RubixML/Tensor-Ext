@@ -689,8 +689,11 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
 }
 
 /**
- * Compute the eigendecomposition of a general matrix A and return the eigenvalues and eigenvectors in a tuple.
- * 
+ * Compute the eigendecomposition of a general matrix A and return the real part of the
+ * eigenvalues, the eigenvectors, and the imaginary part of the eigenvalues in a tuple.
+ * For a complex conjugate pair the two eigenvector columns are the real and imaginary
+ * parts of a single complex eigenvector.
+ *
  * @param return_value
  * @param a
  */
@@ -742,10 +745,19 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
         add_next_index_double(&eigenvalues, wr[i]);
     }
 
+    zval eigenvaluesImaginary;
+
+    array_init_size(&eigenvaluesImaginary, na);
+
+    for (i = 0; i < na; ++i) {
+        add_next_index_double(&eigenvaluesImaginary, wi[i]);
+    }
+
     zval eigenvectors, buf;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
         zval_ptr_dtor(&eigenvalues);
+        zval_ptr_dtor(&eigenvaluesImaginary);
 
         efree(w);
         efree(wr);
@@ -767,9 +779,10 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
 
     zval tuple;
 
-    array_init_size(&tuple, 2);
+    array_init_size(&tuple, 3);
 
     add_next_index_zval(&tuple, &eigenvalues);
+    add_next_index_zval(&tuple, &eigenvaluesImaginary);
     add_next_index_zval(&tuple, &eigenvectors);
 
     RETVAL_ARR(Z_ARR(tuple));
@@ -781,8 +794,10 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
 }
 
 /**
- * Compute the eigendecomposition of a symmetric matrix A and return the eigenvalues and eigenvectors in a tuple.
- * 
+ * Compute the eigendecomposition of a symmetric matrix A and return the (real) eigenvalues,
+ * the eigenvectors, and a zero-filled imaginary eigenvalue list in a tuple. The tuple
+ * shape matches tensor_eig so callers can treat both results uniformly.
+ *
  * @param return_value
  * @param a
  */
@@ -830,10 +845,19 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
         add_next_index_double(&eigenvalues, wr[i]);
     }
 
+    zval eigenvaluesImaginary;
+
+    array_init_size(&eigenvaluesImaginary, na);
+
+    for (i = 0; i < na; ++i) {
+        add_next_index_double(&eigenvaluesImaginary, 0.0);
+    }
+
     zval eigenvectors, buf;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&eigenvectors, (zend_long) na * na, &buf) == FAILURE)) {
         zval_ptr_dtor(&eigenvalues);
+        zval_ptr_dtor(&eigenvaluesImaginary);
 
         efree(w);
         efree(wr);
@@ -853,9 +877,10 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
 
     zval tuple;
 
-    array_init_size(&tuple, 2);
+    array_init_size(&tuple, 3);
 
     add_next_index_zval(&tuple, &eigenvalues);
+    add_next_index_zval(&tuple, &eigenvaluesImaginary);
     add_next_index_zval(&tuple, &eigenvectors);
 
     RETVAL_ARR(Z_ARR(tuple));
