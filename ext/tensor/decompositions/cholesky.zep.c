@@ -83,7 +83,7 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 		zephir_check_call_status();
 		ZEPHIR_INIT_VAR(&_3$$3);
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "Matrix must be", " square, ", &_2$$3, " given.");
-		ZEPHIR_CALL_METHOD(NULL, &_1$$3, "__construct", NULL, 1, &_3$$3);
+		ZEPHIR_CALL_METHOD(NULL, &_1$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
 		zephir_throw_exception_debug(&_1$$3, "tensor/decompositions/cholesky.zep", 37);
 		ZEPHIR_MM_RESTORE();
@@ -106,7 +106,7 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 	zephir_check_call_status();
 	ZEPHIR_CALL_CE_STATIC(&_6, tensor_matrix_ce, "fromBuffer", NULL, 0, &l, &_7, &_8);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 13, &_6);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 14, &_6);
 	zephir_check_call_status();
 	RETURN_MM();
 }

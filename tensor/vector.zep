@@ -31,6 +31,38 @@ class Vector implements Tensor
     protected n;
 
     /**
+     * Build a new vector from a PHP array with validation.
+     *
+     * @deprecated Use `Vector::fromArray([...], true)` instead.
+     *
+     * @param array a
+     * @return self
+     */
+    public static function build(const array a) -> <Vector>
+    {
+        trigger_error("Vector::build() is deprecated, use"
+            . " Vector::fromArray([...], true) instead.", E_USER_DEPRECATED);
+
+        return self::fromArray(a, true);
+    }
+
+    /**
+     * Build a new vector from a PHP array without validation.
+     *
+     * @deprecated Use `Vector::fromArray([...], false)` instead.
+     *
+     * @param array a
+     * @return self
+     */
+    public static function quick(const array a) -> <Vector>
+    {
+        trigger_error("Vector::quick() is deprecated, use"
+            . " Vector::fromArray([...], false) instead.", E_USER_DEPRECATED);
+
+        return self::fromArray(a, false);
+    }
+
+    /**
      * Build a new vector from a flat PHP array of numeric elements.
      *
      * @param array a

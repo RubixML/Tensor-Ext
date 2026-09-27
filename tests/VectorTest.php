@@ -56,6 +56,72 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function buildEmitsDeprecationNotice() : void
+    {
+        $notices = [];
+
+        set_error_handler(
+            function ($errno, $errstr) use (&$notices) : bool {
+                if ($errno === E_USER_DEPRECATED) {
+                    $notices[] = $errstr;
+
+                    return true;
+                }
+
+                return false;
+            },
+            E_USER_DEPRECATED
+        );
+
+        try {
+            $vector = Vector::build([1.0, 2.0, 3.0]);
+
+            $this->assertInstanceOf(Vector::class, $vector);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(1, $notices);
+        $this->assertStringContainsString('Vector::build()', $notices[0]);
+        $this->assertStringContainsString('Vector::fromArray', $notices[0]);
+    }
+
+    /**
+     * @test
+     */
+    public function quickEmitsDeprecationNotice() : void
+    {
+        $notices = [];
+
+        set_error_handler(
+            function ($errno, $errstr) use (&$notices) : bool {
+                if ($errno === E_USER_DEPRECATED) {
+                    $notices[] = $errstr;
+
+                    return true;
+                }
+
+                return false;
+            },
+            E_USER_DEPRECATED
+        );
+
+        try {
+            $vector = Vector::quick([1.0, 2.0, 3.0]);
+
+            $this->assertInstanceOf(Vector::class, $vector);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(1, $notices);
+        $this->assertStringContainsString('Vector::quick()', $notices[0]);
+        $this->assertStringContainsString('Vector::fromArray', $notices[0]);
+    }
+
+    /**
+     * @test
+     */
     public function unaryInterfaceSurface() : void
     {
         $methods = array_map(

@@ -67,6 +67,78 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function buildEmitsDeprecationNotice() : void
+    {
+        $notices = [];
+
+        set_error_handler(
+            function ($errno, $errstr) use (&$notices) : bool {
+                if ($errno === E_USER_DEPRECATED) {
+                    $notices[] = $errstr;
+
+                    return true;
+                }
+
+                return false;
+            },
+            E_USER_DEPRECATED
+        );
+
+        try {
+            $matrix = Matrix::build([
+                [1.0, 2.0, 3.0],
+                [4.0, 5.0, 6.0],
+            ]);
+
+            $this->assertInstanceOf(Matrix::class, $matrix);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(1, $notices);
+        $this->assertStringContainsString('Matrix::build()', $notices[0]);
+        $this->assertStringContainsString('Matrix::fromArray', $notices[0]);
+    }
+
+    /**
+     * @test
+     */
+    public function quickEmitsDeprecationNotice() : void
+    {
+        $notices = [];
+
+        set_error_handler(
+            function ($errno, $errstr) use (&$notices) : bool {
+                if ($errno === E_USER_DEPRECATED) {
+                    $notices[] = $errstr;
+
+                    return true;
+                }
+
+                return false;
+            },
+            E_USER_DEPRECATED
+        );
+
+        try {
+            $matrix = Matrix::quick([
+                [1.0, 2.0, 3.0],
+                [4.0, 5.0, 6.0],
+            ]);
+
+            $this->assertInstanceOf(Matrix::class, $matrix);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(1, $notices);
+        $this->assertStringContainsString('Matrix::quick()', $notices[0]);
+        $this->assertStringContainsString('Matrix::fromArray', $notices[0]);
+    }
+
+    /**
+     * @test
+     */
     public function buildCastsIntegersToFloatsAndPreservesShape() : void
     {
         $matrix = Matrix::fromArray([

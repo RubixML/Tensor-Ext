@@ -44,6 +44,38 @@ class Matrix implements Tensor
     protected n;
 
     /**
+     * Build a new matrix from a PHP array with validation.
+     *
+     * @deprecated Use `Matrix::fromArray([...], true)` instead.
+     *
+     * @param array a
+     * @return self
+     */
+    public static function build(const array a) -> <Matrix>
+    {
+        trigger_error("Matrix::build() is deprecated, use"
+            . " Matrix::fromArray([...], true) instead.", E_USER_DEPRECATED);
+
+        return self::fromArray(a, true);
+    }
+
+    /**
+     * Build a new matrix from a PHP array without validation.
+     *
+     * @deprecated Use `Matrix::fromArray([...], false)` instead.
+     *
+     * @param array a
+     * @return self
+     */
+    public static function quick(const array a) -> <Matrix>
+    {
+        trigger_error("Matrix::quick() is deprecated, use"
+            . " Matrix::fromArray([...], false) instead.", E_USER_DEPRECATED);
+
+        return self::fromArray(a, false);
+    }
+
+    /**
      * Build a new matrix from a PHP array of rows, each row being a PHP array
      * of numeric elements.
      *

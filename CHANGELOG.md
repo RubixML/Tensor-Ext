@@ -3,7 +3,7 @@
 - 4.0.0
     - Data are now backed by a contiguous C buffer instead of PHP array
     - Added `fromArray()` factory method to build from PHP array
-    - Removed `build()` and `quick()` factory methods
+    - `build()` and `quick()` factory methods are now deprecated
     - Tensor constructors are no longer public
     - Added dynamic kernel dispatching based on CPU architecture
     - Added AVX/AVX2 and AVX512 element-wise and unary kernels

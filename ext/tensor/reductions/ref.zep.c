@@ -113,7 +113,7 @@ PHP_METHOD(Tensor_Reductions_Ref, reduce)
 	swaps = zephir_get_intval(&_8);
 	object_init_ex(return_value, tensor_reductions_ref_ce);
 	ZVAL_LONG(&_9, swaps);
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 23, &b, &_9);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 24, &b, &_9);
 	zephir_check_call_status();
 	RETURN_MM();
 }
@@ -156,11 +156,11 @@ PHP_METHOD(Tensor_Reductions_Ref, __construct)
 		ZEPHIR_INIT_VAR(&_0$$3);
 		object_init_ex(&_0$$3, tensor_exceptions_invalidargumentexception_ce);
 		ZVAL_LONG(&_1$$3, swaps);
-		ZEPHIR_CALL_FUNCTION(&_2$$3, "strval", NULL, 4, &_1$$3);
+		ZEPHIR_CALL_FUNCTION(&_2$$3, "strval", NULL, 5, &_1$$3);
 		zephir_check_call_status();
 		ZEPHIR_INIT_VAR(&_3$$3);
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "The number of swaps must", " be greater than or equal to 0, ", &_2$$3, " given.");
-		ZEPHIR_CALL_METHOD(NULL, &_0$$3, "__construct", NULL, 1, &_3$$3);
+		ZEPHIR_CALL_METHOD(NULL, &_0$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
 		zephir_throw_exception_debug(&_0$$3, "tensor/reductions/ref.zep", 67);
 		ZEPHIR_MM_RESTORE();
