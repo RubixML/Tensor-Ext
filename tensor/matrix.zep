@@ -648,7 +648,9 @@ class Matrix implements Tensor
     {
         var b = array_map(callback, this->a->toArray());
 
-        return self::fromArray(b, true);
+        var buffer = tensor_buffer_from_array(b);
+
+        return self::fromBuffer(buffer, this->m, this->n);
     }
 
     /**

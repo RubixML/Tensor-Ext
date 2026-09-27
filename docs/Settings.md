@@ -25,13 +25,12 @@ Return the number of CPU threads currently in use for multiprocessing.
 
 ### `cpuFeatures() : array`
 
-Return the CPU features the extension detected at startup, along with the route the elementwise kernels actually took.
+Return the CPU features the extension detected at startup.
 
-The returned array has four keys:
+The returned array has three keys:
 
 | Key | Type | Meaning |
 | --- | --- | --- |
 | `avx` | `bool` | Whether the CPU exposes the AVX (256-bit) instruction set. |
 | `avx2` | `bool` | Whether the CPU exposes the AVX2 instruction set. Reported for diagnostics only — the dispatched double-precision kernels gain no throughput from a second 256-bit route. |
 | `avx512` | `bool` | Whether the CPU exposes the AVX-512F (512-bit) instruction set. |
-| `dispatch` | `string` | The route the elementwise kernels took, widest first: `"avx512"` when AVX-512 was available and the 512-bit kernels were selected, `"avx"` when AVX was selected, `"scalar"` otherwise. |

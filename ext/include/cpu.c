@@ -148,15 +148,6 @@ int tensor_cpu_has_avx512(void)
 	return tensor_cpu_detected.avx512;
 }
 
-const char * tensor_cpu_dispatch_name(void)
-{
-	if (tensor_cpu_has_avx512()) {
-		return "avx512";
-	}
-
-	return tensor_cpu_has_avx() ? "avx" : "scalar";
-}
-
 /**
  * Route the elementwise kernels through their widest usable variant, giving
  * precedence to AVX-512 and falling back to AVX. Called once from the module

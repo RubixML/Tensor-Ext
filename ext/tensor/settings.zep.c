@@ -92,13 +92,10 @@ PHP_METHOD(Tensor_Settings, numThreads)
 }
 
 /**
- * Return the CPU features the extension detected at startup, along with the
- * route the elementwise kernels actually took.
+ * Return the CPU features the extension detected at startup.
  *
- * The returned array has four keys: "avx", "avx2" and "avx512" are the
- * feature flags detected on the CPU, and "dispatch" is the route the
- * elementwise kernels were installed on: "avx512" when that ISA is usable,
- * otherwise "avx", and "scalar" when neither is.
+ * The returned array has three keys: "avx", "avx2" and "avx512", each a
+ * flag reporting whether that instruction set is available on the CPU.
  *
  * @return array
  */
