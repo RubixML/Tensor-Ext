@@ -43,12 +43,31 @@
  * Three sets of kernels are dispatched: the arithmetic kernels in
  * include/arithmetic.c, the elementwise comparison kernels in
  * include/comparison.c, and the elementwise unary kernels in include/unary.c.
- * The remaining kernels in those files keep a single baseline route, for two
- * distinct reasons.
+ * The remaining kernels in those files keep a single baseline route, because
+ * they are per-element libm calls.
  *
  * Per-element libm calls -- pow, fmod, and exp, log, sin and the rest of the
  * transcendental unary operations -- are scalar no matter which ISA is
- * enabled. These are left alone deliberately, not overlooked.
+ * enabled, because the register only widens the call, not the work inside it.
+ * These are left alone deliberately, not overlooked. Closing that gap needs a
+ * vector math library (SLEEF being the only portable one; the glibc _ZGV*_
+ * symbols are x86-only) rather than a wider route, so it is a dependency
+ * decision and not a dispatch one.
+ *
+ * floor and ceil were in that group until they were measured. They are not a
+ * scalar library call in any meaningful sense -- each is a single exact
+ * operation -- but SSE2 has no rounding instruction, so the baseline route had
+ * to inline libm's floor() as a branchy sequence that the compiler then refused
+ * to vectorize, which cost about 1.2 ns/element against 0.57 for abs. Under
+ * TENSOR_TARGET_AVX the same line is one vroundsd and the branch goes away, so
+ * include/unary.c now dispatches them. Two lessons generalise. First, before
+ * concluding that a kernel cannot be dispatched, check whether the obstacle is
+ * the operation or the ISA baseline. Second, dispatching a kernel does not
+ * guarantee it widens: floor still processes one double per instruction because
+ * GCC will not select the packed vrndscalepd, even under `#pragma omp simd`.
+ * The distantly related case is that AVX2 is reported for diagnostics only, for
+ * the opposite reason -- it is available and useful but adds nothing for double
+ * precision.
  */
 
 /* Signatures shared by the dispatched kernels. `_scalar` operations take the

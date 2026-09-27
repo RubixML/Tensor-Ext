@@ -86,6 +86,8 @@
 
 TENSOR_UNARY_DISPATCH(abs, fabs(va[i]))
 TENSOR_UNARY_DISPATCH(sqrt, sqrt(va[i]))
+TENSOR_UNARY_DISPATCH(floor, floor(va[i]))
+TENSOR_UNARY_DISPATCH(ceil, ceil(va[i]))
 TENSOR_UNARY_DISPATCH(negate, -va[i])
 TENSOR_UNARY_DISPATCH(sign, va[i] > 0.0 ? 1.0 : (va[i] < 0.0 ? -1.0 : 0.0))
 TENSOR_UNARY_DISPATCH(rad2deg, (va[i] / M_PI) * 180.0)
@@ -93,12 +95,6 @@ TENSOR_UNARY_DISPATCH(deg2rad, (va[i] / 180.0) * M_PI)
 
 #undef TENSOR_UNARY_DISPATCH
 #undef TENSOR_UNARY_BODY
-
-/* floor and ceil, plus every operation whose cost sits inside a libm call, keep
- * the single body the whole file used before there was any dispatching.  The
- * reasons are spelled out in include/dispatch.h: widening the register does not
- * help a scalar library call, and for these two the compiler actually gives up
- * on vectorizing once AVX is in scope, so dispatching them would be slower. */
 
 #define TENSOR_UNARY(name, expr)                                                             \
 	void tensor_##name(zval * return_value, zval * a)                                    \
@@ -139,8 +135,6 @@ TENSOR_UNARY(cos, cos(va[i]))
 TENSOR_UNARY(acos, acos(va[i]))
 TENSOR_UNARY(tan, tan(va[i]))
 TENSOR_UNARY(atan, atan(va[i]))
-TENSOR_UNARY(floor, floor(va[i]))
-TENSOR_UNARY(ceil, ceil(va[i]))
 
 #undef TENSOR_UNARY
 
@@ -354,12 +348,6 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
  * column and row macros in include/arithmetic.c. The bounds are loop invariant
  * and get broadcast into a register, leaving a per-lane compare and select. */
 
-/* Note on the parameter names below: the body macros are parameterised on
- * TENSOR_CLIP_EXPR rather than on something like `hi`, because a macro argument
- * is substituted for every occurrence of the parameter in the invoking macro's
- * body -- naming it `hi` would rewrite the `const double hi` that reads the
- * bound out of the zval. */
-
 #define TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                           \
 	zend_long i;                                                                 \
 	zend_long n = 0;                                                             \
@@ -466,19 +454,17 @@ TENSOR_CLIP_BOUND_DISPATCH(clip_upper, va[i] > bound ? bound : va[i])
  * since the two initializers are mutually exclusive. The routes are all already
  * pointing at the baseline variants before this runs, so the effect is strictly
  * an upgrade.
- *
- * floor and ceil are absent on purpose: see include/dispatch.h for why letting
- * the compiler see AVX makes them slower rather than faster.
  */
 void tensor_unary_dispatch_avx_init(void)
 {
 	tensor_abs_route = tensor_abs_avx;
 	tensor_sqrt_route = tensor_sqrt_avx;
+	tensor_floor_route = tensor_floor_avx;
+	tensor_ceil_route = tensor_ceil_avx;
 	tensor_negate_route = tensor_negate_avx;
 	tensor_sign_route = tensor_sign_avx;
 	tensor_rad2deg_route = tensor_rad2deg_avx;
 	tensor_deg2rad_route = tensor_deg2rad_avx;
-
 	tensor_clip_route = tensor_clip_avx;
 	tensor_clip_lower_route = tensor_clip_lower_avx;
 	tensor_clip_upper_route = tensor_clip_upper_avx;
@@ -489,18 +475,20 @@ void tensor_unary_dispatch_avx_init(void)
  *
  * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
  * CPU actually supporting AVX-512. The effect is strictly an upgrade to the
- * widest route. The kernels excluded above (floor, ceil and the libm paths) stay
- * excluded here for the same reasons.
+ * widest route. The libm paths stay excluded here for the reason given in
+ * include/dispatch.h: widening the register does not help a scalar library
+ * call.
  */
 void tensor_unary_dispatch_avx512_init(void)
 {
 	tensor_abs_route = tensor_abs_avx512;
 	tensor_sqrt_route = tensor_sqrt_avx512;
+	tensor_floor_route = tensor_floor_avx512;
+	tensor_ceil_route = tensor_ceil_avx512;
 	tensor_negate_route = tensor_negate_avx512;
 	tensor_sign_route = tensor_sign_avx512;
 	tensor_rad2deg_route = tensor_rad2deg_avx512;
 	tensor_deg2rad_route = tensor_deg2rad_avx512;
-
 	tensor_clip_route = tensor_clip_avx512;
 	tensor_clip_lower_route = tensor_clip_lower_avx512;
 	tensor_clip_upper_route = tensor_clip_upper_avx512;

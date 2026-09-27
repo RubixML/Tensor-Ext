@@ -3644,6 +3644,88 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * The integer fixtures above cannot tell floor and ceil apart, and they
+     * never reach the cases where the rounding instruction in include/unary.c
+     * has to agree with libm. Fractional magnitudes, the infinities, the NaN and
+     * the extremes of the format are where a roundsd-based route could differ
+     * from the scalar one, so they are pinned here.
+     *
+     * A signed zero is deliberately absent. The kernel itself would round
+     * toward negative infinity and produce one, but fromArray() loses the sign
+     * of a zero on the way in, so such a fixture would only be testing the
+     * buffer. That is a separate, pre-existing question from the routing one.
+     *
+     * @test
+     */
+    public function floorAndCeilRoundLikeLibm() : void
+    {
+        $largest = 1.7976931348623157E+308;
+        $smallest = 5.0E-324;
+
+        $a = Matrix::fromArray([
+            [1.5, -1.5, 0.5, -0.5],
+            [2.0, -2.0, 0.0, 7.0],
+            [INF, -INF, NAN, 4503599627370496.0],
+            [$largest, -$largest, $smallest, -$smallest],
+        ]);
+
+        $fl = $a->floor()->asArray();
+        $ce = $a->ceil()->asArray();
+
+        // A positive fraction loses its fraction and a negative one loses it
+        // toward negative infinity, so floor and ceil part company on sign.
+        $this->assertEquals([1.0, -2.0, 0.0, -1.0], $fl[0]);
+        $this->assertEquals([2.0, -1.0, 1.0, 0.0], $ce[0]);
+
+        // Exact integers are a fixed point of both.
+        $this->assertEquals([2.0, -2.0, 0.0, 7.0], $fl[1]);
+        $this->assertEquals([2.0, -2.0, 0.0, 7.0], $ce[1]);
+
+        // The infinities pass through and the NaN poisons its slot.
+        $this->assertSame(INF, $fl[2][0]);
+        $this->assertSame(-INF, $fl[2][1]);
+        $this->assertSame(INF, $ce[2][0]);
+        $this->assertSame(-INF, $ce[2][1]);
+
+        // Every double at or above 2^52 is already integral, so the largest
+        // magnitudes are their own floor and ceiling.
+        $this->assertSame($largest, $fl[3][0]);
+        $this->assertSame($largest, $ce[3][0]);
+        $this->assertSame(-$largest, $fl[3][1]);
+        $this->assertSame(-$largest, $ce[3][1]);
+
+        // A subnormal is not an integer, so it rounds away: the positive one
+        // ceilings to 1.0, the negative one floors to -1.0, and the two that
+        // round toward zero land on a zero of the opposite sign to the input.
+        $this->assertEquals(0.0, $fl[3][2]);
+        $this->assertEquals(1.0, $ce[3][2]);
+        $this->assertEquals(-1.0, $fl[3][3]);
+        $this->assertEquals(0.0, $ce[3][3]);
+
+        // Every non-NaN lane must equal PHP's own floor or ceil exactly, with no
+        // delta: these are integer results, so any drift at all is a fault.
+        foreach ([[$fl, 'floor'], [$ce, 'ceil']] as [$got, $which]) {
+            foreach ($a->asArray() as $row => $values) {
+                foreach ($values as $column => $value) {
+                    if (is_nan($value)) {
+                        $this->assertNan($got[$row][$column]);
+
+                        continue;
+                    }
+
+                    $expected = $which === 'floor' ? floor($value) : ceil($value);
+
+                    $this->assertSame(
+                        $expected,
+                        $got[$row][$column],
+                        sprintf('%s returned the wrong double at row %d column %d.', $which, $row, $column)
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * @test
      */
     public function l1Norm() : void
