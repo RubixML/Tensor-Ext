@@ -1639,7 +1639,12 @@ class Matrix implements Tensor
      */
     public function quantile(const float q) -> <ColumnVector>
     {
-        if unlikely !is_finite(q) || q < 0.0 || q > 1.0 {
+        if unlikely !is_finite(q) {
+            throw new InvalidArgumentException("Q must be a finite value"
+                . " between 0 and 1.");
+        }
+
+        if unlikely q < 0.0 || q > 1.0 {
             throw new InvalidArgumentException("Q must be between"
                 . " 0 and 1, " . strval(q) . " given.");
         }

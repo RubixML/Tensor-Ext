@@ -1,20 +1,4 @@
-# Tensor: Scientific Computing for [PHP](https://php.net)
-
-[![PHP from Packagist](https://img.shields.io/packagist/php-v/rubix/tensor_ext.svg?style=flat&colorB=8892BF)](https://www.php.net/) [![Latest Stable Version](https://img.shields.io/packagist/v/rubix/tensor_ext.svg?style=flat&colorB=orange)](https://packagist.org/packages/rubix/tensor_ext) [![Code Checks](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml/badge.svg)](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml) [![Downloads from Packagist](https://img.shields.io/packagist/dt/rubix/tensor_ext.svg?style=flat&colorB=red)](https://packagist.org/packages/rubix/tensor_ext) [![GitHub](https://img.shields.io/github/license/RubixML/Tensor-Ext)](https://github.com/RubixML/Tensor-Ext/blob/master/LICENSE.md)
-
-Tensor Ext is a PHP extension that brings high-performance Matrix and Vector computing to the PHP language. The friendly object-oriented API is written in [Zephir](https://zephir-lang.com) and backed by highly-optimized native C kernels.
-
-## Features
-
-- **Object-oriented API** — Matrix and Vector APIs are fluent and expressive.
-- **Low memory footprint** — Tensor objects are backed by contiguous C buffers.
-- **Native BLAS and LAPACK acceleration** — Highly-optimized multi-threaded linear algebra kernels.
-- **Universal element-wise functions** — Element-wise operations are broadcasted and vectorized.
-- **Dynamic kernel dispatching** — Optimized kernels are dispatched based on CPU architecture.
-
-## Documentation
-
-API documentation can be found in the `docs` folder in the project root.
+# Installation
 
 ## Requirements
 
@@ -90,11 +74,3 @@ To confirm that the extension is loaded in PHP, you can run the following comman
 ```sh
 php -m | grep tensor
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-The code is licensed [MIT](LICENSE) and the documentation is licensed [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).

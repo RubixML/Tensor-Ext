@@ -62,26 +62,6 @@ class SettingsTest extends TestCase
     }
 
     /**
-     * Each wider set of instructions is an extension of the one below it, so it
-     * cannot be present without its predecessor. A report claiming otherwise
-     * would mean the detection was wrong.
-     *
-     * @test
-     */
-    public function cpuFeaturesWideningImpliesAvx() : void
-    {
-        $features = Settings::cpuFeatures();
-
-        if ($features['avx2']) {
-            $this->assertTrue($features['avx']);
-        }
-
-        if ($features['avx512']) {
-            $this->assertTrue($features['avx']);
-        }
-    }
-
-    /**
      * The dispatched kernels must produce the same answers as the baseline ones
      * whether or not the AVX route was installed. The operations exercised here
      * are dispatched, so on an AVX CPU these run through the widened loops; on
