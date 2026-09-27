@@ -20,11 +20,25 @@ class VectorOuterProductBench
      */
     protected $b;
 
+    /**
+     * @var Vector
+     */
+    protected $c;
+
+    /**
+     * @var Vector
+     */
+    protected $d;
+
     public function setUp() : void
     {
         $this->a = Vector::uniform(500);
 
         $this->b = Vector::uniform(500);
+
+        $this->c = Vector::uniform(2000);
+
+        $this->d = Vector::uniform(2000);
     }
 
     /**
@@ -35,5 +49,15 @@ class VectorOuterProductBench
     public function outer() : void
     {
         $this->a->outer($this->b);
+    }
+
+    /**
+     * @Subject
+     * @Iterations(5)
+     * @OutputTimeUnit("seconds", precision=3)
+     */
+    public function outerLarge() : void
+    {
+        $this->c->outer($this->d);
     }
 }

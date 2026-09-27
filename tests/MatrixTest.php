@@ -1144,6 +1144,36 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEquals(3, $c->rank());
+
+        // A tall (m > n) matrix of full column rank is reported as min(m, n).
+        $rowDependent = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [2.0, 4.0, 7.0],
+            [0.0, 1.0, 0.0],
+            [3.0, 6.0, 10.0],
+        ]);
+
+        $this->assertEquals(3, $rowDependent->rank());
+
+        // A wide (m < n) matrix of full row rank is reported as min(m, n).
+        $wide = Matrix::fromArray([
+            [3.0, 3.0, 7.0, 11.0, 13.0],
+            [5.0, 4.0, 11.0, 18.0, 21.0],
+            [4.0, 7.0, 5.0, 10.0, 14.0],
+        ]);
+
+        $this->assertEquals(3, $wide->rank());
+
+        // Tall and singular (column 2 = column 0 + column 1), so the rank is
+        // one less than the number of columns.
+        $singularTall = Matrix::fromArray([
+            [1.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+            [1.0, 1.0, 2.0],
+            [2.0, 1.0, 3.0],
+        ]);
+
+        $this->assertEquals(2, $singularTall->rank());
     }
 
     /**
@@ -1189,6 +1219,36 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertFalse($c->fullRank());
+
+        // A tall matrix of full column rank is full rank, dependency of the
+        // rows notwithstanding (see rank() above).
+        $rowDependent = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [2.0, 4.0, 7.0],
+            [0.0, 1.0, 0.0],
+            [3.0, 6.0, 10.0],
+        ]);
+
+        $this->assertTrue($rowDependent->fullRank());
+
+        // A wide matrix of full row rank is full rank.
+        $wide = Matrix::fromArray([
+            [3.0, 3.0, 7.0, 11.0, 13.0],
+            [5.0, 4.0, 11.0, 18.0, 21.0],
+            [4.0, 7.0, 5.0, 10.0, 14.0],
+        ]);
+
+        $this->assertTrue($wide->fullRank());
+
+        // Tall and singular (see rank() above); fullRank() must be false.
+        $singularTall = Matrix::fromArray([
+            [1.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+            [1.0, 1.0, 2.0],
+            [2.0, 1.0, 3.0],
+        ]);
+
+        $this->assertFalse($singularTall->fullRank());
     }
 
     /**

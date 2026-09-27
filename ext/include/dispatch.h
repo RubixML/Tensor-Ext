@@ -39,6 +39,13 @@
  * in the first three files keep a single baseline route, because they are
  * per-element libm calls.
  *
+ * A fifth set is dispatched from include/linear_algebra.c: the row update, row
+ * scale, and outer product fill that the row reductions and `outer()` are built
+ * out of. Those are not entry points but the innermost loop of a larger
+ * algorithm, so the route pointer there replaces the loop and the caller keeps
+ * its own control flow. The three routes, and the reason the wider kernels can
+ * only be reached through a pointer, are the same.
+ *
  * Per-element libm calls -- pow, fmod, and exp, log, sin and the rest of the
  * transcendental unary operations -- are scalar no matter which ISA is
  * enabled, because the register only widens the call, not the work inside it.
@@ -98,5 +105,8 @@ void tensor_comparison_dispatch_avx512_init(void);
 void tensor_signal_processing_dispatch_avx_init(void);
 void tensor_signal_processing_dispatch_fma_init(void);
 void tensor_signal_processing_dispatch_avx512_init(void);
+void tensor_linear_algebra_dispatch_avx_init(void);
+void tensor_linear_algebra_dispatch_fma_init(void);
+void tensor_linear_algebra_dispatch_avx512_init(void);
 
 #endif

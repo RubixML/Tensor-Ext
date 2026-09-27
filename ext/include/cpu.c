@@ -186,16 +186,19 @@ void tensor_cpu_init(void)
 		tensor_arithmetic_dispatch_avx512_init();
 		tensor_comparison_dispatch_avx512_init();
 		tensor_unary_dispatch_avx512_init();
+		tensor_linear_algebra_dispatch_avx512_init();
 		tensor_signal_processing_dispatch_avx512_init();
 	} else if (tensor_cpu_has_fma()) {
 		tensor_arithmetic_dispatch_avx_init();
 		tensor_comparison_dispatch_avx_init();
 		tensor_unary_dispatch_avx_init();
+		tensor_linear_algebra_dispatch_fma_init();
 		tensor_signal_processing_dispatch_fma_init();
 	} else if (tensor_cpu_has_avx()) {
 		tensor_arithmetic_dispatch_avx_init();
 		tensor_comparison_dispatch_avx_init();
 		tensor_unary_dispatch_avx_init();
+		tensor_linear_algebra_dispatch_avx_init();
 		tensor_signal_processing_dispatch_avx_init();
 	}
 }

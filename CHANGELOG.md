@@ -16,7 +16,7 @@
     - Fused `covariance()` into a single BLAS `syrk` kernel
     - Add `Eigen::eigenvaluesImaginary()` exposes imaginary part of each eigenvalue
     - `Matrix::eig()` no longer discards imaginary part of complex eigenvalue pairs
-    - Convolutions now use tiled kernels with FMA
+    - Convolutions now use tiled kernels with FMA and vectorization
 
 - 3.1.0
 

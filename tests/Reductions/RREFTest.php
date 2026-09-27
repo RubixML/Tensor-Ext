@@ -260,6 +260,135 @@ class RREFTest extends TestCase
     /**
      * @test
      */
+    public function reduceTallFullColumnRankIsIdentityOverZeros() : void
+    {
+        // A tall matrix of full column rank reduces to the identity over a zero
+        // block. The reduced form is known from the row echelon form alone, so
+        // the reduction writes it out directly; the values are therefore exact
+        // rather than the 1e-16 of a value computed by elimination.
+        $a = Matrix::fromArray([
+            [2.0, 1.0, 1.0],
+            [1.0, 3.0, 2.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 4.0],
+            [3.0, 1.0, 5.0],
+        ]);
+
+        $rref = RREF::reduce($a);
+
+        $expectedA = Matrix::fromArray([
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
+
+        $aOut = $rref->a()->asArray();
+
+        for ($i = 0; $i < 3; ++$i) {
+            $this->assertSame(1.0, $aOut[$i][$i]);
+
+            for ($j = 0; $j < 3; ++$j) {
+                if ($i !== $j) {
+                    $this->assertSame(0.0, $aOut[$i][$j]);
+                }
+            }
+        }
+
+        for ($i = 3; $i < 5; ++$i) {
+            for ($j = 0; $j < 3; ++$j) {
+                $this->assertSame(0.0, $aOut[$i][$j]);
+            }
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function reduceRowDependentTallIsStillIdentityOverZeros() : void
+    {
+        // The rows are dependent -- the last is the sum of the first two -- but
+        // the columns are not, so the matrix is of full column rank and the rank
+        // is min(m, n) despite the dependency.
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [2.0, 4.0, 7.0],
+            [0.0, 1.0, 0.0],
+            [3.0, 6.0, 10.0],
+        ]);
+
+        $rref = RREF::reduce($a);
+
+        $expectedA = Matrix::fromArray([
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [0.0, 0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function reduceWide3x5() : void
+    {
+        // A wide matrix of full row rank reduces to [I | X], which is not
+        // determined by the row echelon form and so has to be computed. The
+        // values are the exact fractions 35/19, 43/19, -5/19, 2/19, 17/19 and
+        // 16/19, which do not divide out to anything short of a float.
+        $a = Matrix::fromArray([
+            [3.0, 3.0, 7.0, 11.0, 13.0],
+            [5.0, 4.0, 11.0, 18.0, 21.0],
+            [4.0, 7.0, 5.0, 10.0, 14.0],
+        ]);
+
+        $rref = RREF::reduce($a);
+
+        $expectedA = Matrix::fromArray([
+            [1.0, 0.0, 0.0, 1.8421052631578947, 2.263157894736842],
+            [0.0, 1.0, 0.0, -0.2631578947368421, 0.10526315789473684],
+            [0.0, 0.0, 1.0, 0.8947368421052632, 0.8421052631578947],
+        ]);
+
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function reduceSingularTall4x3Has2NonZeroRows() : void
+    {
+        // Exactly singular (column 2 = column 0 + column 1) with more rows than
+        // columns. The fourth pivot of the echelon form is not above the
+        // tolerance, so the shortcut does not apply and the two surviving rows
+        // are reduced in place.
+        $a = Matrix::fromArray([
+            [1.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+            [1.0, 1.0, 2.0],
+            [2.0, 1.0, 3.0],
+        ]);
+
+        $rref = RREF::reduce($a);
+
+        $expectedA = Matrix::fromArray([
+            [1.0, 0.0, 1.0],
+            [0.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expectedA->asArray(), $rref->a()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
     public function accessorsReturnMatrices() : void
     {
         $a = Matrix::fromArray([

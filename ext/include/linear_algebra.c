@@ -12,7 +12,154 @@
 #include "php_ext.h"
 #include "kernel/buffer.h"
 #include "include/buffer.h"
+#include "include/dispatch.h"
 #include "include/reductions.h"
+
+/**
+ * Dispatched row kernels for the row reductions and the outer product.
+ *
+ * The reasoning behind the three routes is the same as for the elementwise
+ * kernels in include/arithmetic.c -- the extension is built with no ISA flags,
+ * so the baseline tops out at the SSE2 width of two doubles per vector, and the
+ * wider kernels are only ever reached through a pointer that cpu.c installs once
+ * it has found the CPU to support the ISA (see the note in include/dispatch.h).
+ * The shape is different in one respect: these are not whole zval entry points
+ * but the innermost loop of a larger algorithm, so the route pointer replaces
+ * the loop and the caller keeps its own control flow.
+ *
+ * Each body is a macro expanded once per route, so the copies cannot drift.
+ *
+ * Every body takes restrict pointers, and that is what makes the loops vectorize
+ * at all. Each reads and writes `w`, a private scratch block copied out of the
+ * caller's buffer, through one `double *`, so with no restrict the vectorizer
+ * had to assume the store could collide with the load and bailed out.
+ *
+ * The accumulate step of the row update is the only difference between the FMA
+ * routes and the rest. `fma()` is spelled out on those and nowhere else, for the
+ * reason given in include/signal_processing.c: on the baseline route the
+ * compiler would emit a call to fma() for every element, which is far slower
+ * than the two-rounded multiply and subtract. The two roundings it collapses
+ * differ by at most one unit in the last place, which is several orders of
+ * magnitude below the tolerance the tests assert against.
+ */
+
+/* dst[j] -= alpha * src[j] */
+#define TENSOR_ROW_UPDATE_BODY                                                    \
+	unsigned int j;                                                               \
+	                                                                               \
+	for (j = 0; j < len; ++j) {                                                  \
+		dst[j] = TENSOR_ROW_UPDATE_ACC(alpha, src[j], dst[j]);                    \
+	}
+
+#define TENSOR_ROW_UPDATE_ACC(a, x, acc) ((acc) - (a) * (x))
+
+/* row[j] /= pivot. A division cannot be fused, so there is no FMA route for
+ * this one and `1 / pivot` is deliberately not used to make one -- that would
+ * change the result. */
+#define TENSOR_ROW_SCALE_BODY                                                     \
+	unsigned int j;                                                               \
+	                                                                               \
+	for (j = 0; j < len; ++j) {                                                  \
+		row[j] /= pivot;                                                          \
+	}
+
+/* vc = va (x) vb, i.e. every row of the product is one element of va broadcast
+ * across vb. */
+#define TENSOR_OUTER_FILL_BODY                                                    \
+	unsigned int i, j;                                                            \
+	                                                                               \
+	for (i = 0; i < na; ++i) {                                                   \
+		const double a = va[i];                                                  \
+		double * out = vc + i * nb;                                              \
+	                                                                               \
+		for (j = 0; j < nb; ++j) {                                               \
+			out[j] = a * vb[j];                                                  \
+		}                                                                          \
+	}
+
+typedef void (*tensor_row_update_fn)(double * restrict dst, const double * restrict src, double alpha, unsigned int len);
+typedef void (*tensor_row_scale_fn)(double * restrict row, double pivot, unsigned int len);
+typedef void (*tensor_outer_fill_fn)(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb);
+
+#define TENSOR_ROW_UPDATE_BASELINE(name)                                           \
+	static void name##_baseline(double * restrict dst, const double * restrict src, double alpha, unsigned int len) \
+	{                                                                             \
+		TENSOR_ROW_UPDATE_BODY                                                    \
+	}
+
+#define TENSOR_ROW_UPDATE_ROUTE(name)                                              \
+	TENSOR_TARGET_AVX                                                             \
+	static void name##_avx(double * restrict dst, const double * restrict src, double alpha, unsigned int len) \
+	{                                                                             \
+		TENSOR_ROW_UPDATE_BODY                                                    \
+	}                                                                             \
+	                                                                               \
+	TENSOR_TARGET_AVX512_FMA                                                     \
+	static void name##_avx512(double * restrict dst, const double * restrict src, double alpha, unsigned int len) \
+	{                                                                             \
+		TENSOR_ROW_UPDATE_BODY                                                    \
+	}
+
+TENSOR_ROW_UPDATE_BASELINE(tensor_row_update)
+TENSOR_ROW_UPDATE_ROUTE(tensor_row_update)
+
+static tensor_row_update_fn tensor_row_update_route = tensor_row_update_baseline;
+
+/* The FMA route is a separate function rather than a separate route pointer: a
+ * route can only point at one variant, and cpu.c picks exactly one of the three
+ * initializers, so the FMA variant is installed in place of the plain AVX one. */
+#undef TENSOR_ROW_UPDATE_ACC
+#define TENSOR_ROW_UPDATE_ACC(a, x, acc) fma(-(a), (x), (acc))
+
+TENSOR_TARGET_FMA
+static void tensor_row_update_fma(double * restrict dst, const double * restrict src, double alpha, unsigned int len)
+{
+	TENSOR_ROW_UPDATE_BODY
+}
+
+#define TENSOR_ROW_SCALE_BASELINE(name)                                            \
+	static void name##_baseline(double * restrict row, double pivot, unsigned int len) \
+	{                                                                             \
+		TENSOR_ROW_SCALE_BODY                                                     \
+	}
+
+TENSOR_ROW_SCALE_BASELINE(tensor_row_scale)
+
+TENSOR_TARGET_AVX
+static void tensor_row_scale_avx(double * restrict row, double pivot, unsigned int len)
+{
+	TENSOR_ROW_SCALE_BODY
+}
+
+TENSOR_TARGET_AVX512
+static void tensor_row_scale_avx512(double * restrict row, double pivot, unsigned int len)
+{
+	TENSOR_ROW_SCALE_BODY
+}
+
+static tensor_row_scale_fn tensor_row_scale_route = tensor_row_scale_baseline;
+
+#define TENSOR_OUTER_FILL_BASELINE(name)                                           \
+	static void name##_baseline(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb) \
+	{                                                                             \
+		TENSOR_OUTER_FILL_BODY                                                    \
+	}
+
+TENSOR_OUTER_FILL_BASELINE(tensor_outer_fill)
+
+TENSOR_TARGET_AVX
+static void tensor_outer_fill_avx(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb)
+{
+	TENSOR_OUTER_FILL_BODY
+}
+
+TENSOR_TARGET_AVX512
+static void tensor_outer_fill_avx512(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb)
+{
+	TENSOR_OUTER_FILL_BODY
+}
+
+static tensor_outer_fill_fn tensor_outer_fill_route = tensor_outer_fill_baseline;
 
 /**
  * Matrix-matrix multiplication i.e. linear transformation of matrices A and B.
@@ -340,9 +487,7 @@ static long tensor_ref_singular(double * w, unsigned int m, unsigned int n)
             scale = w[i * n + c] / pivot;
 
             if (fabs(scale) >= epsilon) {
-                for (j = 0; j < n; ++j) {
-                    w[i * n + j] -= scale * pivotRow[j];
-                }
+                tensor_row_update_route(w + i * n, pivotRow, scale, n);
             }
         }
 
@@ -1132,11 +1277,133 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
 }
 
 /**
+ * Return whether the row echelon form in `w` is that of a matrix of full column
+ * rank, so that the reduced form is forced to be `[I; 0]` and need not be
+ * computed. Only meaningful for `m >= n`, where `dgetrf` having found a pivot in
+ * every column means every diagonal entry below is a real pivot.
+ *
+ * The `dgetrf` status alone is not enough to answer this. Its test is for a
+ * pivot that is exactly zero, and floating-point roundoff in the factorization
+ * of a matrix that is singular in exact arithmetic leaves a pivot of order 1e-16
+ * instead -- the reduced form of a 4x4 whose fourth column is a fixed
+ * combination of the first three comes back from `dgetrf` as full rank. So the
+ * diagonal is measured against the same tolerance the reductions themselves use
+ * before the shortcut is taken; below it, the matrix is treated as the
+ * rank-deficient one it is and the reduction below decides its rank, which is
+ * what `rank()`, `fullRank()` and `det()` all report.
+ *
+ * The tolerance is absolute and matches the one in `tensor_rref_step` rather
+ * than being relative to the scale of the matrix. That is a property of the
+ * reductions this file has always had, and the shortcut is gated on exactly the
+ * same question the reduction would have asked of each pivot in turn, so a
+ * matrix that takes the shortcut reduces to what the reduction would have
+ * produced. A relative tolerance would be the better-motivated criterion, but it
+ * would change the rank of every small-scaled matrix as well, which is a
+ * separate decision.
+ *
+ * @param w
+ * @param n
+ * @return int
+ */
+static int tensor_rref_is_full_column_rank(const double * w, unsigned int n)
+{
+    unsigned int i;
+
+    double epsilon = 0.00000001;
+
+    for (i = 0; i < n; ++i) {
+        if (fabs(w[i * n + i]) < epsilon) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+/**
+ * Complete the row echelon form in `w` in place by normalizing each pivot to 1
+ * and eliminating the entries above it, turning a row echelon form into the
+ * reduced one. The scan is the pure-PHP `Rref::reduce` path: it advances past
+ * a column whose pivot is below the tolerance, zeroing the tail of a row that
+ * has no entry at or to the right of that column, and skipping a column whose
+ * pivot is small but whose row does have one to the right.
+ *
+ * Only reached when the row echelon form is not already known to be `[I; 0]`;
+ * see `tensor_rref` for the shortcut that skips this entirely.
+ *
+ * @param w
+ * @param m
+ * @param n
+ */
+static void tensor_rref_step(double * w, unsigned int m, unsigned int n)
+{
+    unsigned int i, j;
+
+    double epsilon = 0.00000001;
+    unsigned int r = 0, c = 0;
+
+    while (r < m && c < n) {
+        double pivot = w[r * n + c];
+
+        if (fabs(pivot) < epsilon) {
+            int found = 0;
+
+            for (i = c; i < n; ++i) {
+                if (fabs(w[r * n + i]) >= epsilon) {
+                    found = 1;
+                    break;
+                }
+            }
+
+            if (!found) {
+                for (j = c; j < n; ++j) {
+                    w[r * n + j] = 0.0;
+                }
+
+                ++r;
+
+                continue;
+            }
+
+            ++c;
+
+            continue;
+        }
+
+        if (pivot != 1.0) {
+            tensor_row_scale_route(w + r * n, pivot, n);
+        }
+
+        for (i = 0; i < r; ++i) {
+            double scale = w[i * n + c];
+
+            if (fabs(scale) >= epsilon) {
+                tensor_row_update_route(w + i * n, w + r * n, scale, n);
+            }
+        }
+
+        ++r;
+        ++c;
+    }
+}
+
+/**
  * Compute the reduced row echelon form (RREF) of matrix A (read from a
  * TensorBuffer). The matrix is first brought to row-echelon form via LAPACK
  * `dgetrf` (with a singular-matrix fallback), and then Gauss-Jordan
  * normalization and elimination are applied to produce unit pivots, matching
  * the pure-PHP `Rref::reduce` path.
+ *
+ * When the echelon form comes back with full column rank -- `dgetrf` found a
+ * pivot in every one of the `n` columns and each is above the tolerance the
+ * reduction uses -- the reduced row echelon form is already known and is
+ * written directly: the identity block over a zero block, with the `m - n`
+ * surplus rows all zero. The uniqueness of RREF makes that forced, and taking it
+ * skips the O(m * n * min(m, n)) of elimination that would otherwise have been
+ * spent computing an answer already in hand. A matrix with more rows than
+ * columns can only be in this case; a wide one reduces to `[I | X]` and still
+ * has to be computed. See `tensor_rref_is_full_column_rank` for what "full
+ * column rank" means here, and why it is not the `dgetrf` status on its own.
  *
  * @param return_value
  * @param a
@@ -1147,9 +1414,7 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
 {
     zend_long nbuf = 0;
     int ok_a = 0;
-    unsigned int i, j;
-
-    double epsilon = 0.00000001;
+    unsigned int i;
 
     unsigned int ma = (unsigned int) zephir_get_intval(m);
     unsigned int na = (unsigned int) zephir_get_intval(n);
@@ -1182,56 +1447,14 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
         RETURN_NULL();
     }
 
-    /* Normalize each pivot to 1 and eliminate the entries above it, matching
-     * the pure-PHP `Rref::reduce` path. */
-    unsigned int r = 0, c = 0;
+    if (status == 0 && ma >= na && tensor_rref_is_full_column_rank(w, na)) {
+        memset(w, 0, (size_t) ma * na * sizeof(double));
 
-    while (r < ma && c < na) {
-        double pivot = w[r * na + c];
-
-        if (fabs(pivot) < epsilon) {
-            int found = 0;
-
-            for (i = c; i < na; ++i) {
-                if (fabs(w[r * na + i]) >= epsilon) {
-                    found = 1;
-                    break;
-                }
-            }
-
-            if (!found) {
-                for (j = c; j < na; ++j) {
-                    w[r * na + j] = 0.0;
-                }
-
-                ++r;
-
-                continue;
-            }
-
-            ++c;
-
-            continue;
+        for (i = 0; i < na; ++i) {
+            w[i * na + i] = 1.0;
         }
-
-        if (pivot != 1.0) {
-            for (j = 0; j < na; ++j) {
-                w[r * na + j] /= pivot;
-            }
-        }
-
-        for (i = 0; i < r; ++i) {
-            double scale = w[i * na + c];
-
-            if (fabs(scale) >= epsilon) {
-                for (j = 0; j < na; ++j) {
-                    w[i * na + j] -= scale * w[r * na + j];
-                }
-            }
-        }
-
-        ++r;
-        ++c;
+    } else {
+        tensor_rref_step(w, ma, na);
     }
 
     zval result, buf;
@@ -1388,16 +1611,10 @@ void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
     if (UNEXPECTED(tensor_tensorbuffer_create(&product, (zend_long) naHat * nbHat, &buf) == FAILURE)) {
         return;
     }
-
     {
         double * vc = (double *) zephir_buffer_doubles(&buf);
-        unsigned int i, j;
 
-        for (i = 0; i < naHat; ++i) {
-            for (j = 0; j < nbHat; ++j) {
-                vc[i * nbHat + j] = va[i] * vb[j];
-            }
-        }
+        tensor_outer_fill_route(vc, va, vb, naHat, nbHat);
     }
 
     zval_ptr_dtor(&buf);
@@ -1492,3 +1709,45 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
     zval_ptr_dtor(&c);
 }
 
+/* Point every dispatched row kernel in this file at its AVX variant.
+ *
+ * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the CPU
+ * actually supporting AVX. The routes are all already pointing at the baseline
+ * variants before this runs, so the effect is strictly an upgrade.
+ */
+void tensor_linear_algebra_dispatch_avx_init(void)
+{
+	tensor_row_update_route = tensor_row_update_avx;
+	tensor_row_scale_route = tensor_row_scale_avx;
+	tensor_outer_fill_route = tensor_outer_fill_avx;
+}
+
+/**
+ * Point every dispatched row kernel in this file at its FMA variant.
+ *
+ * The row update is the only kernel here with a multiply-accumulate to fuse. The
+ * row scale is a division and the outer product a bare multiply, neither of
+ * which FMA can improve, so those two are pointed at the same AVX variants the
+ * plain AVX initializer would have used -- cpu.c runs this in place of that one
+ * rather than alongside it.
+ */
+void tensor_linear_algebra_dispatch_fma_init(void)
+{
+	tensor_row_update_route = tensor_row_update_fma;
+	tensor_row_scale_route = tensor_row_scale_avx;
+	tensor_outer_fill_route = tensor_outer_fill_avx;
+}
+
+/**
+ * Point every dispatched row kernel in this file at its AVX-512 variant.
+ *
+ * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the CPU
+ * actually supporting AVX-512 -- and on FMA, since only one of the three
+ * initializers runs. The effect is strictly an upgrade to the widest route.
+ */
+void tensor_linear_algebra_dispatch_avx512_init(void)
+{
+	tensor_row_update_route = tensor_row_update_avx512;
+	tensor_row_scale_route = tensor_row_scale_avx512;
+	tensor_outer_fill_route = tensor_outer_fill_avx512;
+}
