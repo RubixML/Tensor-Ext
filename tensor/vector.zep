@@ -501,9 +501,9 @@ class Vector implements Tensor
      */
     public function outer(const <Vector> b) -> <Matrix>
     {
-        var result = tensor_outer(this->a, b->buffer(), this->n, b->n());
+        var buffer = tensor_outer(this->a, b->buffer(), this->n, b->n());
 
-        return Matrix::fromBuffer(result, this->n, b->n());
+        return Matrix::fromBuffer(buffer, this->n, b->n());
     }
 
     /**
@@ -1101,9 +1101,9 @@ class Vector implements Tensor
      */
     public function sum() -> float
     {
-        var result = tensor_reduce_sum(this->a, 1, this->n);
+        var buffer = tensor_reduce_sum(this->a, 1, this->n);
 
-        return (double) result->get(0);
+        return (double) buffer->get(0);
     }
 
     /**
@@ -1113,9 +1113,9 @@ class Vector implements Tensor
      */
     public function product() -> float
     {
-        var result = tensor_reduce_product(this->a, 1, this->n);
+        var buffer = tensor_reduce_product(this->a, 1, this->n);
 
-        return (double) result->get(0);
+        return (double) buffer->get(0);
     }
 
     /**
@@ -1130,9 +1130,9 @@ class Vector implements Tensor
                 . " the minimum of an empty vector.");
         }
 
-        var result = tensor_reduce_min(this->a, 1, this->n);
+        var buffer = tensor_reduce_min(this->a, 1, this->n);
 
-        return (double) result->get(0);
+        return (double) buffer->get(0);
     }
 
     /**
@@ -1147,9 +1147,9 @@ class Vector implements Tensor
                 . " the maximum of an empty vector.");
         }
 
-        var result = tensor_reduce_max(this->a, 1, this->n);
+        var buffer = tensor_reduce_max(this->a, 1, this->n);
 
-        return (double) result->get(0);
+        return (double) buffer->get(0);
     }
 
     /**
@@ -1164,9 +1164,9 @@ class Vector implements Tensor
                 . " the argmin of an empty vector.");
         }
 
-        var result = tensor_reduce_argmin(this->a, 1, this->n);
+        var buffer = tensor_reduce_argmin(this->a, 1, this->n);
 
-        return (int) result->get(0);
+        return (int) buffer->get(0);
     }
 
     /**
@@ -1181,9 +1181,9 @@ class Vector implements Tensor
                 . " the argmax of an empty vector.");
         }
 
-        var result = tensor_reduce_argmax(this->a, 1, this->n);
+        var buffer = tensor_reduce_argmax(this->a, 1, this->n);
 
-        return (int) result->get(0);
+        return (int) buffer->get(0);
     }
 
     /**
@@ -1208,9 +1208,9 @@ class Vector implements Tensor
                 . " the median of an empty vector.");
         }
 
-        var result = tensor_median(this->a, this->n);
+        var buffer = tensor_median(this->a, this->n);
 
-        return (float) result->get(0);
+        return (float) buffer->get(0);
     }
 
     /**
@@ -1232,9 +1232,9 @@ class Vector implements Tensor
                 . " the quantile of an empty vector.");
         }
 
-        var result = tensor_quantile(this->a, this->n, q);
+        var buffer = tensor_quantile(this->a, this->n, q);
 
-        return (float) result->get(0);
+        return (float) buffer->get(0);
     }
 
     /**
@@ -1375,11 +1375,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_multiply_row(b->buffer(), this->a, this->n);
 
-        let result = tensor_multiply_row(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1397,11 +1395,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_divide_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_divide_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1419,11 +1415,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_add_row(b->buffer(), this->a, this->n);
 
-        let result = tensor_add_row(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1441,11 +1435,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_subtract_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_subtract_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1463,11 +1455,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_pow_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_pow_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1485,11 +1475,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_mod_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_mod_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1507,11 +1495,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_equal_row(b->buffer(), this->a, this->n);
 
-        let result = tensor_equal_row(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1529,11 +1515,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_not_equal_row(b->buffer(), this->a, this->n);
 
-        let result = tensor_not_equal_row(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1551,11 +1535,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_greater_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_greater_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1573,11 +1555,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_greater_equal_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_greater_equal_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1595,11 +1575,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_less_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_less_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -1617,11 +1595,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var result;
+        var buffer = tensor_less_equal_row_reverse(b->buffer(), this->a, this->n);
 
-        let result = tensor_less_equal_row_reverse(b->buffer(), this->a, this->n);
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**

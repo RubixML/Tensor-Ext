@@ -62,15 +62,27 @@ php -m | grep tensor
 
 ### Tip for Compiling on MacOS
 
-To avoid some errors on Mac devices using homebrew, don't forget to add the following environment variables.
+Install the build dependencies with [Homebrew](https://brew.sh) (alongside a PHP build, e.g. `brew install php`):
 
 ```sh
-export LDFLAGS="-L$(brew --prefix openblas)/lib -L$(brew --prefix pcre2)/lib -L$(brew --prefix gcc)/lib/gcc/current"
-export CPPFLAGS="-I$(brew --prefix openblas)/include -I$(brew --prefix pcre2)/include -I$(brew --prefix gcc)/include"
-export PKG_CONFIG_PATH="$(brew --prefix openblas)/lib/pkgconfig:$(brew --prefix pcre2)/lib/pkgconfig:$(brew --prefix gcc)/lib/pkgconfig"
+$ brew install gcc openblas lapack re2c make autoconf automake
+```
+
+- `openblas` provides [OpenBLAS](https://www.openblas.net/) (BLAS/LAPACK).
+- `lapack` provides the [LAPACKE](https://www.netlib.org/lapack/lapacke.html) C interface (`liblapacke`).
+- `gcc` provides [GFortran](https://gcc.gnu.org/wiki/GFortran) and the GCC runtime used at link time.
+
+Several of these are keg-only and not on the default build paths, so export the following before compiling:
+
+```sh
+export LDFLAGS="-L$(brew --prefix openblas)/lib -L$(brew --prefix lapack)/lib -L$(brew --prefix pcre2)/lib -L$(brew --prefix gcc)/lib/gcc/current"
+export CPPFLAGS="-I$(brew --prefix openblas)/include -I$(brew --prefix lapack)/include -I$(brew --prefix pcre2)/include -I$(brew --prefix gcc)/include"
+export PKG_CONFIG_PATH="$(brew --prefix openblas)/lib/pkgconfig:$(brew --prefix lapack)/lib/pkgconfig:$(brew --prefix pcre2)/lib/pkgconfig:$(brew --prefix gcc)/lib/pkgconfig"
 export PATH="$(brew --prefix gcc)/bin:$PATH"
 export FC=$(brew --prefix gcc)/bin/gfortran
 ```
+
+> **Apple clang / C23:** If `zephir compile` fails with `C23 was disabled in precompiled file ... but is currently enabled`, disable Zephir's precompiled-header optimisation first: `export ZEPHIR_NO_PCH=1`.
 
 ## Your First Script
 

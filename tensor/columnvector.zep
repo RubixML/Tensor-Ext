@@ -77,11 +77,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer =tensor_multiply_col(b->buffer(), this->a, b->n());
 
-        let result = tensor_multiply_col(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -99,11 +97,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer =tensor_divide_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_divide_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -121,11 +117,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer  =tensor_add_col(b->buffer(), this->a, b->n());
 
-        let result = tensor_add_col(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -143,11 +137,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_subtract_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_subtract_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -165,11 +157,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_pow_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_pow_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
  
     /**
@@ -187,11 +177,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_mod_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_mod_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -209,11 +197,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_equal_col(b->buffer(), this->a, b->n());
 
-        let result = tensor_equal_col(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -231,11 +217,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_not_equal_col(b->buffer(), this->a, b->n());
 
-        let result = tensor_not_equal_col(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -253,11 +237,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_greater_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_greater_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -275,11 +257,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_greater_equal_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_greater_equal_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -297,11 +277,9 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_less_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_less_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 
     /**
@@ -319,10 +297,8 @@ class ColumnVector extends Vector
                 . (string) b->m() . ".");
         }
 
-        var result;
+        var buffer = tensor_less_equal_col_reverse(b->buffer(), this->a, b->n());
 
-        let result = tensor_less_equal_col_reverse(b->buffer(), this->a, b->n());
-
-        return Matrix::fromBuffer(result, b->m(), b->n());
+        return Matrix::fromBuffer(buffer, b->m(), b->n());
     }
 }
