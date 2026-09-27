@@ -1,6 +1,5 @@
 namespace Tensor;
 
-use Tensor\Buffer;
 use Tensor\Reductions\Ref;
 use Tensor\Reductions\Rref;
 use Tensor\Decompositions\Lu;
@@ -381,7 +380,7 @@ class Matrix implements Tensor
      */
     protected function __construct(<TensorBuffer> a, const int m, const int n)
     {
-        if unlikely a->type() !== Buffer::TYPE_DOUBLE {
+        if unlikely a->type() !== TensorBuffer::TYPE_DOUBLE {
             throw new InvalidArgumentException("Argument must wrap a buffer of"
                 . " type double.");
         }
@@ -588,7 +587,7 @@ class Matrix implements Tensor
      *
      * @return \Tensor\TensorBuffer
      */
-    public function asTensorBuffer() -> <TensorBuffer>
+    public function buffer() -> <TensorBuffer>
     {
         return this->a;
     }
@@ -764,7 +763,7 @@ class Matrix implements Tensor
     {
         var rref = this->rref()->a();
 
-        return tensor_rank(rref->asTensorBuffer(), rref->m(), rref->n());
+        return tensor_rank(rref->buffer(), rref->m(), rref->n());
     }
 
     /**
@@ -826,7 +825,7 @@ class Matrix implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return ColumnVector::fromBuffer(tensor_matrix_dot(this->a, b->asTensorBuffer(), this->m, this->n));
+        return ColumnVector::fromBuffer(tensor_matrix_dot(this->a, b->buffer(), this->m, this->n));
     }
 
     /**
@@ -1697,7 +1696,7 @@ class Matrix implements Tensor
 
             let result = tensor_covariance_centered(
                 this->a,
-                mean->asTensorBuffer(),
+                mean->buffer(),
                 this->m,
                 this->n
             );
@@ -2199,11 +2198,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_multiply_row(this->a, bHat, this->n);
+        let result = tensor_multiply_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2223,11 +2220,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_divide_row(this->a, bHat, this->n);
+        let result = tensor_divide_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2247,11 +2242,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_add_row(this->a, bHat, this->n);
+        let result = tensor_add_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2271,11 +2264,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_subtract_row(this->a, bHat, this->n);
+        let result = tensor_subtract_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2295,11 +2286,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_pow_row(this->a, bHat, this->n);
+        let result = tensor_pow_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2319,11 +2308,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
     
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_mod_row(this->a, bHat, this->n);
+        let result = tensor_mod_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2344,11 +2331,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_equal_row(this->a, bHat, this->n);
+        let result = tensor_equal_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2368,11 +2353,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_not_equal_row(this->a, bHat, this->n);
+        let result = tensor_not_equal_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2392,11 +2375,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_greater_row(this->a, bHat, this->n);
+        let result = tensor_greater_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2416,11 +2397,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_greater_equal_row(this->a, bHat, this->n);
+        let result = tensor_greater_equal_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2440,11 +2419,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_less_row(this->a, bHat, this->n);
+        let result = tensor_less_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2465,11 +2442,9 @@ class Matrix implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_less_equal_row(this->a, bHat, this->n);
+        let result = tensor_less_equal_row(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2489,11 +2464,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_multiply_col(this->a, bHat, this->n);
+        let result = tensor_multiply_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2513,11 +2486,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_divide_col(this->a, bHat, this->n);
+        let result = tensor_divide_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2537,11 +2508,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_add_col(this->a, bHat, this->n);
+        let result = tensor_add_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2561,11 +2530,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_subtract_col(this->a, bHat, this->n);
+        let result = tensor_subtract_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2585,11 +2552,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_pow_col(this->a, bHat, this->n);
+        let result = tensor_pow_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2609,11 +2574,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_mod_col(this->a, bHat, this->n);
+        let result = tensor_mod_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2633,11 +2596,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_equal_col(this->a, bHat, this->n);
+        let result = tensor_equal_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2657,11 +2618,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_not_equal_col(this->a, bHat, this->n);
+        let result = tensor_not_equal_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2681,11 +2640,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_greater_col(this->a, bHat, this->n);
+        let result = tensor_greater_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2705,11 +2662,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_greater_equal_col(this->a, bHat, this->n);
+        let result = tensor_greater_equal_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2729,11 +2684,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_less_col(this->a, bHat, this->n);
+        let result = tensor_less_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -2753,11 +2706,9 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_less_equal_col(this->a, bHat, this->n);
+        let result = tensor_less_equal_col(this->a, b->buffer(), this->n);
 
         return new self(result, this->m, this->n);
     }
@@ -3027,7 +2978,7 @@ class Matrix implements Tensor
             throw new RuntimeException("Invalid matrix data.");
         }
 
-        let this->a = a->asTensorBuffer();
+        let this->a = a->buffer();
         let this->m = data["m"];
         let this->n = data["n"];
     }

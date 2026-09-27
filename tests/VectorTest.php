@@ -138,7 +138,7 @@ class VectorTest extends TestCase
         $vector = Vector::fromBuffer($buffer);
 
         $this->assertInstanceOf(Vector::class, $vector);
-        $this->assertSame($buffer, $vector->asTensorBuffer());
+        $this->assertSame($buffer, $vector->buffer());
         $this->assertSame([5], $vector->shape());
         $this->assertEqualsWithDelta([1.0, 2.0, 3.0, 4.0, 5.0], $vector->asArray(), self::MAX_DELTA);
     }

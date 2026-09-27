@@ -51,9 +51,9 @@ class Eigen
         var result;
 
         if symmetric {
-            let result = tensor_eig_symmetric(a->asTensorBuffer(), a->n());
+            let result = tensor_eig_symmetric(a->buffer(), a->n());
         } else {
-            let result = tensor_eig(a->asTensorBuffer(), a->n());
+            let result = tensor_eig(a->buffer(), a->n());
         }
 
         if is_null(result) {

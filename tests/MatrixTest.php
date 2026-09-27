@@ -108,7 +108,7 @@ class MatrixTest extends TestCase
         $matrix = Matrix::fromBuffer($buffer, 2, 3);
 
         $this->assertInstanceOf(Matrix::class, $matrix);
-        $this->assertSame($buffer, $matrix->asTensorBuffer());
+        $this->assertSame($buffer, $matrix->buffer());
         $this->assertSame([2, 3], $matrix->shape());
         $this->assertEqualsWithDelta([
             [1.0, 2.0, 3.0],

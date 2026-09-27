@@ -30,7 +30,7 @@ class Rref
      */
     public static function reduce(const <Matrix> a) -> <Rref>
     {
-        var result = tensor_rref(a->asTensorBuffer(), a->m(), a->n());
+        var result = tensor_rref(a->buffer(), a->m(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to reduce matrix.");

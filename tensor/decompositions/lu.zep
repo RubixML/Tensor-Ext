@@ -52,7 +52,7 @@ class Lu
                 . " square, " . $a->shapeString() . " given.");
         }
 
-        var result = tensor_lu(a->asTensorBuffer(), a->n());
+        var result = tensor_lu(a->buffer(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to decompose matrix.");

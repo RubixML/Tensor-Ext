@@ -37,7 +37,7 @@ class Cholesky
                 . " square, " . $a->shapeString() . " given.");
         }
 
-        var l = tensor_cholesky(a->asTensorBuffer(), a->n());
+        var l = tensor_cholesky(a->buffer(), a->n());
 
         if is_null(l) {
             throw new RuntimeException("Failed to decompose matrix.");

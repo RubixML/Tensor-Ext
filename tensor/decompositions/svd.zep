@@ -42,7 +42,7 @@ class Svd
      */
     public static function decompose(const <Matrix> a) -> <Svd>
     {
-        var result = tensor_svd(a->asTensorBuffer(), a->m(), a->n());
+        var result = tensor_svd(a->buffer(), a->m(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to decompose matrix.");

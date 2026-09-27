@@ -60,7 +60,7 @@ class ColumnVectorTest extends TestCase
         $vector = ColumnVector::fromBuffer($buffer);
 
         $this->assertInstanceOf(ColumnVector::class, $vector);
-        $this->assertSame($buffer, $vector->asTensorBuffer());
+        $this->assertSame($buffer, $vector->buffer());
         $this->assertSame([3], $vector->shape());
         $this->assertEqualsWithDelta([-15.0, 25.0, 35.0], $vector->asArray(), self::MAX_DELTA);
     }

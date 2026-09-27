@@ -38,7 +38,7 @@ class Ref
      */
     public static function reduce(const <Matrix> a) -> <Ref>
     {
-        var result = tensor_ref(a->asTensorBuffer(), a->m(), a->n());
+        var result = tensor_ref(a->buffer(), a->m(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to decompose matrix.");

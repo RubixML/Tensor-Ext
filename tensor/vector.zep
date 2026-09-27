@@ -1,6 +1,5 @@
 namespace Tensor;
 
-use Tensor\Buffer;
 use Tensor\Exceptions\InvalidArgumentException;
 use Tensor\Exceptions\DimensionalityMismatch;
 use Tensor\Exceptions\RuntimeException;
@@ -261,7 +260,7 @@ class Vector implements Tensor
      */
     protected function __construct(<TensorBuffer> a)
     {
-        if unlikely a->type() !== Buffer::TYPE_DOUBLE {
+        if unlikely a->type() !== TensorBuffer::TYPE_DOUBLE {
             throw new InvalidArgumentException("Argument must wrap a buffer of"
                 . " type double.");
         }
@@ -337,7 +336,7 @@ class Vector implements Tensor
      *
      * @return \Tensor\TensorBuffer
      */
-    public function asTensorBuffer() -> <TensorBuffer>
+    public function buffer() -> <TensorBuffer>
     {
         return this->a;
     }
@@ -502,7 +501,7 @@ class Vector implements Tensor
      */
     public function outer(const <Vector> b) -> <Matrix>
     {
-        var result = tensor_outer(this->a, b->asTensorBuffer(), this->n, b->n());
+        var result = tensor_outer(this->a, b->buffer(), this->n, b->n());
 
         return Matrix::fromBuffer(result, this->n, b->n());
     }
@@ -1376,11 +1375,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_multiply_row(bHat, this->a, this->n);
+        let result = tensor_multiply_row(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1400,11 +1397,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_divide_row_reverse(bHat, this->a, this->n);
+        let result = tensor_divide_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1424,11 +1419,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_add_row(bHat, this->a, this->n);
+        let result = tensor_add_row(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1448,11 +1441,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_subtract_row_reverse(bHat, this->a, this->n);
+        let result = tensor_subtract_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1472,11 +1463,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_pow_row_reverse(bHat, this->a, this->n);
+        let result = tensor_pow_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1496,11 +1485,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_mod_row_reverse(bHat, this->a, this->n);
+        let result = tensor_mod_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1520,11 +1507,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_equal_row(bHat, this->a, this->n);
+        let result = tensor_equal_row(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1544,11 +1529,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_not_equal_row(bHat, this->a, this->n);
+        let result = tensor_not_equal_row(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1568,11 +1551,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_greater_row_reverse(bHat, this->a, this->n);
+        let result = tensor_greater_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1592,11 +1573,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_greater_equal_row_reverse(bHat, this->a, this->n);
+        let result = tensor_greater_equal_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1616,11 +1595,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_less_row_reverse(bHat, this->a, this->n);
+        let result = tensor_less_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1640,11 +1617,9 @@ class Vector implements Tensor
                 . (string) b->n() . ".");
         }
 
-        var bHat, result;
+        var result;
 
-        let bHat = b->asTensorBuffer();
-
-        let result = tensor_less_equal_row_reverse(bHat, this->a, this->n);
+        let result = tensor_less_equal_row_reverse(b->buffer(), this->a, this->n);
 
         return Matrix::fromBuffer(result, b->m(), b->n());
     }
@@ -1664,7 +1639,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_multiply(this->a, b->a));
+        return new static(tensor_multiply(this->a, b->buffer()));
     }
 
     /**
@@ -1682,7 +1657,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_divide(this->a, b->a));
+        return new static(tensor_divide(this->a, b->buffer()));
     }
 
     /**
@@ -1700,7 +1675,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_add(this->a, b->a));
+        return new static(tensor_add(this->a, b->buffer()));
     }
 
     /**
@@ -1718,7 +1693,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_subtract(this->a, b->a));
+        return new static(tensor_subtract(this->a, b->buffer()));
     }
 
     /**
@@ -1736,7 +1711,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_pow(this->a, b->a));
+        return new static(tensor_pow(this->a, b->buffer()));
     }
 
     /**
@@ -1754,7 +1729,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_mod(this->a, b->a));
+        return new static(tensor_mod(this->a, b->buffer()));
     }
 
     /**
@@ -1773,7 +1748,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_equal(this->a, b->a));
+        return new static(tensor_equal(this->a, b->buffer()));
     }
 
     /**
@@ -1791,7 +1766,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_not_equal(this->a, b->a));
+        return new static(tensor_not_equal(this->a, b->buffer()));
     }
 
     /**
@@ -1809,7 +1784,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_greater(this->a, b->a));
+        return new static(tensor_greater(this->a, b->buffer()));
     }
 
     /**
@@ -1827,7 +1802,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_greater_equal(this->a, b->a));
+        return new static(tensor_greater_equal(this->a, b->buffer()));
     }
 
     /**
@@ -1845,7 +1820,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_less(this->a, b->a));
+        return new static(tensor_less(this->a, b->buffer()));
     }
 
     /**
@@ -1863,7 +1838,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return new static(tensor_less_equal(this->a, b->a));
+        return new static(tensor_less_equal(this->a, b->buffer()));
     }
 
     /**
@@ -2102,7 +2077,7 @@ class Vector implements Tensor
             throw new RuntimeException("Invalid vector data.");
         }
 
-        let this->a = a->asTensorBuffer();
+        let this->a = a->buffer();
         let this->n = data["n"];
     }
 }

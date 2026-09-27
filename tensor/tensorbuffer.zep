@@ -17,6 +17,10 @@ use Tensor\Exceptions\InvalidArgumentException;
  */
 class TensorBuffer
 {
+    const TYPE_DOUBLE = 1;
+
+    const TYPE_LONG = 2;
+
     /**
      * The underlying buffer being decorated.
      *
