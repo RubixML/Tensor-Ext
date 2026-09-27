@@ -475,7 +475,9 @@ class Matrix implements Tensor
                 . " bounds.");
         }
 
-        return Vector::fromBuffer(this->a->slice(index * this->n, this->n));
+        var buffer = this->a->slice(index * this->n, this->n);
+        
+        return Vector::fromBuffer(buffer);
     }
 
     /**
@@ -492,7 +494,9 @@ class Matrix implements Tensor
                 . " bounds.");
         }
 
-        return ColumnVector::fromBuffer(this->a->sliceStrided(index, this->m, this->n));
+        var buffer = this->a->sliceStrided(index, this->m, this->n);
+        
+        return ColumnVector::fromBuffer(buffer);
     }
 
     /**
@@ -508,7 +512,9 @@ class Matrix implements Tensor
                 . " square, " . this->shapeString() . " given.");
         }
 
-        return Vector::fromBuffer(this->a->sliceStrided(0, this->m, this->n + 1));
+        var buffer = this->a->sliceStrided(0, this->m, this->n + 1);
+
+        return Vector::fromBuffer(buffer);
     }
 
     /**
@@ -518,7 +524,7 @@ class Matrix implements Tensor
      */
     public function asVectors() -> array
     {
-        var rowBuffer;
+        var buffer;
 
         array b = [];
 
@@ -526,8 +532,8 @@ class Matrix implements Tensor
             return [];
         }
 
-        for rowBuffer in this->a->split(this->n) {
-            let b[] = Vector::fromBuffer(rowBuffer);
+        for buffer in this->a->split(this->n) {
+            let b[] = Vector::fromBuffer(buffer);
         }
 
         return b;
@@ -540,7 +546,7 @@ class Matrix implements Tensor
      */
     public function asColumnVectors() -> array
     {
-        var columnBuffer;
+        var buffer;
 
         array b = [];
 
@@ -548,8 +554,8 @@ class Matrix implements Tensor
             return [];
         }
 
-        for columnBuffer in this->asColumnBuffers() {
-            let b[] = ColumnVector::fromBuffer(columnBuffer);
+        for buffer in this->asColumnBuffers() {
+            let b[] = ColumnVector::fromBuffer(buffer);
         }
 
         return b;
@@ -633,9 +639,7 @@ class Matrix implements Tensor
     }
 
     /**
-     * Run a function over all of the elements in the matrix.
-     *
-     * @internal
+     * Run a callback function over all of the elements in the matrix.
      *
      * @param callable callback
      * @return self
@@ -644,15 +648,11 @@ class Matrix implements Tensor
     {
         var b = array_map(callback, this->a->toArray());
 
-        var buffer = tensor_buffer_from_array(b);
-
-        return new self(buffer, this->m, this->n);
+        return self::fromArray(b, true);
     }
 
     /**
      * Reduce the matrix down to a scalar using a callback function.
-     *
-     * @internal
      *
      * @param callable callback function (float carry, float value): float
      * @param float initial
@@ -671,7 +671,7 @@ class Matrix implements Tensor
     public function transpose() -> <Matrix>
     {
         if unlikely this->n < 1 {
-            return self::fromArray([], false);
+            return this;
         }
 
         var buffer = tensor_matrix_transpose(this->a, this->m, this->n);
@@ -1738,9 +1738,9 @@ class Matrix implements Tensor
                 . " greater than maximum.");
         }
 
-        return new self(
-            tensor_clip(this->a, (double) min, (double) max), this->m, this->n
-        );
+        var buffer = tensor_clip(this->a, (double) min, (double) max);
+
+        return new self(buffer, this->m, this->n);
     }
 
     /**
@@ -1751,9 +1751,9 @@ class Matrix implements Tensor
      */
     public function clipLower(const float min) -> <Matrix>
     {
-        return new self(
-            tensor_clip_lower(this->a, (double) min), this->m, this->n
-        );
+        var buffer = tensor_clip_lower(this->a, (double) min);
+
+        return new self(buffer, this->m, this->n);
     }
 
     /**
@@ -1764,9 +1764,9 @@ class Matrix implements Tensor
      */
     public function clipUpper(const float max) -> <Matrix>
     {
-        return new self(
-            tensor_clip_upper(this->a, (double) max), this->m, this->n
-        );
+        var buffer = tensor_clip_upper(this->a, (double) max);
+
+        return new self(buffer, this->m, this->n);
     }
 
     /**
@@ -1844,7 +1844,9 @@ class Matrix implements Tensor
             let c[] = bufferB->concat([bufferA]);
         }
 
-        return new self(TensorBuffer::fromBuffers(c), m, this->n + b->n());
+        var buffer = TensorBuffer::fromBuffers(c);
+
+        return new self(buffer, m, this->n + b->n());
     }
 
     /**
@@ -1878,7 +1880,9 @@ class Matrix implements Tensor
             let c[] = bufferA->concat([bufferB]);
         }
 
-        return new self(TensorBuffer::fromBuffers(c), m, this->n + b->n());
+        var buffer = TensorBuffer::fromBuffers(c);
+
+        return new self(buffer, m, this->n + b->n());
     }
 
     /**
