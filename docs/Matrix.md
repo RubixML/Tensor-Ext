@@ -183,6 +183,12 @@ Transpose the matrix, i.e. rows become columns and columns become rows.
 
 ## Linear Algebra
 
+### Numerical tolerance
+
+`rank()`, `fullRank()`, `det()`, `inverse()` and `pseudoinverse()` judge a value to be zero when it is at or below `max(m, n) * DBL_EPSILON * c`, where `c` is the largest absolute value the operation is applied to: the largest singular value for `pseudoinverse()`, the largest entry of the matrix for the row reductions. This is NumPy's default `rcond` criterion, and being relative to the matrix it keeps a matrix's answer the same however the matrix is scaled.
+
+A matrix that is singular in exact arithmetic is therefore reported as singular, with a determinant of exactly `0.0` rather than a spurious value assembled from the roundoff its last pivot was left with, and a matrix of zeros has rank `0`.
+
 ### `inverse() : Matrix`
 
 Compute the inverse of the square matrix.
@@ -194,9 +200,13 @@ Compute the inverse of the square matrix.
 
 Compute the (Moore-Penrose) pseudo inverse of the general matrix.
 
+The result is `n` by `m` for an `m` by `n` matrix, and satisfies the four Moore-Penrose conditions: `A P A = A`, `P A P = P`, `P A = (P A)^T` and `A P = (A P)^T`.
+
+Singular values at or below `max(m, n) * DBL_EPSILON * σ_max` are treated as zero (see [Numerical tolerance](#numerical-tolerance)). Rank-deficient input is therefore inverted as far as it can be, rather than having the roundoff in its zero singular values inverted into a result dominated by it, and the rank the reduction reports is the rank this inverts.
+
 ### `det() : float`
 
-Calculate the determinant of the matrix.
+Calculate the determinant of the matrix. A singular matrix has a determinant of exactly `0.0`, since the pivot it is missing is below the tolerance described in [Numerical tolerance](#numerical-tolerance) and so does not enter the product.
 
 - **Throws:** `Tensor\Exceptions\InvalidArgumentException` if the matrix is not square
 
@@ -206,7 +216,7 @@ Return the trace of the matrix, i.e. the sum of all diagonal elements of a squar
 
 ### `rank() : int`
 
-Calculate the rank of the matrix, i.e. the number of pivots in its reduced row echelon form.
+Calculate the rank of the matrix, i.e. the number of pivots in its reduced row echelon form. An entry counts as a pivot only if it is above the tolerance described in [Numerical tolerance](#numerical-tolerance).
 
 ### `fullRank() : bool`
 

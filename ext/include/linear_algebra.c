@@ -4,6 +4,7 @@
 
 #include <php.h>
 #include <math.h>
+#include <float.h>
 #include <string.h>
 #include <ext/spl/spl_exceptions.h>
 #include <cblas.h>
@@ -351,6 +352,45 @@ void tensor_inverse(zval * return_value, zval * a, zval * n)
 }
 
 /**
+ * Return the tolerance below which a value of an m-by-n matrix is treated as
+ * zero, given the largest of them in `scale`.
+ * 
+ * @param m
+ * @param n
+ * @param scale
+ * @return double
+ */
+static double tensor_relative_tolerance(unsigned int m, unsigned int n, double scale)
+{
+    return (double) MAX(m, n) * DBL_EPSILON * scale;
+}
+
+/**
+ * Return the largest absolute value among the first `count` elements of `a`,
+ * which is the scale a tolerance is measured against.
+ *
+ * @param a
+ * @param count
+ * @return double
+ */
+static double tensor_absolute_max(const double * a, zend_long count)
+{
+    zend_long i;
+
+    double max = 0.0;
+
+    for (i = 0; i < count; ++i) {
+        double v = fabs(a[i]);
+
+        if (v > max) {
+            max = v;
+        }
+    }
+
+    return max;
+}
+
+/**
  * Return the (Moore-Penrose) pseudoinverse of a general matrix A.
  * 
  * @param return_value
@@ -402,11 +442,13 @@ void tensor_pseudoinverse(zval * return_value, zval * a, zval * m, zval * n)
         RETURN_NULL();
     }
 
+    double tolerance = tensor_relative_tolerance(ma, na, vs[0]);
+
     for (i = 0; i < k; ++i) {
-        cblas_dscal(ma, 1.0 / vs[i], &vu[i], ma);
+        cblas_dscal(ma, vs[i] > tolerance ? 1.0 / vs[i] : 0.0, &vu[i], ma);
     }
 
-    cblas_dgemm(CblasRowMajor, CblasTrans, CblasTrans, na, ma, ma, 1.0, vvt, na, vu, ma, 0.0, vb, ma);
+    cblas_dgemm(CblasRowMajor, CblasTrans, CblasTrans, na, ma, k, 1.0, vvt, na, vu, ma, 0.0, vb, ma);
 
     zval c;
 
@@ -438,19 +480,27 @@ void tensor_pseudoinverse(zval * return_value, zval * a, zval * m, zval * n)
 /**
  * Reduce a (possibly singular) row echelon matrix stored in `w` in place,
  * mirroring the pure-PHP row reduction path. Pivot rows are not normalized so
- * the output matches the non-singular (LAPACK dgetrf) path. Returns the
- * number of row swaps performed.
+ * the output matches the non-singular (LAPACK dgetrf) path. An entry counts as
+ * a pivot only if it is strictly above `tolerance`; returns the number of row
+ * swaps performed.
+ *
+ * The comparison is strict because the tolerance of a matrix of zeros is zero,
+ * and a threshold that only rejects what is *below* it would find every entry of
+ * the zero matrix above it. Treating the tolerance as the largest value that is
+ * still zero -- the reading `tensor_pseudoinverse` already gives a singular
+ * value -- leaves a zero matrix with no pivots and hence a rank of zero, which
+ * is what it is.
  *
  * @param w
  * @param m
  * @param n
+ * @param tolerance
  * @return long
  */
-static long tensor_ref_singular(double * w, unsigned int m, unsigned int n)
+static long tensor_ref_singular(double * w, unsigned int m, unsigned int n, double tolerance)
 {
     unsigned int i, j;
 
-    double epsilon = 0.00000001;
     double pivot, scale, tmp;
     unsigned int r = 0;
     unsigned int c = 0;
@@ -459,9 +509,9 @@ static long tensor_ref_singular(double * w, unsigned int m, unsigned int n)
     while (r < m && c < n) {
         double * pivotRow = w + r * n;
 
-        if (fabs(pivotRow[c]) < epsilon) {
+        if (fabs(pivotRow[c]) <= tolerance) {
             for (i = r + 1; i < m; ++i) {
-                if (fabs(w[i * n + c]) >= epsilon) {
+                if (fabs(w[i * n + c]) > tolerance) {
                     for (j = 0; j < n; ++j) {
                         tmp = pivotRow[j];
                         pivotRow[j] = w[i * n + j];
@@ -475,7 +525,7 @@ static long tensor_ref_singular(double * w, unsigned int m, unsigned int n)
             }
         }
 
-        if (fabs(pivotRow[c]) < epsilon) {
+        if (fabs(pivotRow[c]) <= tolerance) {
             ++c;
 
             continue;
@@ -486,7 +536,7 @@ static long tensor_ref_singular(double * w, unsigned int m, unsigned int n)
         for (i = r + 1; i < m; ++i) {
             scale = w[i * n + c] / pivot;
 
-            if (fabs(scale) >= epsilon) {
+            if (fabs(scale) > tolerance) {
                 tensor_row_update_route(w + i * n, pivotRow, scale, n);
             }
         }
@@ -500,10 +550,11 @@ static long tensor_ref_singular(double * w, unsigned int m, unsigned int n)
 
 /**
  * Bring a matrix in row-echelon form on a scratch buffer in place, mirroring
- * the pure-PHP forward elimination path. Returns the number of row swaps and
- * sets `*status` to the LAPACK result (negative on failure).
+ * the pure-PHP forward elimination path, with a pivot taken to be one that is
+ * above `tolerance`. Returns the number of row swaps and sets `*status` to the
+ * LAPACK result (negative on failure).
  */
-static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, lapack_int * status);
+static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, double tolerance, lapack_int * status);
 
 /**
  * Compute the row echelon form (REF) of matrix A, reading A out of a
@@ -544,7 +595,14 @@ void tensor_ref(zval * return_value, zval * a, zval * m, zval * n)
 
     lapack_int status;
 
-    long swaps = tensor_ref_step(w, va, ma, na, &status);
+    long swaps = tensor_ref_step(
+        w,
+        va,
+        ma,
+        na,
+        tensor_relative_tolerance(ma, na, tensor_absolute_max(va, nbuf)),
+        &status
+    );
 
     if (status < 0) {
         efree(w);
@@ -1221,9 +1279,11 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
 /**
  * Run the forward elimination + singular row reduction used by both
  * `tensor_ref` and `tensor_rref`. On failure (LAPACK error) sets *status to a
- * large negative value. On success returns the number of row swaps.
+ * large negative value. On success returns the number of row swaps. A pivot is
+ * only a pivot if it is above `tolerance`; the reduction leaves the rows below
+ * the last such one at zero, whatever roundoff they were left with.
  */
-static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, lapack_int * status)
+static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, double tolerance, lapack_int * status)
 {
     unsigned int i, j;
 
@@ -1247,7 +1307,7 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
             w[i] = orig[i];
         }
 
-        swaps = tensor_ref_singular(w, m, n);
+        swaps = tensor_ref_singular(w, m, n, tolerance);
     } else if (*status != 0) {
         efree(pivots);
 
@@ -1268,6 +1328,12 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
             for (j = 0; j < lim; ++j) {
                 w[i * n + j] = 0.0;
             }
+        }
+    }
+
+    for (i = 0; i < MIN(m, n); ++i) {
+        if (fabs(w[i * n + i]) <= tolerance) {
+            w[i * n + i] = 0.0;
         }
     }
 
@@ -1292,27 +1358,17 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
  * rank-deficient one it is and the reduction below decides its rank, which is
  * what `rank()`, `fullRank()` and `det()` all report.
  *
- * The tolerance is absolute and matches the one in `tensor_rref_step` rather
- * than being relative to the scale of the matrix. That is a property of the
- * reductions this file has always had, and the shortcut is gated on exactly the
- * same question the reduction would have asked of each pivot in turn, so a
- * matrix that takes the shortcut reduces to what the reduction would have
- * produced. A relative tolerance would be the better-motivated criterion, but it
- * would change the rank of every small-scaled matrix as well, which is a
- * separate decision.
- *
  * @param w
  * @param n
+ * @param tolerance
  * @return int
  */
-static int tensor_rref_is_full_column_rank(const double * w, unsigned int n)
+static int tensor_rref_is_full_column_rank(const double * w, unsigned int n, double tolerance)
 {
     unsigned int i;
 
-    double epsilon = 0.00000001;
-
     for (i = 0; i < n; ++i) {
-        if (fabs(w[i * n + i]) < epsilon) {
+        if (fabs(w[i * n + i]) <= tolerance) {
             return 0;
         }
     }
@@ -1323,10 +1379,19 @@ static int tensor_rref_is_full_column_rank(const double * w, unsigned int n)
 /**
  * Complete the row echelon form in `w` in place by normalizing each pivot to 1
  * and eliminating the entries above it, turning a row echelon form into the
- * reduced one. The scan is the pure-PHP `Rref::reduce` path: it advances past
- * a column whose pivot is below the tolerance, zeroing the tail of a row that
- * has no entry at or to the right of that column, and skipping a column whose
- * pivot is small but whose row does have one to the right.
+ * reduced one. A pivot is only a pivot if it is above `tolerance`. The scan is
+ * the pure-PHP `Rref::reduce` path: it advances past a column whose pivot is
+ * below the tolerance, zeroing a row that has no entry at or to the right of
+ * that column, and skipping a column whose pivot is small but whose row does
+ * have one to the right.
+ *
+ * A row zeroed for want of a pivot is zeroed whole, and not only from that
+ * column on. A reduced row echelon form has a zero row there -- the columns to
+ * the left of it are pivot columns, which the rows below have already been
+ * eliminated from -- so an entry of roundoff left in one of them is not a
+ * nonzero row of the form, and `tensor_rank` counts rows of the form. It is the
+ * same reason the rows `tensor_ref_step` could not pivot on are exactly zero
+ * there.
  *
  * Only reached when the row echelon form is not already known to be `[I; 0]`;
  * see `tensor_rref` for the shortcut that skips this entirely.
@@ -1334,29 +1399,29 @@ static int tensor_rref_is_full_column_rank(const double * w, unsigned int n)
  * @param w
  * @param m
  * @param n
+ * @param tolerance
  */
-static void tensor_rref_step(double * w, unsigned int m, unsigned int n)
+static void tensor_rref_step(double * w, unsigned int m, unsigned int n, double tolerance)
 {
     unsigned int i, j;
 
-    double epsilon = 0.00000001;
     unsigned int r = 0, c = 0;
 
     while (r < m && c < n) {
         double pivot = w[r * n + c];
 
-        if (fabs(pivot) < epsilon) {
+        if (fabs(pivot) <= tolerance) {
             int found = 0;
 
             for (i = c; i < n; ++i) {
-                if (fabs(w[r * n + i]) >= epsilon) {
+                if (fabs(w[r * n + i]) > tolerance) {
                     found = 1;
                     break;
                 }
             }
 
             if (!found) {
-                for (j = c; j < n; ++j) {
+                for (j = 0; j < n; ++j) {
                     w[r * n + j] = 0.0;
                 }
 
@@ -1377,7 +1442,7 @@ static void tensor_rref_step(double * w, unsigned int m, unsigned int n)
         for (i = 0; i < r; ++i) {
             double scale = w[i * n + c];
 
-            if (fabs(scale) >= epsilon) {
+            if (fabs(scale) > tolerance) {
                 tensor_row_update_route(w + i * n, w + r * n, scale, n);
             }
         }
@@ -1439,7 +1504,9 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
 
     lapack_int status;
 
-    (void) tensor_ref_step(w, va, ma, na, &status);
+    double tolerance = tensor_relative_tolerance(ma, na, tensor_absolute_max(va, nbuf));
+
+    (void) tensor_ref_step(w, va, ma, na, tolerance, &status);
 
     if (status < 0) {
         efree(w);
@@ -1447,14 +1514,14 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
         RETURN_NULL();
     }
 
-    if (status == 0 && ma >= na && tensor_rref_is_full_column_rank(w, na)) {
+    if (status == 0 && ma >= na && tensor_rref_is_full_column_rank(w, na, tolerance)) {
         memset(w, 0, (size_t) ma * na * sizeof(double));
 
         for (i = 0; i < na; ++i) {
             w[i * na + i] = 1.0;
         }
     } else {
-        tensor_rref_step(w, ma, na);
+        tensor_rref_step(w, ma, na, tolerance);
     }
 
     zval result, buf;
@@ -1484,6 +1551,14 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
  * Return the rank of an already-reduced matrix stored in a TensorBuffer, i.e.
  * the number of rows containing at least one non-zero element.
  *
+ * The input is a reduced row echelon form, and the reduction that produced it has
+ * already decided which of its rows are zero: a row it could not pivot on is
+ * zeroed whole, and a pivot that is not above the tolerance is not a pivot, so
+ * the row it heads is zeroed too. Comparing against zero exactly is therefore
+ * counting those rows, and re-measuring them against a second threshold would
+ * only disagree with the reduction that wrote them. The tolerance belongs to the
+ * reduction, in one place, and this is where the decision it makes is read back.
+ *
  * @param return_value
  * @param a
  * @param m
@@ -1494,8 +1569,6 @@ void tensor_rank(zval * return_value, zval * a, zval * m, zval * n)
     zend_long nbuf = 0;
     int ok_a = 0;
     unsigned int i, j;
-
-    double epsilon = 0.00000001;
 
     unsigned int ma = (unsigned int) zephir_get_intval(m);
     unsigned int na = (unsigned int) zephir_get_intval(n);
@@ -1516,7 +1589,7 @@ void tensor_rank(zval * return_value, zval * a, zval * m, zval * n)
 
     for (i = 0; i < ma; ++i) {
         for (j = 0; j < na; ++j) {
-            if (fabs(va[i * na + j]) >= epsilon) {
+            if (va[i * na + j] != 0.0) {
                 ++rank;
 
                 break;

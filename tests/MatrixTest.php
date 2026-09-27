@@ -1017,7 +1017,8 @@ class MatrixTest extends TestCase
     public function detSingularIsZero() : void
     {
         // Exactly singular (column 3 = column 0 - column 1 + column 2); the
-        // determinant must be ~0 rather than a spurious ~1e-15 value.
+        // determinant must be zero rather than a spurious ~1e-15 value, and now
+        // is zero exactly: see detOfSingularMatrixIsExactlyZero.
         $a = Matrix::fromArray([
             [2.0, 1.0, 0.0, 1.0],
             [1.0, 2.0, 1.0, 0.0],
@@ -1025,7 +1026,7 @@ class MatrixTest extends TestCase
             [1.0, 0.0, 1.0, 2.0],
         ]);
 
-        $this->assertEqualsWithDelta(0.0, $a->det(), self::MAX_DELTA);
+        $this->assertSame(0.0, $a->det());
     }
 
     /**
@@ -1249,6 +1250,191 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertFalse($singularTall->fullRank());
+    }
+
+    /**
+     * @test
+     */
+    public function rankOfZeroMatrixIsZero() : void
+    {
+        // A matrix of zeros has no pivot in any column. Its rank is zero, it is
+        // not full rank, and its determinant is zero -- the reduced form is the
+        // zero matrix rather than a division of zero pivots.
+        $zeros = Matrix::zeros(3, 3);
+
+        $this->assertSame(0, $zeros->rank());
+        $this->assertFalse($zeros->fullRank());
+        $this->assertSame(0.0, $zeros->det());
+        $this->assertEquals(Matrix::zeros(3, 3)->asArray(), $zeros->rref()->a()->asArray());
+
+        $tall = Matrix::zeros(4, 2);
+
+        $this->assertSame(0, $tall->rank());
+        $this->assertFalse($tall->fullRank());
+
+        $wide = Matrix::zeros(2, 4);
+
+        $this->assertSame(0, $wide->rank());
+        $this->assertFalse($wide->fullRank());
+    }
+
+    /**
+     * @test
+     */
+    public function rankIsRelativeToTheScaleOfTheMatrix() : void
+    {
+        // A matrix is judged against the size of its own entries, so a matrix on
+        // the order of 1e-10 is as invertible as one on the order of 1e10. A
+        // threshold that did not scale with the matrix would call the first of
+        // these singular and hand back a determinant of zero.
+        $rows = [
+            [1.0e-10, 2.0e-10],
+            [3.0e-10, 4.0e-10],
+        ];
+
+        $small = Matrix::fromArray($rows, false);
+
+        $this->assertSame(2, $small->rank());
+        $this->assertTrue($small->fullRank());
+        $this->assertEqualsWithDelta(-2.0e-20, $small->det(), 1.0e-32);
+
+        // The identity has entries of order 1 while the inverse it is multiplied
+        // with has entries of order 1e10, so this is a check about relative
+        // accuracy: the products cancel to zero from terms of order 1e10.
+        $this->assertMatricesEqualRelative(Matrix::identity(2), $small->matmul($small->inverse()), 1.0e-12);
+
+        $large = Matrix::fromArray([
+            [1.0e10, 2.0e10],
+            [3.0e10, 4.0e10],
+        ], false);
+
+        $this->assertSame(2, $large->rank());
+        $this->assertTrue($large->fullRank());
+        $this->assertEqualsWithDelta(-2.0e20, $large->det(), 1.0e8);
+        $this->assertMatricesEqualRelative(Matrix::identity(2), $large->matmul($large->inverse()), 1.0e-12);
+
+        // The same matrix at both scales is the same matrix, so the same rank.
+        foreach ([1.0e-10, 1.0, 1.0e10] as $scale) {
+            $scaled = Matrix::fromArray([
+                [1.0 * $scale, 2.0 * $scale],
+                [3.0 * $scale, 4.0 * $scale],
+            ], false);
+
+            $this->assertSame(2, $scaled->rank());
+            $this->assertTrue($scaled->fullRank());
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function rankIgnoresAnEntryBelowTheRelativeTolerance() : void
+    {
+        // A pivot of order 1e-17 in a matrix whose largest entry is 1 sits below
+        // the tolerance, so the matrix is the rank one matrix it is written as
+        // and its determinant is zero rather than 1e-17.
+        $noise = Matrix::fromArray([
+            [1.0, 1.0],
+            [1.0, 1.0 + 1.0e-17],
+        ], false);
+
+        $this->assertSame(1, $noise->rank());
+        $this->assertFalse($noise->fullRank());
+        $this->assertSame(0.0, $noise->det());
+
+        // A pivot of order 1e-9 is above it, and the matrix is full rank.
+        $signal = Matrix::fromArray([
+            [1.0, 1.0],
+            [1.0, 1.0 + 1.0e-9],
+        ], false);
+
+        $this->assertSame(2, $signal->rank());
+        $this->assertTrue($signal->fullRank());
+        $this->assertEqualsWithDelta(1.0e-9, $signal->det(), 1.0e-13);
+
+        // The same holds once the matrix is scaled up: the noise moves with the
+        // matrix rather than being pinned to an absolute threshold.
+        $scaledNoise = Matrix::fromArray([
+            [1.0e10, 1.0e10],
+            [1.0e10, 1.0e10 + 1.0e-10],
+        ], false);
+
+        $this->assertSame(1, $scaledNoise->rank());
+        $this->assertFalse($scaledNoise->fullRank());
+    }
+
+    /**
+     * @test
+     */
+    public function detOfSingularMatrixIsExactlyZero() : void
+    {
+        // The elimination leaves a pivot of order 1e-16 in place of a zero one,
+        // and the determinant is the product of the pivots, so a determinant that
+        // is merely close to zero means the residual was left in the product. The
+        // pivot is below the tolerance, so it is not a pivot, so the product is
+        // zero exactly.
+        $a = Matrix::fromArray([
+            [2.0, 1.0, 0.0, 1.0],
+            [1.0, 2.0, 1.0, 0.0],
+            [0.0, 1.0, 2.0, 1.0],
+            [1.0, 0.0, 1.0, 2.0],
+        ], false);
+
+        $this->assertSame(0.0, $a->det());
+
+        $b = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [2.0, 4.0, 6.0],
+            [0.0, 1.0, 0.0],
+        ], false);
+
+        $this->assertSame(0.0, $b->det());
+
+        // Scaled up by 1e9, where the residual of the elimination is as large as
+        // 1e-7 and would pass for a determinant of its own.
+        $c = Matrix::fromArray([
+            [1.0e9, 2.0e9, 3.0e9],
+            [4.0e9, 5.0e9, 6.0e9],
+            [5.0e9, 7.0e9, 9.0e9],
+        ], false);
+
+        $this->assertSame(0.0, $c->det());
+        $this->assertSame(2, $c->rank());
+    }
+
+    /**
+     * @test
+     */
+    public function rrefOfRankDeficientMatrixHasZeroRows() : void
+    {
+        // The rows below the last pivot of a reduced row echelon form are zero
+        // rows, and are written as exact zeros rather than as the roundoff the
+        // elimination left behind -- the rank of the form is counted from them.
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [2.0, 4.0, 6.0],
+            [0.0, 1.0, 0.0],
+        ], false);
+
+        $this->assertEquals(Matrix::fromArray([
+            [1.0, 0.0, 3.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0],
+        ], false)->asArray(), $a->rref()->a()->asArray());
+
+        $this->assertSame(2, $a->rank());
+
+        $b = Matrix::fromArray([
+            [1.0e9, 2.0e9, 3.0e9],
+            [4.0e9, 5.0e9, 6.0e9],
+            [5.0e9, 7.0e9, 9.0e9],
+        ], false);
+
+        $this->assertEquals(Matrix::fromArray([
+            [1.0, 0.0, -1.0],
+            [0.0, 1.0, 2.0],
+            [0.0, 0.0, 0.0],
+        ], false)->asArray(), $b->rref()->a()->asArray());
     }
 
     /**
@@ -4798,6 +4984,221 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $a->pseudoinverse()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function pseudoinverseDiscardsSingularValuesBelowTolerance() : void
+    {
+        // The counterpart of pseudoinversePreservesTinySingularValues: a singular
+        // value below the rank tolerance is roundoff rather than information
+        // about the matrix, and the pseudo-inverse of zero is zero. The tolerance
+        // is max(2, 2) * DBL_EPSILON * 1.0, so 1e-16 is far below it.
+        $a = Matrix::fromArray([
+            [1.0, 0.0],
+            [0.0, 1e-16],
+        ]);
+
+        $expected = Matrix::fromArray([
+            [1.0, 0.0],
+            [0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $a->pseudoinverse()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function pseudoinverseRankDeficient() : void
+    {
+        // Rank 2. The third singular value comes back from the SVD at 4.4e-16
+        // rather than at zero, so inverting it inverts roundoff and swamps the
+        // product; the rank-deficient input has to be recognized as such.
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0],
+        ]);
+
+        $this->assertEquals(2, $a->rank());
+
+        $expected = Matrix::fromArray([
+            [-0.638888888888888, -0.166666666666667, 0.305555555555556],
+            [-0.055555555555556, 0.0, 0.055555555555556],
+            [0.527777777777778, 0.166666666666667, -0.194444444444444],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $a->pseudoinverse()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function pseudoinverseRankDeficientWide() : void
+    {
+        // The same defect through a wide matrix, where the pseudo-inverse is
+        // 4x3 and only two of the four columns carry a singular value.
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+        ]);
+
+        $this->assertEquals(2, $a->rank());
+
+        $expected = Matrix::fromArray([
+            [-0.375, -0.1, 0.175],
+            [-0.145833333333333, -0.033333333333333, 0.079166666666667],
+            [0.083333333333333, 0.033333333333333, -0.016666666666667],
+            [0.3125, 0.1, -0.1125],
+        ]);
+
+        $b = $a->pseudoinverse();
+
+        $this->assertEquals([4, 3], $b->shape());
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function pseudoinverseZeroSingularValuesAreZeroed() : void
+    {
+        // Two of the three singular values are exactly zero, so the pseudo-inverse
+        // inverts the one that is not. Inverting zero instead is what turned the
+        // whole matrix into NAN.
+        $a = Matrix::fromArray([
+            [2.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+        ]);
+
+        $expected = Matrix::fromArray([
+            [0.5, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+        ]);
+
+        $b = $a->pseudoinverse();
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+
+        foreach ($this->toFlatList($b) as $v) {
+            $this->assertFinite($v);
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function pseudoinverseOfZeroMatrixIsZero() : void
+    {
+        $a = Matrix::zeros(4, 3);
+        $b = $a->pseudoinverse();
+
+        $this->assertEquals([3, 4], $b->shape());
+        $this->assertEqualsWithDelta(Matrix::zeros(3, 4)->asArray(), $b->asArray(), self::MAX_DELTA);
+
+        foreach ($this->toFlatList($b) as $v) {
+            $this->assertFinite($v);
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function pseudoinverseTall() : void
+    {
+        // A tall matrix has more rows than the singular values it decomposes into,
+        // and U is square in a row count the singular values do not fill. The
+        // product that assembles the result contracts over the singular values, so
+        // the rows of U that are not one of them are not part of it; a contraction
+        // over the row count instead read past the end of both factor buffers and
+        // returned values of order 1e45 for this input.
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0],
+            [10.0, 11.0, 12.0],
+        ]);
+
+        $this->assertEquals(2, $a->rank());
+
+        $expected = Matrix::fromArray([
+            [-0.483333333333333, -0.244444444444444, -0.005555555555556, 0.233333333333333],
+            [-0.033333333333333, -0.011111111111111, 0.011111111111111, 0.033333333333333],
+            [0.416666666666667, 0.222222222222222, 0.027777777777778, -0.166666666666667],
+        ]);
+
+        $b = $a->pseudoinverse();
+
+        $this->assertEquals([3, 4], $b->shape());
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function pseudoinverseSatisfiesMoorePenroseConditions() : void
+    {
+        // A P A = A, P A P = P, P A = (P A)^T and A P = (A P)^T, which is what
+        // makes P a pseudo-inverse rather than merely some matrix A happens to
+        // have a large left inverse of. The comparison is relative because the
+        // result of inverting a 1e-9 singular value is of order 1e9, and the
+        // identities hold to a few units in the last place of that rather than to
+        // the absolute 1e-8 the rest of this file asserts against.
+        $inputs = [
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+            [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0], [9.0, 10.0, 11.0, 12.0]],
+            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0], [10.0, 11.0, 12.0]],
+            [[1.0, 2.0], [2.0, 4.0]],
+            [[2.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+            [[1.0, 0.0], [0.0, 1e-9]],
+            [[0.0, 0.0], [0.0, 0.0]],
+        ];
+
+        foreach ($inputs as $rows) {
+            $a = Matrix::fromArray($rows);
+            $p = $a->pseudoinverse();
+
+            $this->assertMatricesEqualRelative($a, $a->matmul($p)->matmul($a));
+            $this->assertMatricesEqualRelative($p, $p->matmul($a)->matmul($p));
+
+            $pa = $p->matmul($a);
+            $ap = $a->matmul($p);
+
+            $this->assertMatricesEqualRelative($pa, $pa->transpose());
+            $this->assertMatricesEqualRelative($ap, $ap->transpose());
+        }
+    }
+
+    /**
+     * Assert that two matrices agree to within `relative` of the largest element
+     * either of them holds, so a check is judged against the scale of the result
+     * it is checking rather than against an absolute constant.
+     *
+     * @param Matrix $expected
+     * @param Matrix $actual
+     * @param float $relative
+     */
+    private function assertMatricesEqualRelative(Matrix $expected, Matrix $actual, float $relative = 1e-12) : void
+    {
+        $e = $this->toFlatList($expected);
+        $a = $this->toFlatList($actual);
+
+        $scale = 0.0;
+
+        foreach ($e as $v) {
+            $scale = max($scale, abs($v));
+        }
+
+        foreach ($a as $v) {
+            $scale = max($scale, abs($v));
+        }
+
+        $this->assertEqualsWithDelta($e, $a, $relative * $scale);
     }
 
     /**
