@@ -993,24 +993,21 @@ class Matrix implements Tensor
      */
     public function multiply(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->multiplyMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->multiplyMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->multiplyColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->multiplyVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->multiplyColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->multiplyVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->multiplyScalar(b);
+        if is_numeric(b) {
+            return this->multiplyScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot multiply"
@@ -1026,24 +1023,21 @@ class Matrix implements Tensor
      */
     public function divide(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->divideMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->divideMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->divideColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->divideVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->divideColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->divideVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->divideScalar(b);
+        if is_numeric(b) {
+            return this->divideScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot divide"
@@ -1060,24 +1054,21 @@ class Matrix implements Tensor
      */
     public function add(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->addMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->addMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->addColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->addVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->addColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->addVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->addScalar(b);
+        if is_numeric(b) {
+            return this->addScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot add"
@@ -1094,24 +1085,21 @@ class Matrix implements Tensor
      */
     public function subtract(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->subtractMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->subtractMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->subtractColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->subtractVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->subtractColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->subtractVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->subtractScalar(b);
+        if is_numeric(b) {
+            return this->subtractScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot subtract"
@@ -1128,24 +1116,21 @@ class Matrix implements Tensor
      */
     public function pow(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->powMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->powMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->powColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->powVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->powColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->powVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->powScalar(b);
+        if is_numeric(b) {
+            return this->powScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot raise"
@@ -1162,24 +1147,21 @@ class Matrix implements Tensor
      */
     public function mod(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->modMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->modMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->modColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->modVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->modColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->modVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->modScalar(b);
+        if is_numeric(b) {
+            return this->modScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot mod"
@@ -1196,24 +1178,21 @@ class Matrix implements Tensor
      */
     public function equal(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->equalMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->equalMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->equalColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->equalVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->equalColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->equalVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->equalScalar(b);
+        if is_numeric(b) {
+            return this->equalScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot compare"
@@ -1230,24 +1209,21 @@ class Matrix implements Tensor
      */
     public function notEqual(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->notEqualMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->notEqualMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->notEqualColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->notEqualVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->notEqualColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->notEqualVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->notEqualScalar(b);
+        if is_numeric(b) {
+            return this->notEqualScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot compare"
@@ -1264,24 +1240,21 @@ class Matrix implements Tensor
      */
     public function greater(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->greaterMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->greaterMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->greaterColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->greaterVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->greaterColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->greaterVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->greaterScalar(b);
+        if is_numeric(b) {
+            return this->greaterScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot compare"
@@ -1298,24 +1271,21 @@ class Matrix implements Tensor
      */
     public function greaterEqual(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->greaterEqualMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->greaterEqualMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->greaterEqualColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->greaterEqualVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->greaterEqualColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->greaterEqualVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->greaterEqualScalar(b);
+        if is_numeric(b) {
+            return this->greaterEqualScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot compare"
@@ -1332,24 +1302,21 @@ class Matrix implements Tensor
      */
     public function less(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->lessMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->lessMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->lessColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->lessVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->lessColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->lessVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->lessScalar(b);
+        if is_numeric(b) {
+            return this->lessScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot compare"
@@ -1366,24 +1333,21 @@ class Matrix implements Tensor
      */
     public function lessEqual(const var b)
     {
-        switch (gettype(b)) {
-            case "object":
-                switch true {
-                    case b instanceof Matrix:
-                        return this->lessEqualMatrix(b);
+        if is_object(b) {
+            switch true {
+                case b instanceof Matrix:
+                    return this->lessEqualMatrix(b);
 
-                    case b instanceof ColumnVector:
-                        return this->lessEqualColumnVector(b);
-                    
-                    case b instanceof Vector:
-                        return this->lessEqualVector(b);
-                }
+                case b instanceof ColumnVector:
+                    return this->lessEqualColumnVector(b);
 
-                break;
+                case b instanceof Vector:
+                    return this->lessEqualVector(b);
+            }
+        }
 
-            case "double":
-            case "integer":
-                return this->lessEqualScalar(b);
+        if is_numeric(b) {
+            return this->lessEqualScalar(b);
         }
 
         throw new InvalidArgumentException("Cannot compare"

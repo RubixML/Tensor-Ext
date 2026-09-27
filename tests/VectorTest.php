@@ -2476,6 +2476,118 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function multiplyNumericString() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0, 3.0]);
+
+        $this->assertEqualsWithDelta(
+            [2.0, 4.0, 6.0],
+            $a->multiply('2')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function addNumericString() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0]);
+
+        $this->assertEqualsWithDelta(
+            [2.5, 3.5],
+            $a->add('1.5')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function powInfScalar() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0]);
+
+        $this->assertEqualsWithDelta(
+            [1.0, INF],
+            $a->pow(INF)->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function greaterEqualNumericString() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0]);
+
+        $this->assertEqualsWithDelta(
+            [0, 1],
+            $a->greaterEqual('1.5')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function subtractNumericString() : void
+    {
+        $a = Vector::fromArray([5.0, 6.0]);
+
+        $this->assertEqualsWithDelta(
+            [4.5, 5.5],
+            $a->subtract('0.5')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function divideNumericString() : void
+    {
+        $a = Vector::fromArray([4.0, 6.0]);
+
+        $this->assertEqualsWithDelta(
+            [2.0, 3.0],
+            $a->divide('2')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function modNumericString() : void
+    {
+        $a = Vector::fromArray([4.0, 7.0]);
+
+        $this->assertEqualsWithDelta(
+            [1.0, 1.0],
+            $a->mod('3')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function greaterInfScalar() : void
+    {
+        $a = Vector::fromArray([1.0, INF]);
+
+        $this->assertEqualsWithDelta(
+            [0, 0],
+            $a->greater(INF)->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
     public function convolveStrideLessThanOneThrows() : void
     {
         $this->expectException(InvalidArgumentException::class);

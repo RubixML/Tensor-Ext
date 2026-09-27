@@ -1720,6 +1720,134 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function multiplyNumericString() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            [
+                [2.0, 4.0],
+                [6.0, 8.0],
+            ],
+            $a->multiply('2')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function addNumericString() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            [
+                [2.5, 3.5],
+            ],
+            $a->add('1.5')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function powInfScalar() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            [
+                [1.0, INF],
+            ],
+            $a->pow(INF)->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function greaterEqualNumericString() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            [
+                [0, 1],
+            ],
+            $a->greaterEqual('1.5')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function subtractNumericString() : void
+    {
+        $a = Matrix::fromArray([
+            [5.0, 6.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            [
+                [4.5, 5.5],
+            ],
+            $a->subtract('0.5')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function divideNumericString() : void
+    {
+        $a = Matrix::fromArray([
+            [4.0, 6.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            [
+                [2.0, 3.0],
+            ],
+            $a->divide('2.0')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function modNumericString() : void
+    {
+        $a = Matrix::fromArray([
+            [4.0, 7.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            [
+                [1.0, 1.0],
+            ],
+            $a->mod('3')->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
      * @return Generator<mixed[]>
      */
     public function addProvider() : Generator
