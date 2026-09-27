@@ -27,14 +27,6 @@
  * this code never uses. A second 256-bit route would be code-sized for no
  * measurable speedup, so AVX2 is detected and reported for diagnostics only.
  *
- * One kernel needs a little help beyond the target attribute. The compiler
- * will not vectorize sqrt() because the libm function may set errno, and a
- * target attribute does not lift that restriction, so the build carries
- * -fno-math-errno (see extra-cflags in config.json). Nothing in the extension
- * ever reads errno, and vsqrtpd returns the same double sqrtsd does, so the
- * routes remain bit-for-bit identical; it is worth checking that stays true if
- * the flag is ever dropped.
- *
  * No intrinsic is used anywhere in this file or in the kernels it serves; the
  * target attribute alone is enough for the compiler to widen every loop we
  * dispatch, which keeps <immintrin.h> -- and the portability caveats that come

@@ -106,7 +106,7 @@ static void tensor_conv_reverse(double * restrict out, const double * restrict i
 }
 
 /**
- * The 1D kernel bodies.
+ * The kernel bodies.
  *
  * TILE accumulates TENSOR_CONV_TILE consecutive outputs of the full convolution
  * starting at output index m0, every one of which has its whole kernel window
@@ -164,24 +164,6 @@ static void tensor_conv_reverse(double * restrict out, const double * restrict i
 	                                                                             \
 	*out = (a0 + a1) + (a2 + a3);
 
-/**
- * The 2D kernel bodies.
- *
- * TILE accumulates TENSOR_CONV_TILE consecutive output columns of one output row.
- * `img` points at the image row the kernel's *top* tap reads, and the taps are
- * walked from there downward, because kernel row k reads image row (ii + p - k)
- * while the reversed kernel leaves the row index alone. So `k` ascends and the row
- * pointer descends, and neither loop has to convert the other's index; the
- * multiply that would reconcile them costs one per kernel row, against TILE *
- * nb work in the body. `jbase` is the first image column the tile touches, being
- * the first output column shifted by the kernel's own offset. As in 1D the
- * innermost loop is over the tile, so each kernel element becomes a broadcast
- * operand and the loop covers TENSOR_CONV_TILE outputs per iteration.
- *
- * DOT is the per-output fallback with the valid tap ranges in both directions
- * already clamped by the caller: image row (xbase - k), reversed kernel column
- * mlo through mhi. The inner dot is therefore unit stride on both operands and
- * carries neither of the two per-element range tests the original inner loop had. */
 #define TENSOR_CONV_2D_TILE_BODY                                                  \
 	double acc[TENSOR_CONV_TILE];                                             \
 	const double * restrict row = img;                                        \

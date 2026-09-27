@@ -182,7 +182,7 @@ int tensor_cpu_has_fma(void)
  */
 void tensor_cpu_init(void)
 {
-	if (tensor_cpu_has_avx512() && tensor_cpu_has_fma()) {
+	if (tensor_cpu_has_avx512()) {
 		tensor_arithmetic_dispatch_avx512_init();
 		tensor_comparison_dispatch_avx512_init();
 		tensor_unary_dispatch_avx512_init();
