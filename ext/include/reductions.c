@@ -188,7 +188,7 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 {
 	zval buffer;
 	uint8_t kind;
-	zend_long total = 0, groupsHat = 0, lengthHat = 0, i;
+	zend_long total = 0, groups = 0, length = 0, i;
 
 	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
 		return;
@@ -211,25 +211,25 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 		return;
 	}
 
-	groupsHat = zephir_get_intval(groups_zval);
-	lengthHat = zephir_get_intval(length_zval);
+	groups = zephir_get_intval(groups_zval);
+	length = zephir_get_intval(length_zval);
 
-	if (UNEXPECTED(groupsHat < 1)) {
+	if (UNEXPECTED(groups < 1)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Number of groups must be greater than 0."));
 		zval_ptr_dtor(&buffer);
 		return;
 	}
 
-	if (UNEXPECTED(lengthHat < 0)) {
+	if (UNEXPECTED(length < 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Group length must be non-negative."));
 		zval_ptr_dtor(&buffer);
 		return;
 	}
 
-	if (lengthHat > 0) {
-		if (UNEXPECTED(total % lengthHat != 0 || groupsHat != total / lengthHat)) {
+	if (length > 0) {
+		if (UNEXPECTED(total % length != 0 || groups != total / length)) {
 			zephir_throw_exception_string(spl_ce_LengthException,
 				SL("Matrix and row dimensions must agree."));
 			zval_ptr_dtor(&buffer);
@@ -243,7 +243,7 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 	}
 
 	/* Extrema need at least one element in every group. */
-	if (UNEXPECTED(lengthHat == 0 && (mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_MAX
+	if (UNEXPECTED(length == 0 && (mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_MAX
 		|| mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX))) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Cannot compute the reduction of an empty group."));
@@ -253,7 +253,7 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 
 	zval c;
 
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, groupsHat, &c) == FAILURE)) {
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, groups, &c) == FAILURE)) {
 		zval_ptr_dtor(&buffer);
 		return;
 	}
@@ -261,10 +261,10 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 	double * vc = zephir_buffer_doubles(&c);
 	const double * ptr = zephir_buffer_doubles(&buffer);
 
-	for (i = 0; i < groupsHat; ++i) {
+	for (i = 0; i < groups; ++i) {
 		zend_long index = 0;
 
-		double value = tensor_group_reduce(ptr + i * lengthHat, lengthHat, mode, &index);
+		double value = tensor_group_reduce(ptr + i * length, length, mode, &index);
 
 		vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
 			? (double) index : value;
