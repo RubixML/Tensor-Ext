@@ -39,14 +39,6 @@ PHPAPI zend_long php_mt_rand_range(zend_long min, zend_long max);
 #  define PHP_MT_RAND_MAX ((zend_long) 0x7FFFFFFF) /* (1<<31) - 1 */
 #endif
 
-/**
- * Allocate a fresh `Tensor\TensorBuffer` of `n` elements, every one of which
- * is set to `value`. Returns the buffer in return_value.
- *
- * @param return_value
- * @param value
- * @param n
- */
 void tensor_fill(zval * return_value, zval * value, zval * n)
 {
 	zend_long length = zephir_get_intval(n);

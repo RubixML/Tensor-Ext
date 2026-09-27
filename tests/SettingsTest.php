@@ -31,10 +31,12 @@ class SettingsTest extends TestCase
         $this->assertArrayHasKey('avx', $features);
         $this->assertArrayHasKey('avx2', $features);
         $this->assertArrayHasKey('avx512', $features);
+        $this->assertArrayHasKey('fma', $features);
 
         $this->assertIsBool($features['avx']);
         $this->assertIsBool($features['avx2']);
         $this->assertIsBool($features['avx512']);
+        $this->assertIsBool($features['fma']);
     }
 
     /**

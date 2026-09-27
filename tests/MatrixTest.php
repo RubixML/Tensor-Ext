@@ -1740,6 +1740,129 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * The kernel accumulates a tile of 32 output columns of one output row at a
+     * time, and only for a unit stride, so convolveMatchesReference() above --
+     * whose matrices are all smaller than one tile in both directions -- never
+     * reaches that path. The two tile bounds are derived independently, one from
+     * the row overhang and one from the column overhang, so a matrix can sit
+     * inside the tiled row band while no whole column tile fits at all; this
+     * crosses both bounds from either side, and steps the kernel across the tile
+     * width and across the stack scratch the reversed kernel is built in so the
+     * heap fallback is covered as well.
+     *
+     * @test
+     */
+    public function convolveAcrossTileBoundariesMatchesReference() : void
+    {
+        mt_srand(1234);
+
+        $sizes = [1, 31, 32, 33, 40, 64, 65];
+
+        foreach ($sizes as $m) {
+            foreach ($sizes as $n) {
+                foreach ([[1, 1], [3, 3], [2, 5], [16, 16], [17, 17]] as [$mb, $nb]) {
+                    if ($mb > $m || $nb > $n) {
+                        continue;
+                    }
+
+                    $a = [];
+                    $b = [];
+
+                    for ($i = 0; $i < $m; ++$i) {
+                        $row = [];
+
+                        for ($j = 0; $j < $n; ++$j) {
+                            $row[] = mt_rand(-500, 500) / 7.0;
+                        }
+
+                        $a[] = $row;
+                    }
+
+                    for ($i = 0; $i < $mb; ++$i) {
+                        $row = [];
+
+                        for ($j = 0; $j < $nb; ++$j) {
+                            $row[] = mt_rand(-500, 500) / 7.0;
+                        }
+
+                        $b[] = $row;
+                    }
+
+                    $expected = $this->referenceConvolve2d($a, $b, 1);
+
+                    $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), 1);
+
+                    $this->assertSame(
+                        [count($expected), count($expected[0])],
+                        $actual->shape(),
+                        "{$m} x {$n} by {$mb} x {$nb}, stride = 1"
+                    );
+
+                    $this->assertEqualsWithDelta(
+                        $expected,
+                        $actual->asArray(),
+                        self::MAX_DELTA,
+                        "{$m} x {$n} by {$mb} x {$nb}, stride = 1"
+                    );
+                }
+            }
+        }
+
+        // The tile path is deliberately not taken for a stride above 1, so the
+        // same boundary sizes are worth crossing on the per-output path too.
+        foreach ($sizes as $m) {
+            foreach ($sizes as $n) {
+                foreach ([2, 3] as $stride) {
+                    // The API rejects a kernel larger than the input outright.
+                    if ($m < 3 || $n < 3) {
+                        continue;
+                    }
+
+                    $a = [];
+                    $b = [];
+
+                    for ($i = 0; $i < $m; ++$i) {
+                        $row = [];
+
+                        for ($j = 0; $j < $n; ++$j) {
+                            $row[] = mt_rand(-500, 500) / 7.0;
+                        }
+
+                        $a[] = $row;
+                    }
+
+                    for ($i = 0; $i < 3; ++$i) {
+                        $row = [];
+
+                        for ($j = 0; $j < 3; ++$j) {
+                            $row[] = mt_rand(-500, 500) / 7.0;
+                        }
+
+                        $b[] = $row;
+                    }
+
+                    $expected = $this->referenceConvolve2d($a, $b, $stride);
+
+                    $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), $stride);
+
+                    $this->assertSame(
+                        [count($expected), count($expected[0])],
+                        $actual->shape(),
+                        "{$m} x {$n} by 3 x 3, stride = {$stride}"
+                    );
+
+                    $this->assertEqualsWithDelta(
+                        $expected,
+                        $actual->asArray(),
+                        self::MAX_DELTA,
+                        "{$m} x {$n} by 3 x 3, stride = {$stride}"
+                    );
+                }
+            }
+        }
+    }
+
+    /**
      * @test
      * @dataProvider multiplyProvider
      *

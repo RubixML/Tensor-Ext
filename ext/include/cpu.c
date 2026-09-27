@@ -13,6 +13,7 @@
 /* CPUID leaf 1, ECX. */
 #define TENSOR_CPUID_ECX_AVX      0x10000000u /* bit 28 */
 #define TENSOR_CPUID_ECX_OSXSAVE  0x08000000u /* bit 27 */
+#define TENSOR_CPUID_ECX_FMA3     0x00001000u /* bit 12 */
 
 /* XCR0 bits covering the SSE and AVX (YMM) register state. */
 #define TENSOR_XCR0_SSE_AVX 0x6u
@@ -48,9 +49,10 @@ typedef struct {
 	int avx;
 	int avx2;
 	int avx512;
+	int fma;
 } tensor_cpu_features;
 
-static tensor_cpu_features tensor_cpu_detected = { 0, 0, 0 };
+static tensor_cpu_features tensor_cpu_detected = { 0, 0, 0, 0 };
 static int tensor_cpu_detected_ready = 0;
 
 /**
@@ -78,6 +80,7 @@ static void tensor_cpu_detect(void)
 	tensor_cpu_detected.avx = __builtin_cpu_supports("avx") ? 1 : 0;
 	tensor_cpu_detected.avx2 = __builtin_cpu_supports("avx2") ? 1 : 0;
 	tensor_cpu_detected.avx512 = __builtin_cpu_supports("avx512f") ? 1 : 0;
+	tensor_cpu_detected.fma = __builtin_cpu_supports("fma") ? 1 : 0;
 
 #	else
 
@@ -95,6 +98,13 @@ static void tensor_cpu_detect(void)
 
 		if ((xcr0 & TENSOR_XCR0_SSE_AVX) == TENSOR_XCR0_SSE_AVX) {
 			tensor_cpu_detected.avx = (ecx & TENSOR_CPUID_ECX_AVX) ? 1 : 0;
+
+			/* FMA3 needs no state beyond the SSE and AVX registers the same
+			 * XCR0 test has just cleared, so it is gated identically rather
+			 * than on a bit of its own. It is deliberately not folded into
+			 * `avx` above: the two features really are independent, and
+			 * Sandy Bridge and Ivy Bridge have 256-bit AVX with no FMA3. */
+			tensor_cpu_detected.fma = (ecx & TENSOR_CPUID_ECX_FMA3) ? 1 : 0;
 		}
 	}
 
@@ -148,6 +158,17 @@ int tensor_cpu_has_avx512(void)
 	return tensor_cpu_detected.avx512;
 }
 
+int tensor_cpu_has_fma(void)
+{
+	if (!tensor_cpu_detected_ready) {
+		tensor_cpu_detect();
+
+		tensor_cpu_detected_ready = 1;
+	}
+
+	return tensor_cpu_detected.fma;
+}
+
 /**
  * Route the elementwise kernels through their widest usable variant, giving
  * precedence to AVX-512 and falling back to AVX. Called once from the module
@@ -161,13 +182,20 @@ int tensor_cpu_has_avx512(void)
  */
 void tensor_cpu_init(void)
 {
-	if (tensor_cpu_has_avx512()) {
+	if (tensor_cpu_has_avx512() && tensor_cpu_has_fma()) {
 		tensor_arithmetic_dispatch_avx512_init();
 		tensor_comparison_dispatch_avx512_init();
 		tensor_unary_dispatch_avx512_init();
+		tensor_signal_processing_dispatch_avx512_init();
+	} else if (tensor_cpu_has_fma()) {
+		tensor_arithmetic_dispatch_avx_init();
+		tensor_comparison_dispatch_avx_init();
+		tensor_unary_dispatch_avx_init();
+		tensor_signal_processing_dispatch_fma_init();
 	} else if (tensor_cpu_has_avx()) {
 		tensor_arithmetic_dispatch_avx_init();
 		tensor_comparison_dispatch_avx_init();
 		tensor_unary_dispatch_avx_init();
+		tensor_signal_processing_dispatch_avx_init();
 	}
 }

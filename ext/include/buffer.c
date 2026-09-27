@@ -214,6 +214,7 @@ int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
 {
 	if (UNEXPECTED(len < 0)) {
 		ZVAL_NULL(buffer);
+
 		return FAILURE;
 	}
 
@@ -257,6 +258,7 @@ int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
 		ZVAL_UNDEF(ret);
 		zval_ptr_dtor(buffer);
 		ZVAL_UNDEF(buffer);
+		
 		return FAILURE;
 	}
 

@@ -27,10 +27,11 @@ Return the number of CPU threads currently in use for multiprocessing.
 
 Return the CPU features the extension detected at startup.
 
-The returned array has three keys:
+The returned array has four keys:
 
 | Key | Type | Meaning |
 | --- | --- | --- |
 | `avx` | `bool` | Whether the CPU exposes the AVX (256-bit) instruction set. |
 | `avx2` | `bool` | Whether the CPU exposes the AVX2 instruction set. Reported for diagnostics only — the dispatched double-precision kernels gain no throughput from a second 256-bit route. |
 | `avx512` | `bool` | Whether the CPU exposes the AVX-512F (512-bit) instruction set. |
+| `fma` | `bool` | Whether the CPU exposes FMA3. Reported separately from `avx` because the two are independent features — some CPUs have 256-bit AVX with no fused multiply-add — and because the convolution kernels route on the pair rather than on AVX alone. |

@@ -884,6 +884,78 @@ class VectorTest extends TestCase
     }
 
     /**
+     * The kernel accumulates 32 outputs at a time whenever consecutive outputs
+     * read consecutive samples, so convolveMatchesReference() above -- whose
+     * inputs are all shorter than one tile -- never reaches that path. This
+     * crosses it from both sides: the lengths and kernel sizes step either side
+     * of the tile width and of the stack scratch the reversed kernel is built
+     * in, so the first tile, the last whole tile, the two partial ranges either
+     * side of them, and the heap fallback for an oversized kernel are all
+     * covered.
+     *
+     * @test
+     */
+    public function convolveAcrossTileBoundariesMatchesReference() : void
+    {
+        mt_srand(1234);
+
+        $lengths = [1, 31, 32, 33, 63, 64, 65, 100, 257];
+        $kernels = [1, 2, 3, 31, 32, 33, 64, 257];
+
+        foreach ($lengths as $na) {
+            foreach ($kernels as $nb) {
+                // The API rejects a kernel longer than the input outright.
+                if ($nb > $na) {
+                    continue;
+                }
+
+                $a = [];
+                $b = [];
+
+                for ($i = 0; $i < $na; ++$i) {
+                    $a[] = mt_rand(-500, 500) / 7.0;
+                }
+
+                for ($i = 0; $i < $nb; ++$i) {
+                    $b[] = mt_rand(-500, 500) / 7.0;
+                }
+
+                $expected = $this->referenceConvolve1d($a, $b, 1);
+
+                $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), 1)->asArray();
+
+                $this->assertCount(count($expected), $actual, "na = {$na}, nb = {$nb}, stride = 1");
+
+                $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA, "na = {$na}, nb = {$nb}, stride = 1");
+            }
+        }
+
+        // The tile path is deliberately not taken for a stride above 1, so the
+        // same boundary lengths are worth crossing on the per-output path too.
+        foreach ($lengths as $na) {
+            foreach ([1, 2, 3] as $stride) {
+                $a = [];
+                $b = [];
+
+                for ($i = 0; $i < $na; ++$i) {
+                    $a[] = mt_rand(-500, 500) / 7.0;
+                }
+
+                for ($i = 0; $i < min($na, 33); ++$i) {
+                    $b[] = mt_rand(-500, 500) / 7.0;
+                }
+                $expected = $this->referenceConvolve1d($a, $b, $stride);
+
+                $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), $stride)->asArray();
+
+                $this->assertCount(count($expected), $actual, "na = {$na}, stride = {$stride}");
+
+                $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA, "na = {$na}, stride = {$stride}");
+            }
+        }
+    }
+
+    /**
      * @test
      * @dataProvider multiplyProvider
      *

@@ -42,9 +42,15 @@ void tensor_get_num_threads(zval * return_value)
  */
 void tensor_get_cpu_features(zval * return_value)
 {
-    array_init_size(return_value, 3);
+    array_init_size(return_value, 4);
 
     add_assoc_bool(return_value, "avx", tensor_cpu_has_avx());
     add_assoc_bool(return_value, "avx2", tensor_cpu_has_avx2());
     add_assoc_bool(return_value, "avx512", tensor_cpu_has_avx512());
+
+    /* FMA3 is reported alongside AVX rather than folded into it because it is a
+     * separate feature bit, and because the convolution routes are chosen from
+     * the two independently: a CPU with 256-bit AVX and no FMA3 still gets the
+     * AVX kernels, and one with FMA3 gets the fused ones. */
+    add_assoc_bool(return_value, "fma", tensor_cpu_has_fma());
 }

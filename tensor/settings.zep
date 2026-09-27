@@ -40,8 +40,11 @@ class Settings
     /**
      * Return the CPU features the extension detected at startup.
      *
-     * The returned array has three keys: "avx", "avx2" and "avx512", each a
-     * flag reporting whether that instruction set is available on the CPU.
+     * The returned array has four keys: "avx", "avx2", "avx512" and "fma",
+     * each a flag reporting whether that instruction set is available on the
+     * CPU. "fma" reports FMA3, which is a separate feature from "avx" rather
+     * than a consequence of it: a CPU can have 256-bit AVX and no fused
+     * multiply-add, and the two decide different kernel routes.
      *
      * @return array
      */

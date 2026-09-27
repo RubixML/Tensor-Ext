@@ -40,34 +40,17 @@
  * dispatch, which keeps <immintrin.h> -- and the portability caveats that come
  * with it -- out of the build entirely.
  *
- * Three sets of kernels are dispatched: the arithmetic kernels in
+ * Four sets of kernels are dispatched: the arithmetic kernels in
  * include/arithmetic.c, the elementwise comparison kernels in
- * include/comparison.c, and the elementwise unary kernels in include/unary.c.
- * The remaining kernels in those files keep a single baseline route, because
- * they are per-element libm calls.
+ * include/comparison.c, the elementwise unary kernels in include/unary.c, and
+ * the convolution kernels in include/signal_processing.c. The remaining kernels
+ * in the first three files keep a single baseline route, because they are
+ * per-element libm calls.
  *
  * Per-element libm calls -- pow, fmod, and exp, log, sin and the rest of the
  * transcendental unary operations -- are scalar no matter which ISA is
  * enabled, because the register only widens the call, not the work inside it.
- * These are left alone deliberately, not overlooked. Closing that gap needs a
- * vector math library (SLEEF being the only portable one; the glibc _ZGV*_
- * symbols are x86-only) rather than a wider route, so it is a dependency
- * decision and not a dispatch one.
- *
- * floor and ceil were in that group until they were measured. They are not a
- * scalar library call in any meaningful sense -- each is a single exact
- * operation -- but SSE2 has no rounding instruction, so the baseline route had
- * to inline libm's floor() as a branchy sequence that the compiler then refused
- * to vectorize, which cost about 1.2 ns/element against 0.57 for abs. Under
- * TENSOR_TARGET_AVX the same line is one vroundsd and the branch goes away, so
- * include/unary.c now dispatches them. Two lessons generalise. First, before
- * concluding that a kernel cannot be dispatched, check whether the obstacle is
- * the operation or the ISA baseline. Second, dispatching a kernel does not
- * guarantee it widens: floor still processes one double per instruction because
- * GCC will not select the packed vrndscalepd, even under `#pragma omp simd`.
- * The distantly related case is that AVX2 is reported for diagnostics only, for
- * the opposite reason -- it is available and useful but adds nothing for double
- * precision.
+ * These are left alone deliberately, not overlooked.
  */
 
 /* Signatures shared by the dispatched kernels. `_scalar` operations take the
@@ -82,19 +65,36 @@ typedef void (*tensor_unary_fn)(zval * return_value, zval * a);
 typedef void (*tensor_unary_bound_fn)(zval * return_value, zval * a, zval * bound);
 typedef void (*tensor_unary_clip_fn)(zval * return_value, zval * a, zval * lo, zval * hi);
 
+/* The convolution signatures. Both carry the stride, and the 2D kernel also
+ * carries the four extents the Zephir layer already knows, so that the shape of
+ * the result can be validated against the buffers without a second trip through
+ * the object. */
+typedef void (*tensor_convolve_1d_fn)(zval * return_value, zval * a, zval * b, zval * stride);
+typedef void (*tensor_convolve_2d_fn)(zval * return_value, zval * a, zval * b, zval * stride, zval * ma, zval * na, zval * mb, zval * nb);
+
 /* True when the target attribute below expands to a real ISA override. */
 #if (defined(__x86_64__) || defined(__i386__)) && \
 	(defined(__GNUC__) || defined(__clang__))
 #	define TENSOR_X86_DISPATCH 1
 #	define TENSOR_TARGET_AVX __attribute__((target("avx")))
 #	define TENSOR_TARGET_AVX512 __attribute__((target("avx512f")))
+/* The FMA routes are separate from the AVX and AVX-512 ones above, and neither
+ * implies the other: a CPU can have 256-bit AVX and no FMA3 (Sandy Bridge, Ivy
+ * Bridge), and `target("avx512f")` on its own leaves GCC emitting a packed
+ * multiply and add rather than a fused one. The convolution kernels are the
+ * only ones that want these, because they are the only ones with a
+ * multiply-accumulate inner loop wide enough for the single rounding to show. */
+#	define TENSOR_TARGET_FMA __attribute__((target("avx,fma")))
+#	define TENSOR_TARGET_AVX512_FMA __attribute__((target("avx512f,fma")))
 #else
 #	define TENSOR_TARGET_AVX
 #	define TENSOR_TARGET_AVX512
+#	define TENSOR_TARGET_FMA
+#	define TENSOR_TARGET_AVX512_FMA
 #endif
 
 /* Installed once from the module initializer in config.json. The hooks are
- * idempotent and only ever upgrade a kernel from its baseline to its AVX or
+ * idempotent and only ever upgrade a kernel from its baseline to its AVX, FMA or
  * AVX-512 variant, so an extension whose initializer never ran still computes
  * the right answers, just without the wider vectors. */
 void tensor_arithmetic_dispatch_avx_init(void);
@@ -103,5 +103,8 @@ void tensor_comparison_dispatch_avx_init(void);
 void tensor_arithmetic_dispatch_avx512_init(void);
 void tensor_unary_dispatch_avx512_init(void);
 void tensor_comparison_dispatch_avx512_init(void);
+void tensor_signal_processing_dispatch_avx_init(void);
+void tensor_signal_processing_dispatch_fma_init(void);
+void tensor_signal_processing_dispatch_avx512_init(void);
 
 #endif
