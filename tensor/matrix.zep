@@ -152,8 +152,8 @@ class Matrix implements Tensor
             throw new InvalidArgumentException("N must be"
                 . " greater than 0, " . strval(n) . " given.");
         }
- 
-        return self::fromArray(array_fill(0, m, array_fill(0, n, value)), false);
+
+        return new self(tensor_fill(value, m * n), m, n);
     }
  
      /**

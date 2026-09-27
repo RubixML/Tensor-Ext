@@ -75,7 +75,7 @@ class Vector implements Tensor
                 . " greater than 0, " . strval(n) . " given.");
         }
 
-        return static::fromArray(array_fill(0, n, value), false);
+        return new static(tensor_fill(value, n));
     }
 
     /**

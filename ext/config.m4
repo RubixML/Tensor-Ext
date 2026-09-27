@@ -36,6 +36,7 @@ if test "$PHP_TENSOR" = "yes"; then
 	include/buffer.c
 	include/comparison.c
 	include/cpu.c
+	include/factories.c
 	include/reductions.c
 	include/shape.c
 	include/unary.c

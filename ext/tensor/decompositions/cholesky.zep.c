@@ -106,7 +106,7 @@ PHP_METHOD(Tensor_Decompositions_Cholesky, decompose)
 	zephir_check_call_status();
 	ZEPHIR_CALL_CE_STATIC(&_6, tensor_matrix_ce, "fromBuffer", NULL, 0, &l, &_7, &_8);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 18, &_6);
+	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 17, &_6);
 	zephir_check_call_status();
 	RETURN_MM();
 }

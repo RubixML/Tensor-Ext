@@ -21,6 +21,33 @@ Guidance for AI coding agents contributing to **Tensor** — a scientific-comput
 - Dev tooling is installed as Composer dev dependencies (php-cs-fixer, phpunit, phpbench, Zephir).
 - Compiling the extension additionally needs a C compiler, GFortran, `phpize`, OpenBLAS dev headers, LAPACKE, and re2c (see README for per-OS install commands).
 
+## Compiling on macOS (Homebrew)
+
+Two things block `composer compile` with a clean shell — set both before compiling:
+
+```sh
+# 1. OpenBLAS/LAPACKE/gfortran are keg-only (not symlinked into /opt/homebrew),
+#    so export the brew prefixes — otherwise: 'cblas.h' file not found.
+export LDFLAGS="-L$(brew --prefix openblas)/lib -L$(brew --prefix lapack)/lib -L$(brew --prefix pcre2)/lib -L$(brew --prefix gcc)/lib/gcc/current"
+export CPPFLAGS="-I$(brew --prefix openblas)/include -I$(brew --prefix lapack)/include -I$(brew --prefix pcre2)/include -I$(brew --prefix gcc)/include"
+export PKG_CONFIG_PATH="$(brew --prefix openblas)/lib/pkgconfig:$(brew --prefix lapack)/lib/pkgconfig:$(brew --prefix pcre2)/lib/pkgconfig:$(brew --prefix gcc)/lib/pkgconfig"
+export PATH="$(brew --prefix gcc)/bin:$PATH"; FC="$(brew --prefix gcc)/bin/gfortran"
+
+# 2. Zephir's PCH fails on the macOS `gcc` shim ("C23 was disabled in precompiled
+#    file") — aborts every .lo. Disable it (only loses a speed-up).
+export ZEPHIR_NO_PCH=1
+
+composer compile
+```
+
+Note: Zephir's re-`configure` fingerprint ignores `CPPFLAGS`/`LDFLAGS` — if you change them on an existing tree, delete `.zephir/1.5.0-$Id$/build-fingerprint` first to force a fresh `configure`.
+
+To verify, raise the memory limit (some tests alloc large buffers) and load the built `.so`:
+
+```sh
+php -n -d extension=$PWD/ext/modules/tensor.so -d memory_limit=-1 -d extension=iconv vendor/bin/phpunit
+```
+
 ## Commands
 
 All are Composer scripts (see `composer.json`):
@@ -73,10 +100,10 @@ Do **not** hand-edit the generated C in `ext/` (files like `*.dep`, `*.lo`, `*.o
 
 ## Working verification paths
 
-An installed TEnsor extension will override any new changes. To run the tests against the locally compiled extension, load the built shared object. For example:
+An installed Tensor extension will override any new changes. To test the locally compiled extension, load the built shared object (see the macOS compile section above):
 
 ```sh
-php -n -d extension=$PWD/ext/modules/tensor.so extension=iconv -d extension=mbstring -d extension=tokenizer -d extension=dom -d extension=xml -d extension=ctype -d extension=xmlwriter vendor/bin/phpunit ...
+php -n -d extension=$PWD/ext/modules/tensor.so -d memory_limit=-1 -d extension=iconv vendor/bin/phpunit
 ```
 
 If a system-installed `tensor` extension is already enabled, you can rely on it instead of building locally.
