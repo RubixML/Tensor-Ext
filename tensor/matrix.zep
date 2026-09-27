@@ -1657,30 +1657,11 @@ class Matrix implements Tensor
     /**
      * Compute the covariance of the matrix.
      *
-     * @param \Tensor\ColumnVector mean
-     * @throws \Tensor\Exceptions\DimensionalityMismatch
      * @return self
      */
-    public function covariance(<ColumnVector> mean = null) -> <Matrix>
+    public function covariance() -> <Matrix>
     {
-        var buffer;
-
-        if !is_null(mean) {
-            if unlikely mean->m() !== this->m {
-                throw new DimensionalityMismatch("Mean vector must"
-                    . " have " . (string) this->m . " rows, "
-                    . (string) mean->m() . " given.");
-            }
-
-            let buffer = tensor_covariance_centered(
-                this->a,
-                mean->buffer(),
-                this->m,
-                this->n
-            );
-        } else {
-            let buffer = tensor_covariance(this->a, this->m, this->n);
-        }
+        var buffer = tensor_covariance(this->a, this->m, this->n);
 
         return new self(buffer, this->m, this->m);
     }

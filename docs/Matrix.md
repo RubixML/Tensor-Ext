@@ -443,7 +443,7 @@ See [Statistical](interfaces/statistical.md) and [Reductions](interfaces/reducti
 - `median() : ColumnVector` — median vector of this matrix
 - `quantile(float $q) : ColumnVector` — q'th quantile of each row (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)
 - `variance($mean = null) : ColumnVector` — row variance of the matrix; `$mean` optionally provides a pre-computed mean `ColumnVector` (throws `DimensionalityMismatch` if `$mean->m() !== $this->m`)
-- `covariance(?ColumnVector $mean = null) : self` — compute the covariance matrix (throws `DimensionalityMismatch` if `$mean->m() !== $this->m`)
+- `covariance() : self` — compute the covariance matrix
 
 ## Array Access
 

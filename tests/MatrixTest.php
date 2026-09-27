@@ -3227,30 +3227,6 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
-    public function covarianceSuppliedMean() : void
-    {
-        $a = Matrix::fromArray([
-            [22.0, -17.0, 12.0],
-            [4.0, 11.0, -2.0],
-            [20.0, -6.0, -9.0],
-        ]);
-
-        $expected = Matrix::fromArray([
-            [273.55555555555554, -65.55555555555556, 135.2222222222222],
-            [-65.55555555555556, 28.222222222222225, 3.4444444444444406],
-            [135.2222222222222, 3.4444444444444406, 169.55555555555554],
-        ]);
-
-        $this->assertEqualsWithDelta(
-            $expected->asArray(),
-            $a->covariance($a->mean())->asArray(),
-            self::MAX_DELTA
-        );
-    }
-
-    /**
-     * @test
-     */
     public function covarianceNonSquare() : void
     {
         $a = Matrix::fromArray([
@@ -3338,22 +3314,9 @@ class MatrixTest extends TestCase
 
         $this->assertEqualsWithDelta(
             $composed->asArray(),
-            $a->covariance($mean)->asArray(),
+            $a->covariance()->asArray(),
             self::MAX_DELTA
         );
-    }
-
-    /**
-     * @test
-     */
-    public function covarianceMeanLengthMismatchThrows() : void
-    {
-        $this->expectException(DimensionalityMismatch::class);
-
-        Matrix::fromArray([
-            [1.0, 2.0, 3.0],
-            [4.0, 5.0, 6.0],
-        ])->covariance(ColumnVector::fromArray([1.0]));
     }
 
     /**
