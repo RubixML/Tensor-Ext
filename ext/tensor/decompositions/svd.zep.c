@@ -14,8 +14,8 @@
 #include "kernel/main.h"
 #include "kernel/memory.h"
 #include "kernel/fcall.h"
-#include "kernel/operators.h"
 #include "kernel/exception.h"
+#include "kernel/operators.h"
 #include "kernel/array.h"
 #include "kernel/object.h"
 #include "include/linear_algebra.h"
@@ -90,22 +90,23 @@ PHP_METHOD(Tensor_Decompositions_Svd, decompose)
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &a);
-	ZEPHIR_INIT_VAR(&_0);
-	ZEPHIR_CALL_METHOD(&_1, a, "buffer", NULL, 0);
+	ZEPHIR_INIT_VAR(&result);
+	ZEPHIR_CALL_METHOD(&_0, a, "buffer", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&_2, a, "m", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_1, a, "m", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_METHOD(&_3, a, "n", NULL, 0);
+	ZEPHIR_CALL_METHOD(&_2, a, "n", NULL, 0);
 	zephir_check_call_status();
-	tensor_svd(&_0, &_1, &_2, &_3);
-	zephir_get_arrval(&_4, &_0);
-	ZEPHIR_CPY_WRT(&result, &_4);
+	tensor_svd(&result, &_0, &_1, &_2);
 	if (Z_TYPE_P(&result) == IS_NULL) {
 		ZEPHIR_THROW_EXCEPTION_DEBUG_STR(tensor_exceptions_runtimeexception_ce, "Failed to decompose matrix.", "tensor/decompositions/svd.zep", 49);
 		return;
 	}
+	ZEPHIR_CPY_WRT(&_3, &result);
+	zephir_get_arrval(&_4, &_3);
+	ZEPHIR_CPY_WRT(&result, &_4);
 	zephir_memory_observe(&_5);
-	zephir_array_fetch_long(&_5, &result, 0, PH_NOISY, "tensor/decompositions/svd.zep", 52);
+	zephir_array_fetch_long(&_5, &result, 0, PH_NOISY, "tensor/decompositions/svd.zep", 54);
 	ZEPHIR_CALL_METHOD(&_6, a, "m", NULL, 0);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_7, a, "m", NULL, 0);
@@ -113,11 +114,11 @@ PHP_METHOD(Tensor_Decompositions_Svd, decompose)
 	ZEPHIR_CALL_CE_STATIC(&u, tensor_matrix_ce, "fromBuffer", NULL, 0, &_5, &_6, &_7);
 	zephir_check_call_status();
 	zephir_memory_observe(&_8);
-	zephir_array_fetch_long(&_8, &result, 1, PH_NOISY, "tensor/decompositions/svd.zep", 53);
+	zephir_array_fetch_long(&_8, &result, 1, PH_NOISY, "tensor/decompositions/svd.zep", 55);
 	ZEPHIR_CALL_CE_STATIC(&singularValues, tensor_vector_ce, "fromBuffer", NULL, 0, &_8);
 	zephir_check_call_status();
 	zephir_memory_observe(&_9);
-	zephir_array_fetch_long(&_9, &result, 2, PH_NOISY, "tensor/decompositions/svd.zep", 54);
+	zephir_array_fetch_long(&_9, &result, 2, PH_NOISY, "tensor/decompositions/svd.zep", 56);
 	ZEPHIR_CALL_METHOD(&_10, a, "n", NULL, 0);
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_11, a, "n", NULL, 0);

@@ -43,11 +43,13 @@ class Svd
      */
     public static function decompose(const <Matrix> a) -> <Svd>
     {
-        var result = (array) tensor_svd(a->buffer(), a->m(), a->n());
+        var result = tensor_svd(a->buffer(), a->m(), a->n());
 
         if is_null(result) {
             throw new RuntimeException("Failed to decompose matrix.");
         }
+
+        let result = (array) result;
 
         var u = Matrix::fromBuffer(result[0], a->m(), a->m());
         var singularValues = Vector::fromBuffer(result[1]);
