@@ -51,7 +51,7 @@ class TensorMatrixToArrayOptimizer extends OptimizerAbstract
         }
 
         $context->headersManager->add(
-            'include/reductions',
+            'include/shape',
             HeadersManager::POSITION_LAST
         );
 

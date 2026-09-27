@@ -22,7 +22,5 @@ double tensor_product_doubles(const double * data, zend_long len);
 
 void tensor_median(zval * return_value, zval * obj, zval * n);
 void tensor_quantile(zval * return_value, zval * obj, zval * n, zval * q);
-void tensor_matrix_repeat(zval * return_value, zval * obj, zval * n, zval * times_m, zval * times_n);
-void tensor_matrix_to_array(zval * return_value, zval * obj, zval * n);
 
 #endif

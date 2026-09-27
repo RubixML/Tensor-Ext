@@ -24,11 +24,11 @@
 #include "ext/spl/spl_array.h"
 #include "include/factories.h"
 #include "include/buffer.h"
-#include "include/reductions.h"
 #include "include/shape.h"
 #include "include/linear_algebra.h"
 #include "include/signal_processing.h"
 #include "include/unary.h"
+#include "include/reductions.h"
 #include "include/arithmetic.h"
 #include "include/comparison.h"
 
