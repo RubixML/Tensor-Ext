@@ -1208,7 +1208,8 @@ PHP_METHOD(Tensor_Vector, dot)
 		return;
 	}
 	zephir_read_property_cached(&_8, this_ptr, _zephir_prop_1, 1, PH_NOISY_CC | PH_READONLY);
-	zephir_read_property_cached(&_9, b, _zephir_prop_1, 0, PH_NOISY_CC | PH_READONLY);
+	ZEPHIR_CALL_METHOD(&_9, b, "buffer", NULL, 0);
+	zephir_check_call_status();
 	tensor_dot(return_value, &_8, &_9);
 	RETURN_MM();
 }
@@ -1304,7 +1305,8 @@ PHP_METHOD(Tensor_Vector, convolve)
 	object_init_ex(return_value, zend_get_called_scope(execute_data));
 	ZEPHIR_INIT_VAR(&_9);
 	zephir_read_property_cached(&_10, this_ptr, _zephir_prop_1, 1, PH_NOISY_CC | PH_READONLY);
-	zephir_read_property_cached(&_11, b, _zephir_prop_1, 0, PH_NOISY_CC | PH_READONLY);
+	ZEPHIR_CALL_METHOD(&_11, b, "buffer", NULL, 0);
+	zephir_check_call_status();
 	ZVAL_LONG(&_12, stride);
 	tensor_convolve_1d(&_9, &_10, &_11, &_12);
 	ZEPHIR_CALL_METHOD(NULL, return_value, "__construct", NULL, 12, &_9);

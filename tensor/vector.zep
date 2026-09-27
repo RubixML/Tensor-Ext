@@ -438,7 +438,7 @@ class Vector implements Tensor
                 . (string) b->size() . ".");
         }
 
-        return tensor_dot(this->a, b->a);
+        return tensor_dot(this->a, b->buffer());
     }
 
     /**
@@ -468,7 +468,7 @@ class Vector implements Tensor
                 . " less than 1, " . strval(stride). " given.");
         }
 
-        return new static(tensor_convolve_1d(this->a, b->a, stride));
+        return new static(tensor_convolve_1d(this->a, b->buffer(), stride));
     }
 
     /**

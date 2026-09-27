@@ -404,7 +404,7 @@ class ColumnVectorTest extends TestCase
         $b = $a->transpose();
 
         $this->assertInstanceOf(Vector::class, $b);
-        $this->assertEquals(Vector::fromArray([1.0, 2.0, 3.0])->asArray(), $b->asArray());
+        $this->assertEquals(Vector::fromArray([1.0, 2.0, 3.0])->asArray(), $b->buffer()sArray());
     }
 
     /**

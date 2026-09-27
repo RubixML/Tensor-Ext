@@ -805,7 +805,7 @@ class Matrix implements Tensor
                 . (string) b->m() . ".");
         }
          
-        var result = tensor_matmul(this->a, b->a, this->m, this->n, b->n());
+        var result = tensor_matmul(this->a, b->buffer(), this->m, this->n, b->n());
 
         return new self(result, this->m, b->n());
     }
@@ -853,7 +853,7 @@ class Matrix implements Tensor
                 . " less than 1, " . strval(stride) . " given.");
         }
 
-        var result = tensor_convolve_2d(this->a, b->a, stride, this->m, this->n, b->m(), b->n());
+        var result = tensor_convolve_2d(this->a, b->buffer(), stride, this->m, this->n, b->m(), b->n());
 
         /* Rounded up without adding the stride, which would overflow for a
          * stride near the maximum integer and disagree with the shape the
@@ -1827,7 +1827,7 @@ class Matrix implements Tensor
 
         int n = this->n > 0 ? this->n : b->n();
 
-        var buffer = b->a->concat([this->a]);
+        var buffer = b->buffer()->concat([this->a]);
 
         return new self(buffer, b->m() + this->m, n);
     }
@@ -1849,7 +1849,7 @@ class Matrix implements Tensor
 
         int n = this->n > 0 ? this->n : b->n();
 
-        var buffer = this->a->concat([b->a]);
+        var buffer = this->a->concat([b->buffer()]);
 
         return new self(buffer, this->m + b->m(), n);
     }
@@ -1878,7 +1878,7 @@ class Matrix implements Tensor
         array c = [];
 
         for i in range(0, m - 1) {
-            let bufferB = b->a->slice(i * b->n(), b->n());
+            let bufferB = b->buffer()->slice(i * b->n(), b->n());
 
             let bufferA = this->a->slice(i * this->n, this->n);
 
@@ -1914,7 +1914,7 @@ class Matrix implements Tensor
         for i in range(0, m - 1) {
             let bufferA = this->a->slice(i * this->n, this->n);
 
-            let bufferB = b->a->slice(i * b->n(), b->n());
+            let bufferB = b->buffer()->slice(i * b->n(), b->n());
 
             let c[] = bufferA->concat([bufferB]);
         }
@@ -1964,7 +1964,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_multiply(this->a, b->a);
+        var result = tensor_multiply(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -1983,7 +1983,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_divide(this->a, b->a);
+        var result = tensor_divide(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2002,7 +2002,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_add(this->a, b->a);
+        var result = tensor_add(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2021,7 +2021,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_subtract(this->a, b->a);
+        var result = tensor_subtract(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2041,7 +2041,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_pow(this->a, b->a);
+        var result = tensor_pow(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2061,7 +2061,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_mod(this->a, b->a);
+        var result = tensor_mod(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2081,7 +2081,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_equal(this->a, b->a);
+        var result = tensor_equal(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2100,7 +2100,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_not_equal(this->a, b->a);
+        var result = tensor_not_equal(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2120,7 +2120,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_greater(this->a, b->a);
+        var result = tensor_greater(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2140,7 +2140,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_greater_equal(this->a, b->a);
+        var result = tensor_greater_equal(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2159,7 +2159,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_less(this->a, b->a);
+        var result = tensor_less(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
@@ -2178,7 +2178,7 @@ class Matrix implements Tensor
                 . " matrix expected but " . b->shapeString() . " given.");
         }
 
-        var result = tensor_less_equal(this->a, b->a);
+        var result = tensor_less_equal(this->a, b->buffer());
 
         return new self(result, this->m, this->n);
     }
