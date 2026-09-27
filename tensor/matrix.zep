@@ -44,35 +44,69 @@ class Matrix implements Tensor
     protected n;
 
     /**
-     * Return an identity matrix with dimensionality n x n.
+     * Build a new matrix from a PHP array of rows, each row being a PHP array
+     * of numeric elements.
      *
-     * @param int n
+     * @param array[] a
+     * @param bool validate
      * @throws \Tensor\Exceptions\InvalidArgumentException
      * @return self
      */
-    public static function identity(const int n) -> <Matrix>
+    public static function fromArray(const array a, const bool validate = true) -> <Matrix>
     {
-        if unlikely n < 1 {
-            throw new InvalidArgumentException("N must be"
-                . " greater than 0, " . strval(n) . " given.");
+        int rows = count(a);
+
+        if unlikely rows < 1 {
+            var buffer = tensor_buffer_from_array([]);
+
+            return new self(buffer, 0, 0);
         }
- 
-        int i, j;
 
-        array a = [];
-        array rowA = [];
- 
-        for i in range(0, n - 1) {
-            let rowA = [];
+        var rowA, valueA;
 
-            for j in range(0, n - 1) {
-                let rowA[] = i === j ? 1.0 : 0.0;
+        var firstRow, n, aList;
+
+        int i;
+
+        let aList = array_values(a);
+
+        let firstRow = aList[0];
+
+        if unlikely !is_array(firstRow) {
+            throw new InvalidArgumentException("Matrix requires an"
+                . " array of arrays.");
+        }
+
+        let n = count(firstRow);
+
+        array flat = [];
+
+        let i = 0;
+
+        while i < rows {
+            let rowA = aList[i];
+
+            if unlikely validate && !is_array(rowA) {
+                throw new InvalidArgumentException("Matrix requires an"
+                    . " array of arrays.");
             }
- 
-            let a[] = rowA;
+
+            if unlikely validate && count(rowA) !== n {
+                throw new InvalidArgumentException("The number of"
+                    . " columns must be equal for all rows, "
+                    .  strval(n) . " needed but " . count(rowA) . " given.");
+            }
+
+            for valueA in rowA {
+                let flat[] = valueA;
+            }
+
+            let i++;
         }
- 
-        return self::fromArray(a, false);
+
+        var buffer = tensor_buffer_from_array(flat);
+
+        return new self(buffer, rows, n);
     }
  
     /**
@@ -100,38 +134,7 @@ class Matrix implements Tensor
     {
         return self::fill(1.0, m, n);
     }
- 
-    /**
-     * Build a matrix with the value of each element along the diagonal
-     * and zeros everywhere else.
-     *
-     * @param float[] elements
-     * @return self
-     */
-    public static function diagonal(array elements) -> <Matrix>
-    {
-        int n = count(elements);
 
-        let elements = array_values(elements);
-
-        int i, j;
-
-        array a = [];
-        array rowA = [];
- 
-        for i in range(0, n - 1) {
-            let rowA = [];
- 
-            for j in range(0, n - 1) {
-                let rowA[] = i === j ? elements[i] : 0.0;
-            }
- 
-            let a[] = rowA;
-        }
- 
-        return self::fromArray(a, false);
-    }
- 
     /**
      * Fill a matrix with a given value at each element.
      *
@@ -154,6 +157,39 @@ class Matrix implements Tensor
         }
 
         return new self(tensor_fill(value, m * n), m, n);
+    }
+
+    /**
+     * Return an identity matrix with dimensionality n x n.
+     *
+     * @param int n
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
+     */
+    public static function identity(const int n) -> <Matrix>
+    {
+        if unlikely n < 1 {
+            throw new InvalidArgumentException("N must be"
+                . " greater than 0, " . strval(n) . " given.");
+        }
+
+        var ones = array_fill(0, n, 1.0);
+
+        return new self(tensor_diagonal(ones), n, n);
+    }
+ 
+    /**
+     * Build a matrix with the value of each element along the diagonal
+     * and zeros everywhere else.
+     *
+     * @param float[] elements
+     * @return self
+     */
+    public static function diagonal(array elements) -> <Matrix>
+    {
+        int n = count(elements);
+
+        return new self(tensor_diagonal(elements), n, n);
     }
  
      /**
@@ -234,72 +270,6 @@ class Matrix implements Tensor
         }
 
         return new self(tensor_random_uniform_pm1(m * n), m, n);
-    }
-
-    /**
-     * Build a new matrix from a PHP array of rows, each row being a PHP array
-     * of numeric elements.
-     *
-     * @param array[] a
-     * @param bool validate
-     * @throws \Tensor\Exceptions\InvalidArgumentException
-     * @return self
-     */
-    public static function fromArray(const array a, const bool validate = true) -> <Matrix>
-    {
-        int rows = count(a);
-
-        if unlikely rows < 1 {
-            var buffer = tensor_buffer_from_array([]);
-
-            return new self(buffer, 0, 0);
-        }
-
-        var rowA, valueA;
-
-        var firstRow, n, aList;
-
-        int i;
-
-        let aList = array_values(a);
-
-        let firstRow = aList[0];
-
-        if unlikely !is_array(firstRow) {
-            throw new InvalidArgumentException("Matrix requires an"
-                . " array of arrays.");
-        }
-
-        let n = count(firstRow);
-
-        array flat = [];
-
-        let i = 0;
-
-        while i < rows {
-            let rowA = aList[i];
-
-            if unlikely validate && !is_array(rowA) {
-                throw new InvalidArgumentException("Matrix requires an"
-                    . " array of arrays.");
-            }
-
-            if unlikely validate && count(rowA) !== n {
-                throw new InvalidArgumentException("The number of"
-                    . " columns must be equal for all rows, "
-                    .  strval(n) . " needed but " . count(rowA) . " given.");
-            }
-
-            for valueA in rowA {
-                let flat[] = valueA;
-            }
-
-            let i++;
-        }
-
-        var buffer = tensor_buffer_from_array(flat);
-
-        return new self(buffer, rows, n);
     }
 
     /**

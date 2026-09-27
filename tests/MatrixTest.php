@@ -238,6 +238,17 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function diagonalEmpty() : void
+    {
+        $matrix = Matrix::diagonal([]);
+
+        $this->assertSame([0, 0], $matrix->shape());
+        $this->assertSame([], $matrix->asArray());
+    }
+
+    /**
+     * @test
+     */
     public function fill() : void
     {
         $matrix = Matrix::fill(5.0, 4, 4);

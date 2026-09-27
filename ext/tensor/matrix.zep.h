@@ -3,15 +3,15 @@ extern zend_class_entry *tensor_matrix_ce;
 
 ZEPHIR_INIT_CLASS(Tensor_Matrix);
 
-PHP_METHOD(Tensor_Matrix, identity);
+PHP_METHOD(Tensor_Matrix, fromArray);
 PHP_METHOD(Tensor_Matrix, zeros);
 PHP_METHOD(Tensor_Matrix, ones);
-PHP_METHOD(Tensor_Matrix, diagonal);
 PHP_METHOD(Tensor_Matrix, fill);
+PHP_METHOD(Tensor_Matrix, identity);
+PHP_METHOD(Tensor_Matrix, diagonal);
 PHP_METHOD(Tensor_Matrix, rand);
 PHP_METHOD(Tensor_Matrix, gaussian);
 PHP_METHOD(Tensor_Matrix, uniform);
-PHP_METHOD(Tensor_Matrix, fromArray);
 PHP_METHOD(Tensor_Matrix, fromBuffer);
 PHP_METHOD(Tensor_Matrix, __construct);
 PHP_METHOD(Tensor_Matrix, shape);
@@ -162,8 +162,9 @@ PHP_METHOD(Tensor_Matrix, getIterator);
 PHP_METHOD(Tensor_Matrix, __serialize);
 PHP_METHOD(Tensor_Matrix, __unserialize);
 
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_identity, 0, 1, Tensor\\Matrix, 0)
-	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_fromarray, 0, 1, Tensor\\Matrix, 0)
+	ZEND_ARG_ARRAY_INFO(0, a, 0)
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, validate, _IS_BOOL, 0, "true")
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_zeros, 0, 2, Tensor\\Matrix, 0)
@@ -176,14 +177,18 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_ones, 0, 2, Tensor\
 	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_diagonal, 0, 1, Tensor\\Matrix, 0)
-	ZEND_ARG_ARRAY_INFO(0, elements, 0)
-ZEND_END_ARG_INFO()
-
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_fill, 0, 3, Tensor\\Matrix, 0)
 	ZEND_ARG_TYPE_INFO(0, value, IS_DOUBLE, 0)
 	ZEND_ARG_TYPE_INFO(0, m, IS_LONG, 0)
 	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_identity, 0, 1, Tensor\\Matrix, 0)
+	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_diagonal, 0, 1, Tensor\\Matrix, 0)
+	ZEND_ARG_ARRAY_INFO(0, elements, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_rand, 0, 2, Tensor\\Matrix, 0)
@@ -199,11 +204,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_uniform, 0, 2, Tensor\\Matrix, 0)
 	ZEND_ARG_TYPE_INFO(0, m, IS_LONG, 0)
 	ZEND_ARG_TYPE_INFO(0, n, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_fromarray, 0, 1, Tensor\\Matrix, 0)
-	ZEND_ARG_ARRAY_INFO(0, a, 0)
-	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, validate, _IS_BOOL, 0, "true")
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_frombuffer, 0, 3, Tensor\\Matrix, 0)
@@ -752,15 +752,15 @@ ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_matrix___unserialize, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
-	PHP_ME(Tensor_Matrix, identity, arginfo_tensor_matrix_identity, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(Tensor_Matrix, fromArray, arginfo_tensor_matrix_fromarray, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, zeros, arginfo_tensor_matrix_zeros, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, ones, arginfo_tensor_matrix_ones, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Tensor_Matrix, diagonal, arginfo_tensor_matrix_diagonal, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, fill, arginfo_tensor_matrix_fill, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(Tensor_Matrix, identity, arginfo_tensor_matrix_identity, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	PHP_ME(Tensor_Matrix, diagonal, arginfo_tensor_matrix_diagonal, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, rand, arginfo_tensor_matrix_rand, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, gaussian, arginfo_tensor_matrix_gaussian, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, uniform, arginfo_tensor_matrix_uniform, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Tensor_Matrix, fromArray, arginfo_tensor_matrix_fromarray, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, fromBuffer, arginfo_tensor_matrix_frombuffer, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Tensor_Matrix, __construct, arginfo_tensor_matrix___construct, ZEND_ACC_PROTECTED|ZEND_ACC_CTOR)
 	PHP_ME(Tensor_Matrix, shape, arginfo_tensor_matrix_shape, ZEND_ACC_PUBLIC)

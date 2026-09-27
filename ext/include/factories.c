@@ -66,6 +66,45 @@ void tensor_fill(zval * return_value, zval * value, zval * n)
 	zval_ptr_dtor(&c);
 }
 
+void tensor_diagonal(zval * return_value, zval * elements)
+{
+	if (UNEXPECTED(Z_TYPE_P(elements) != IS_ARRAY)) {
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("Diagonal elements must be an array."));
+		return;
+	}
+
+	zend_long length = (zend_long) zend_hash_num_elements(Z_ARRVAL_P(elements));
+
+	if (UNEXPECTED(length < 0)) {
+		ZVAL_NULL(return_value);
+		return;
+	}
+
+	zval c;
+
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, length * length, &c) == FAILURE)) {
+		return;
+	}
+
+	if (length > 0) {
+		double * vc = zephir_buffer_doubles(&c);
+		zval * value;
+		zend_long i = 0;
+
+		memset(vc, 0, (size_t) length * length * sizeof(double));
+
+		/* Positional: the keys of the source array are discarded, the values
+		 * are taken in iteration order and written down the diagonal. */
+		ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(elements), value) {
+			vc[i * (length + 1)] = zephir_get_doubleval(value);
+			++i;
+		} ZEND_HASH_FOREACH_END();
+	}
+
+	zval_ptr_dtor(&c);
+}
+
 void tensor_random_uniform_01(zval * return_value, zval * n)
 {
 	zend_long length = zephir_get_intval(n);

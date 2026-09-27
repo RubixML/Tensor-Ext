@@ -31,6 +31,34 @@ class Vector implements Tensor
     protected n;
 
     /**
+     * Build a new vector from a flat PHP array of numeric elements.
+     *
+     * @param array a
+     * @param bool validate
+     * @throws \Tensor\Exceptions\InvalidArgumentException
+     * @return self
+     */
+    public static function fromArray(const array a, const bool validate = true) -> <Vector>
+    {
+        var valueA;
+
+        array flat = [];
+
+        for valueA in (array) a {
+            if unlikely validate && is_array(valueA) {
+                throw new InvalidArgumentException("Vector requires a"
+                    . " flat array of numeric elements.");
+            }
+
+            let flat[] = valueA;
+        }
+
+        var buffer = tensor_buffer_from_array(flat);
+
+        return new static(buffer);
+    }
+
+    /**
      * Build a vector of zeros with n elements.
      *
      * @param int n
@@ -187,34 +215,6 @@ class Vector implements Tensor
         let a[] = max;
 
         return self::fromArray(a, false);
-    }
-
-    /**
-     * Build a new vector from a flat PHP array of numeric elements.
-     *
-     * @param array a
-     * @param bool validate
-     * @throws \Tensor\Exceptions\InvalidArgumentException
-     * @return self
-     */
-    public static function fromArray(const array a, const bool validate = true) -> <Vector>
-    {
-        var valueA;
-
-        array flat = [];
-
-        for valueA in (array) a {
-            if unlikely validate && is_array(valueA) {
-                throw new InvalidArgumentException("Vector requires a"
-                    . " flat array of numeric elements.");
-            }
-
-            let flat[] = valueA;
-        }
-
-        var buffer = tensor_buffer_from_array(flat);
-
-        return new static(buffer);
     }
 
     /**
