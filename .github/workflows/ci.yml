@@ -65,7 +65,7 @@ jobs:
           echo "PHP didn't raise any warnings at startup."
 
       - name: Inspect PHP extension
-        run: php --ri tensor_ext
+        run: php --ri tensor
 
       - name: Install Composer
         run: |

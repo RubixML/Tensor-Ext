@@ -4,32 +4,73 @@ Tensor is a PHP extension that provides objects for scientific computing, backed
 
 ## Installation
 
-### Requirements
-
-- PHP 8.0 or above
-- A C compiler, GFortran, and the PHP development tooling if you compile from source.
-
-### Install via PECL
-
-Install the compiled extension via [PECL](https://pecl.php.net/package/Tensor):
+Install the Tensor extension via [PIE](https://github.com/php/pie):
 
 ```sh
-$ pecl install tensor
+$ pie install rubix/tensor_ext
 ```
 
-After installing, add the following line to your `php.ini`:
+## Requirements
+
+- [PHP](https://php.net) 8.1 or above
+- The PHP development package (source code and tooling)
+- A C compiler such as [GCC](https://gcc.gnu.org/) or [Clang](https://clang.llvm.org/)
+- A Fortran compiler such as [GFortran](https://gcc.gnu.org/wiki/GFortran)
+- [OpenBLAS](https://www.openblas.net/) development package
+- [LAPACKE](https://www.netlib.org/lapack/lapacke.html) C interface to [LAPACK](http://www.netlib.org/lapack/)
+- [re2c](https://re2c.org/) 0.13.6 or later
+- [GNU make](https://www.gnu.org/software/make/) 3.81 or later
+- [autoconf](https://www.gnu.org/software/autoconf/autoconf.html) 2.31 or later
+- [automake](https://www.gnu.org/software/automake/) 1.14 or later
+- Ubuntu build-essentials
+
+## Manually Compiling the Extension
+
+Clone the repository locally using [Git](https://git-scm.com/):
+
+```sh
+$ git clone https://github.com/RubixML/Tensor-Ext
+```
+
+Make sure you have all the necessary build tools installed such as a C compiler and make tools. For example, on an Ubuntu linux system you can enter the following on the command line to install the necessary dependencies.
+
+```sh
+$ sudo apt-get install make gcc gfortran php-dev libopenblas-dev liblapacke-dev re2c build-essential
+```
+
+Then, change into the `ext` directory from the project root and run the following commands from the terminal. See [this guide](https://www.php.net/manual/en/install.pecl.phpize.php) for more information on compiling PHP extensions with PHPize.
+
+```sh
+$ cd ./ext
+$ phpize
+$ ./configure
+$ make
+$ sudo make install
+```
+
+Finally, add the following line to your `php.ini` configuration to install the extension.
 
 ```
 extension=tensor.so
 ```
 
-Confirm the extension is loaded:
+To confirm that the extension is loaded in PHP, you can run the following command.
 
 ```sh
-$ php -m | grep tensor
+php -m | grep tensor
 ```
 
-See the [README](https://github.com/RubixML/Tensor-Ext#manually-compiling-the-extension) for instructions on compiling the extension from source (requires a C compiler, GFortran, OpenBLAS, LAPACKE, and PHP development tooling).
+### Tip for Compiling on MacOS
+
+To avoid some errors on Mac devices using homebrew, don't forget to add the following environment variables.
+
+```sh
+export LDFLAGS="-L$(brew --prefix openblas)/lib -L$(brew --prefix pcre2)/lib -L$(brew --prefix gcc)/lib/gcc/current"
+export CPPFLAGS="-I$(brew --prefix openblas)/include -I$(brew --prefix pcre2)/include -I$(brew --prefix gcc)/include"
+export PKG_CONFIG_PATH="$(brew --prefix openblas)/lib/pkgconfig:$(brew --prefix pcre2)/lib/pkgconfig:$(brew --prefix gcc)/lib/pkgconfig"
+export PATH="$(brew --prefix gcc)/bin:$PATH"
+export FC=$(brew --prefix gcc)/bin/gfortran
+```
 
 ## Your First Script
 

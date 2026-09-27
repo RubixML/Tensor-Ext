@@ -65,13 +65,13 @@ $ sudo make install
 Finally, add the following line to your `php.ini` configuration to install the extension.
 
 ```
-extension=tensor_ext.so
+extension=tensor.so
 ```
 
 To confirm that the extension is loaded in PHP, you can run the following command.
 
 ```sh
-php -m | grep tensor_ext
+php -m | grep tensor
 ```
 
 ### Tip for Compiling on MacOS
