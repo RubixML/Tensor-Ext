@@ -313,7 +313,7 @@ class BufferReuseTest extends TestCase
         $b = Vector::fill(2.0, self::CACHE_SMALL);
 
         $first = $a->add($b);
-        $second = $b->buffer()dd($a);
+        $second = $b->add($a);
 
         unset($first, $second, $a, $b);
 
