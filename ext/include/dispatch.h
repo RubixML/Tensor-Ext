@@ -40,8 +40,9 @@
  * dispatch, which keeps <immintrin.h> -- and the portability caveats that come
  * with it -- out of the build entirely.
  *
- * Two sets of kernels are dispatched: the arithmetic kernels in
- * include/arithmetic.c and the elementwise unary kernels in include/unary.c.
+ * Three sets of kernels are dispatched: the arithmetic kernels in
+ * include/arithmetic.c, the elementwise comparison kernels in
+ * include/comparison.c, and the elementwise unary kernels in include/unary.c.
  * The remaining kernels in those files keep a single baseline route, for two
  * distinct reasons.
  *
@@ -79,7 +80,9 @@ typedef void (*tensor_unary_clip_fn)(zval * return_value, zval * a, zval * lo, z
  * the right answers, just without the wider vectors. */
 void tensor_arithmetic_dispatch_avx_init(void);
 void tensor_unary_dispatch_avx_init(void);
+void tensor_comparison_dispatch_avx_init(void);
 void tensor_arithmetic_dispatch_avx512_init(void);
 void tensor_unary_dispatch_avx512_init(void);
+void tensor_comparison_dispatch_avx512_init(void);
 
 #endif
