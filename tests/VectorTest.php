@@ -307,6 +307,95 @@ class VectorTest extends TestCase
     }
 
     /**
+     * The random factories draw from PHP's MT19937 stream, so the exact same
+     * seed must reproduce the exact same values. This guards against a future
+     * regression that swaps in a different RNG (e.g. libc rand()).
+     *
+     * @test
+     */
+    public function randIsReproducibleUnderMtSrand() : void
+    {
+        mt_srand(4321);
+        $a = Vector::rand(8)->asArray();
+
+        mt_srand(4321);
+        $b = Vector::rand(8)->asArray();
+
+        $this->assertEquals($a, $b);
+    }
+
+    /**
+     * @test
+     */
+    public function gaussianIsReproducibleUnderMtSrand() : void
+    {
+        mt_srand(4321);
+        $a = Vector::gaussian(8)->asArray();
+
+        mt_srand(4321);
+        $b = Vector::gaussian(8)->asArray();
+
+        $this->assertEquals($a, $b);
+    }
+
+    /**
+     * @test
+     */
+    public function uniformIsReproducibleUnderMtSrand() : void
+    {
+        mt_srand(4321);
+        $a = Vector::uniform(8)->asArray();
+
+        mt_srand(4321);
+        $b = Vector::uniform(8)->asArray();
+
+        $this->assertEquals($a, $b);
+    }
+
+    /**
+     * A different seed must yield a different sample, i.e. the output actually
+     * depends on the seed rather than being constant.
+     *
+     * @test
+     */
+    public function randChangesWithSeed() : void
+    {
+        mt_srand(4321);
+        $a = Vector::rand(8)->asArray();
+
+        mt_srand(4322);
+        $b = Vector::rand(8)->asArray();
+
+        $this->assertNotEquals($a, $b);
+    }
+
+    /**
+     * `Vector::rand(2)` consumes two draws from the same MT19937 state that
+     * `mt_rand()` reads, so the element equals `mt_rand()/getrandmax()` and the
+     * *following* `mt_rand()` is deterministic. Proves the factory shares
+     * PHP's stream (order matters, so a separate RNG would not pass).
+     *
+     * @test
+     */
+    public function randSharesStreamWithMtRand() : void
+    {
+        mt_srand(123);
+        $v = Vector::rand(2);
+        $third = mt_rand();
+
+        mt_srand(123);
+        $r1 = mt_rand();
+        $r2 = mt_rand();
+        $r3 = mt_rand();
+
+        $max = getrandmax();
+
+        $this->assertEqualsWithDelta($r1 / $max, $v->asArray()[0], 0.0);
+        $this->assertEqualsWithDelta($r2 / $max, $v->asArray()[1], 0.0);
+        $this->assertSame($r3, $third);
+    }
+
+    /**
      * @test
      */
     public function range() : void

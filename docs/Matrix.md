@@ -74,19 +74,25 @@ Fill a matrix with a given value at each element.
 
 ### `Matrix::rand(int $m, int $n) : Matrix`
 
-Return a random uniform matrix with values between 0 and 1.
+Return a random matrix with uniformly distributed values in the range `[0, 1)`.
+
+Random values are drawn from PHP's built-in MT19937 stream, so results are reproducible: seed the stream with `mt_srand()` (equivalently `srand()`) before calling, and the same seed always yields the same matrix.
 
 - **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$m < 1` or `$n < 1`
 
 ### `Matrix::gaussian(int $m, int $n) : Matrix`
 
-Return a standard normally distributed random matrix, i.e. values between -1 and 1.
+Return a random matrix with values drawn from the standard normal distribution (mean 0 and unit variance), generated via the Box–Muller transform.
+
+Random values are drawn from PHP's built-in MT19937 stream, so results are reproducible: seed the stream with `mt_srand()` (equivalently `srand()`) before calling, and the same seed always yields the same matrix.
 
 - **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$m < 1` or `$n < 1`
 
 ### `Matrix::uniform(int $m, int $n) : Matrix`
 
-Return a uniform random matrix with mean 0 and unit variance.
+Return a random matrix with uniformly distributed values in the range `[-1, 1]`.
+
+Random values are drawn from PHP's built-in MT19937 stream, so results are reproducible: seed the stream with `mt_srand()` (equivalently `srand()`) before calling, and the same seed always yields the same matrix.
 
 - **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$m < 1` or `$n < 1`
 

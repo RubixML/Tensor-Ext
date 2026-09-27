@@ -63,7 +63,9 @@ Fill a vector with a given value.
 
 ### `Vector::rand(int $n) : Vector`
 
-Return a random uniform vector with values between 0 and 1.
+Return a random vector with uniformly distributed values in the range `[0, 1)`.
+
+Random values are drawn from PHP's built-in MT19937 stream, so results are reproducible: seed the stream with `mt_srand()` (equivalently `srand()`) before calling, and the same seed always yields the same vector.
 
 - **Parameters:** `$n` — the number of elements
 - **Returns:** `Vector`
@@ -71,7 +73,9 @@ Return a random uniform vector with values between 0 and 1.
 
 ### `Vector::gaussian(int $n) : Vector`
 
-Return a standard normally distributed (Gaussian) random vector with mean 0 and unit variance.
+Return a random vector with values drawn from the standard normal distribution (mean 0 and unit variance), generated via the Box–Muller transform.
+
+Random values are drawn from PHP's built-in MT19937 stream, so results are reproducible: seed the stream with `mt_srand()` (equivalently `srand()`) before calling, and the same seed always yields the same vector.
 
 - **Parameters:** `$n` — the number of elements
 - **Returns:** `Vector`
@@ -79,7 +83,9 @@ Return a standard normally distributed (Gaussian) random vector with mean 0 and 
 
 ### `Vector::uniform(int $n) : Vector`
 
-Return a uniform random vector with mean 0 and unit variance.
+Return a random vector with uniformly distributed values in the range `[-1, 1]`.
+
+Random values are drawn from PHP's built-in MT19937 stream, so results are reproducible: seed the stream with `mt_srand()` (equivalently `srand()`) before calling, and the same seed always yields the same vector.
 
 - **Parameters:** `$n` — the number of elements
 - **Returns:** `Vector`

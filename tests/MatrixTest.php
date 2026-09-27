@@ -285,6 +285,203 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function randHasCorrectBounds() : void
+    {
+        $flat = $this->toFlatList(Matrix::rand(100, 100));
+        $this->assertCount(10000, $flat);
+
+        $this->assertGreaterThanOrEqual(0.0, min($flat));
+        $this->assertTrue(max($flat) < 1.0);
+    }
+
+    /**
+     * @test
+     */
+    public function randMeanIsCloseToHalf() : void
+    {
+        $flat = $this->toFlatList(Matrix::rand(100, 100));
+
+        $this->assertEqualsWithDelta(0.5, array_sum($flat) / count($flat), 0.05);
+    }
+
+    /**
+     * @test
+     */
+    public function uniformHasCorrectBounds() : void
+    {
+        $flat = $this->toFlatList(Matrix::uniform(100, 100));
+
+        $this->assertGreaterThanOrEqual(-1.0, min($flat));
+        $this->assertLessThanOrEqual(1.0, max($flat));
+    }
+
+    /**
+     * @test
+     */
+    public function uniformMeanIsCloseToZero() : void
+    {
+        $flat = $this->toFlatList(Matrix::uniform(100, 100));
+
+        $this->assertEqualsWithDelta(0.0, array_sum($flat) / count($flat), 0.05);
+    }
+
+    /**
+     * @test
+     */
+    public function uniformVarianceIsUnitScale() : void
+    {
+        $flat = $this->toFlatList(Matrix::uniform(100, 100));
+        $n = count($flat);
+        $mean = array_sum($flat) / $n;
+        $var = array_sum(array_map(function ($x) use ($mean) {
+            return ($x - $mean) * ($x - $mean);
+        }, $flat)) / $n;
+
+        $this->assertEqualsWithDelta(1.0 / 3.0, $var, 0.1);
+    }
+
+    /**
+     * @test
+     */
+    public function gaussianHasZeroMeanAndUnitVariance() : void
+    {
+        $flat = $this->toFlatList(Matrix::gaussian(100, 100));
+        $n = count($flat);
+        $mean = array_sum($flat) / $n;
+        $var = array_sum(array_map(function ($x) use ($mean) {
+            return ($x - $mean) * ($x - $mean);
+        }, $flat)) / $n;
+
+        $this->assertEqualsWithDelta(0.0, $mean, 0.05);
+        $this->assertEqualsWithDelta(1.0, $var, 0.1);
+    }
+
+    /**
+     * The random factories draw from PHP's MT19937 stream, so the exact same
+     * seed must reproduce the exact same values. This guards against a future
+     * regression that swaps in a different RNG (e.g. libc rand()).
+     *
+     * @test
+     */
+    public function randIsReproducibleUnderMtSrand() : void
+    {
+        mt_srand(7777);
+        $a = Matrix::rand(3, 3)->asArray();
+
+        mt_srand(7777);
+        $b = Matrix::rand(3, 3)->asArray();
+
+        $this->assertEquals($a, $b);
+    }
+
+    /**
+     * @test
+     */
+    public function gaussianIsReproducibleUnderMtSrand() : void
+    {
+        mt_srand(7777);
+        $a = Matrix::gaussian(3, 3)->asArray();
+
+        mt_srand(7777);
+        $b = Matrix::gaussian(3, 3)->asArray();
+
+        $this->assertEquals($a, $b);
+    }
+
+    /**
+     * @test
+     */
+    public function uniformIsReproducibleUnderMtSrand() : void
+    {
+        mt_srand(7777);
+        $a = Matrix::uniform(3, 3)->asArray();
+
+        mt_srand(7777);
+        $b = Matrix::uniform(3, 3)->asArray();
+
+        $this->assertEquals($a, $b);
+    }
+
+    /**
+     * A different seed must yield a different sample, i.e. the output actually
+     * depends on the seed rather than being constant.
+     *
+     * @test
+     */
+    public function randChangesWithSeed() : void
+    {
+        mt_srand(7777);
+        $a = Matrix::rand(3, 3)->asArray();
+
+        mt_srand(7778);
+        $b = Matrix::rand(3, 3)->asArray();
+
+        $this->assertNotEquals($a, $b);
+    }
+
+    /**
+     * @test
+     */
+    public function randNegativeMThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::rand(0, 3);
+    }
+
+    /**
+     * @test
+     */
+    public function randNegativeNThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::rand(3, 0);
+    }
+
+    /**
+     * @test
+     */
+    public function gaussianNegativeMThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::gaussian(0, 3);
+    }
+
+    /**
+     * @test
+     */
+    public function gaussianNegativeNThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::gaussian(3, 0);
+    }
+
+    /**
+     * @test
+     */
+    public function uniformNegativeMThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::uniform(0, 3);
+    }
+
+    /**
+     * @test
+     */
+    public function uniformNegativeNThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::uniform(3, 0);
+    }
+
+    /**
+     * @test
+     */
     public function shape() : void
     {
         $matrix = Matrix::fromArray([
@@ -4253,6 +4450,25 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $a->pseudoinverse()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * Build a flat `list<float>` of elements from a matrix's row arrays.
+     *
+     * @param Matrix $m
+     * @return list<float>
+     */
+    private function toFlatList(Matrix $m) : array
+    {
+        $flat = [];
+
+        foreach ($m->asArray() as $row) {
+            foreach ($row as $v) {
+                $flat[] = (float) $v;
+            }
+        }
+
+        return $flat;
     }
 
     /**
