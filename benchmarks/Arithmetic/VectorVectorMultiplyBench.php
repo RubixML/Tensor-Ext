@@ -22,9 +22,9 @@ class VectorVectorMultiplyBench
 
     public function setUp() : void
     {
-        $this->a = Vector::uniform(10000);
+        $this->a = Vector::uniform(1024 * 1024);
 
-        $this->b = Vector::uniform(10000);
+        $this->b = Vector::uniform(1024 * 1024);
     }
 
     /**

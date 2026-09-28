@@ -8,7 +8,7 @@ use Tensor\Vector;
  * @Groups({"Arithmetic"})
  * @BeforeMethods({"setUp"})
  */
-class VectorVectorPowBench
+class VectorVectorDivideBench
 {
     /**
      * @var Vector
@@ -32,8 +32,8 @@ class VectorVectorPowBench
      * @Iterations(5)
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function pow() : void
+    public function divide() : void
     {
-        $this->a->pow($this->b);
+        $this->a->divide($this->b);
     }
 }

@@ -3,13 +3,12 @@
 namespace Tensor\Benchmarks\Arithmetic;
 
 use Tensor\Matrix;
-use Tensor\ColumnVector;
 
 /**
  * @Groups({"Arithmetic"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixColumnVectorSubtractBench
+class MatrixMatrixSubtractBench
 {
     /**
      * @var Matrix
@@ -17,7 +16,7 @@ class MatrixColumnVectorSubtractBench
     protected $a;
 
     /**
-     * @var ColumnVector
+     * @var Matrix
      */
     protected $b;
 
@@ -38,7 +37,7 @@ class MatrixColumnVectorSubtractBench
 
         $this->a = Matrix::uniform($m, $n);
 
-        $this->b = ColumnVector::uniform($m);
+        $this->b = Matrix::uniform($m, $n);
     }
 
     /**

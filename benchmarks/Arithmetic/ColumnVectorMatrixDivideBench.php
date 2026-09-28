@@ -2,8 +2,8 @@
 
 namespace Tensor\Benchmarks\Arithmetic;
 
-use Tensor\Matrix;
 use Tensor\ColumnVector;
+use Tensor\Matrix;
 
 /**
  * @Groups({"Arithmetic"})
@@ -12,7 +12,7 @@ use Tensor\ColumnVector;
 class ColumnVectorMatrixDivideBench
 {
     /**
-     * @var \Tensor\Vector
+     * @var ColumnVector
      */
     protected $a;
 
@@ -21,17 +21,31 @@ class ColumnVectorMatrixDivideBench
      */
     protected $b;
 
-    public function setUp() : void
+    /**
+     * @return list<array{size: list<int>}>
+     */
+    public function sizes() : array
     {
-        $this->a = ColumnVector::uniform(1000);
+        return [
+            ['size' => [1024, 1024]],
+            ['size' => [8192, 8192]],
+        ];
+    }
 
-        $this->b = Matrix::uniform(1000, 1000);
+    public function setUp(array $parameters) : void
+    {
+        [$m, $n] = $parameters['size'];
+
+        $this->a = ColumnVector::uniform($m);
+
+        $this->b = Matrix::uniform($m, $n);
     }
 
     /**
      * @Subject
      * @Iterations(5)
-     * @OutputTimeUnit("seconds", precision=3)
+     * @ParamProviders({"sizes"})
+     * @OutputTimeUnit("milliseconds", precision=3)
      */
     public function divide() : void
     {

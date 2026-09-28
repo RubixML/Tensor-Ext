@@ -22,7 +22,7 @@ class VectorScalarAddBench
 
     public function setUp() : void
     {
-        $this->a = Vector::uniform(10000);
+        $this->a = Vector::uniform(1024 * 1024);
     }
 
     /**
