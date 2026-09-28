@@ -17,7 +17,7 @@ class CosVectorBench
 
     public function setUp() : void
     {
-        $this->a = Vector::uniform(100000);
+        $this->a = Vector::uniform(1024 * 1024);
     }
 
     /**

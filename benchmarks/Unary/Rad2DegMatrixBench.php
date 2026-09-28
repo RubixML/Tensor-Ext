@@ -17,13 +17,13 @@ class Rad2DegMatrixBench
 
     public function setUp() : void
     {
-        $this->a = Matrix::uniform(1000, 1000);
+        $this->a = Matrix::uniform(1024, 1024);
     }
 
     /**
      * @Subject
      * @Iterations(5)
-     * @OutputTimeUnit("seconds", precision=3)
+     * @OutputTimeUnit("milliseconds", precision=3)
      */
     public function rad2deg() : void
     {

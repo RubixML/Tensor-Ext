@@ -1,17 +1,17 @@
 <?php
 
-namespace Tensor\Benchmarks\Structural;
+namespace Tensor\Benchmarks\Unary;
 
-use Tensor\Matrix;
+use Tensor\Vector;
 
 /**
- * @Groups({"Structural"})
+ * @Groups({"Functions"})
  * @BeforeMethods({"setUp"})
  */
-class FlattenMatrixBench
+class ProductVectorBench
 {
     /**
-     * @var Matrix
+     * @var Vector
      */
     protected $a;
 
@@ -20,18 +20,16 @@ class FlattenMatrixBench
      */
     public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(...$params['size']);
+        $this->a = Vector::uniform($params['size']);
     }
 
     /**
-     * @return list<array{size: list<int>}>
+     * @return list<array{size: int}>
      */
     public function sizes() : array
     {
         return [
-            ['size' => [1024, 1024]],
-            ['size' => [4096, 4096]],
-            ['size' => [8192, 8192]],
+            ['size' => 1024 * 1024],
         ];
     }
 
@@ -41,8 +39,8 @@ class FlattenMatrixBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function flatten() : void
+    public function product() : void
     {
-        $this->a->flatten();
+        $this->a->product();
     }
 }
