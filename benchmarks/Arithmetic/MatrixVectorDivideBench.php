@@ -23,6 +23,7 @@ class MatrixVectorDivideBench
 
     /**
      * @ParamProviders({"sizes"})
+     * @param array $params
      */
     public function setUp(array $params) : void
     {

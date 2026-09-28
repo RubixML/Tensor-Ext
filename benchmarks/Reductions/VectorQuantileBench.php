@@ -1,6 +1,6 @@
 <?php
 
-namespace Tensor\Benchmarks\Arithmetic;
+namespace Tensor\Benchmarks\Reductions;
 
 use Tensor\Vector;
 
@@ -8,7 +8,7 @@ use Tensor\Vector;
  * @Groups({"Reductions"})
  * @BeforeMethods({"setUp"})
  */
-class VectorMinBench
+class VectorQuantileBench
 {
     /**
      * @var Vector
@@ -16,7 +16,6 @@ class VectorMinBench
     protected $a;
 
     /**
-     * @ParamProviders({"sizes"})
      * @param array $params
      */
     public function setUp(array $params) : void
@@ -40,8 +39,8 @@ class VectorMinBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function min() : void
+    public function quantile() : void
     {
-        $this->a->min();
+        $this->a->quantile(0.5);
     }
 }

@@ -23,6 +23,7 @@ class MatrixVectorMultiplyBench
 
     /**
      * @ParamProviders({"sizes"})
+     * @param array $params
      */
     public function setUp(array $params) : void
     {

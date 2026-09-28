@@ -1,6 +1,6 @@
 <?php
 
-namespace Tensor\Benchmarks\Arithmetic;
+namespace Tensor\Benchmarks\Reductions;
 
 use Tensor\Vector;
 
@@ -8,17 +8,13 @@ use Tensor\Vector;
  * @Groups({"Reductions"})
  * @BeforeMethods({"setUp"})
  */
-class VectorMinBench
+class VectorMedianBench
 {
     /**
      * @var Vector
      */
     protected $a;
 
-    /**
-     * @ParamProviders({"sizes"})
-     * @param array $params
-     */
     public function setUp(array $params) : void
     {
         $this->a = Vector::uniform($params['size']);
@@ -40,8 +36,8 @@ class VectorMinBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function min() : void
+    public function median() : void
     {
-        $this->a->min();
+        $this->a->median();
     }
 }

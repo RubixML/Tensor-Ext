@@ -1,30 +1,23 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Reductions;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"LinearAlgebra"})
+ * @Groups({"Reductions"})
  * @BeforeMethods({"setUp"})
  */
-class MatmulBench
+class MatrixMedianBench
 {
     /**
      * @var Matrix
      */
     protected $a;
 
-    /**
-     * @var Matrix
-     */
-    protected $b;
-
     public function setUp(array $params) : void
     {
         $this->a = Matrix::uniform(...$params['size']);
-
-        $this->b = Matrix::uniform(...$params['size']);
     }
 
     /**
@@ -45,8 +38,8 @@ class MatmulBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("seconds", precision=3)
      */
-    public function matmul() : void
+    public function median() : void
     {
-        $this->a->matmul($this->b);
+        $this->a->median();
     }
 }
