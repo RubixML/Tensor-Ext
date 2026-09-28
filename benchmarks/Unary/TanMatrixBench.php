@@ -5,7 +5,7 @@ namespace Tensor\Benchmarks\Unary;
 use Tensor\Matrix;
 
 /**
- * @Groups({"Trigonometric"})
+ * @Groups({"Unary"})
  * @BeforeMethods({"setUp"})
  */
 class TanMatrixBench

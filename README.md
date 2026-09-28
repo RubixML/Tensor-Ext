@@ -2,7 +2,7 @@
 
 [![PHP from Packagist](https://img.shields.io/packagist/php-v/rubix/tensor_ext.svg?style=flat&colorB=8892BF)](https://www.php.net/) [![Latest Stable Version](https://img.shields.io/packagist/v/rubix/tensor_ext.svg?style=flat&colorB=orange)](https://packagist.org/packages/rubix/tensor_ext) [![Code Checks](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml/badge.svg)](https://github.com/RubixML/Tensor-Ext/actions/workflows/ci.yml) [![Downloads from Packagist](https://img.shields.io/packagist/dt/rubix/tensor_ext.svg?style=flat&colorB=red)](https://packagist.org/packages/rubix/tensor_ext) [![GitHub](https://img.shields.io/github/license/RubixML/Tensor-Ext)](https://github.com/RubixML/Tensor-Ext/blob/master/LICENSE.md)
 
-Tensor Ext is a PHP extension that brings high-performance Matrix and Vector computing to the PHP language. The high-level object-oriented API is written in [Zephir](https://zephir-lang.com) and backed by highly-optimized native C kernels.
+Tensor Ext is a PHP extension that brings fast Matrix and Vector computing to the PHP language. The high-level object-oriented API is written in [Zephir](https://zephir-lang.com) and backed by highly-optimized native C kernels.
 
 ## Features
 

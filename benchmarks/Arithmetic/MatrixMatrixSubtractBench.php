@@ -36,6 +36,7 @@ class MatrixMatrixSubtractBench
     {
         return [
             ['size' => [1024, 1024]],
+            ['size' => [4096, 4096]],
             ['size' => [8192, 8192]],
         ];
     }

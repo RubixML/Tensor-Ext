@@ -1,23 +1,33 @@
 <?php
 
-namespace Tensor\Benchmarks\Unary;
+namespace Tensor\Benchmarks\Arithmetic;
 
+use Tensor\ColumnVector;
 use Tensor\Matrix;
 
 /**
- * @Groups({"Unary"})
+ * @Groups({"Arithmetic"})
  * @BeforeMethods({"setUp"})
  */
-class CeilMatrixBench
+class ColumnVectorMatrixAddBench
 {
     /**
-     * @var Matrix
+     * @var ColumnVector
      */
     protected $a;
 
+    /**
+     * @var Matrix
+     */
+    protected $b;
+
     public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(...$params['size']);
+        [$m, $n] = $params['size'];
+
+        $this->a = ColumnVector::uniform($m);
+
+        $this->b = Matrix::uniform($m, $n);
     }
 
     /**
@@ -38,8 +48,8 @@ class CeilMatrixBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function ceil() : void
+    public function add() : void
     {
-        $this->a->ceil();
+        $this->a->add($this->b);
     }
 }

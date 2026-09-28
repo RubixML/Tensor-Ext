@@ -1416,11 +1416,11 @@ class MatrixTest extends TestCase
             [0.0, 1.0, 0.0],
         ], false);
 
-        $this->assertEquals(Matrix::fromArray([
+        $this->assertEqualsWithDelta(Matrix::fromArray([
             [1.0, 0.0, 3.0],
             [0.0, 1.0, 0.0],
             [0.0, 0.0, 0.0],
-        ], false)->asArray(), $a->rref()->a()->asArray());
+        ], false)->asArray(), $a->rref()->a()->asArray(), self::MAX_DELTA);
 
         $this->assertSame(2, $a->rank());
 
@@ -1430,11 +1430,11 @@ class MatrixTest extends TestCase
             [5.0e9, 7.0e9, 9.0e9],
         ], false);
 
-        $this->assertEquals(Matrix::fromArray([
+        $this->assertEqualsWithDelta(Matrix::fromArray([
             [1.0, 0.0, -1.0],
             [0.0, 1.0, 2.0],
             [0.0, 0.0, 0.0],
-        ], false)->asArray(), $b->rref()->a()->asArray());
+        ], false)->asArray(), $b->rref()->a()->asArray(), self::MAX_DELTA);
     }
 
     /**

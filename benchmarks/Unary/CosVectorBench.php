@@ -5,7 +5,7 @@ namespace Tensor\Benchmarks\Unary;
 use Tensor\Vector;
 
 /**
- * @Groups({"Trigonometric"})
+ * @Groups({"Unary"})
  * @BeforeMethods({"setUp"})
  */
 class CosVectorBench
