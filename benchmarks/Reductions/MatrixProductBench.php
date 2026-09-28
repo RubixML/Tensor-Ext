@@ -1,14 +1,14 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Arithmetic;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"LinearAlgebra"})
+ * @Groups({"Reductions"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixL1NormBench
+class MatrixProductBench
 {
     /**
      * @var Matrix
@@ -37,8 +37,8 @@ class MatrixL1NormBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function l1Norm() : void
+    public function product() : void
     {
-        $this->a->l1Norm();
+        $this->a->product();
     }
 }

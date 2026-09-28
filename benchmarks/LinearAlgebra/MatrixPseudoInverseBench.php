@@ -17,7 +17,7 @@ class MatrixPseudoinverseBench
 
     public function setUp() : void
     {
-        $this->a = Matrix::uniform(500, 500);
+        $this->a = Matrix::uniform(512, 1536);
     }
 
     /**

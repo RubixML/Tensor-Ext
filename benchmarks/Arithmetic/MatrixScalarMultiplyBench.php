@@ -20,6 +20,13 @@ class MatrixScalarMultiplyBench
      */
     protected $b = M_E;
 
+    public function setUp(array $params) : void
+    {
+        [$m, $n] = $params['size'];
+
+        $this->a = Matrix::uniform($m, $n);
+    }
+
     /**
      * @return list<array{size: list<int>}>
      */
@@ -29,13 +36,6 @@ class MatrixScalarMultiplyBench
             ['size' => [1024, 1024]],
             ['size' => [8192, 8192]],
         ];
-    }
-
-    public function setUp(array $parameters) : void
-    {
-        [$m, $n] = $parameters['size'];
-
-        $this->a = Matrix::uniform($m, $n);
     }
 
     /**

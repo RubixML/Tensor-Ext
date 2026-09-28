@@ -1,11 +1,11 @@
 <?php
 
-namespace Tensor\Benchmarks\Factory;
+namespace Tensor\Benchmarks\Factories;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"Factory"})
+ * @Groups({"Factories"})
  */
 class MatrixIdentityBench
 {
@@ -16,6 +16,6 @@ class MatrixIdentityBench
      */
     public function identity() : void
     {
-        Matrix::identity(500);
+        Matrix::identity(1024);
     }
 }

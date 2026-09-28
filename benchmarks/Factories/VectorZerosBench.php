@@ -2,21 +2,21 @@
 
 namespace Tensor\Benchmarks\Factories;
 
-use Tensor\Matrix;
+use Tensor\Vector;
 
 /**
  * @Groups({"Factories"})
  */
-class MatrixFillBench
+class VectorZerosBench
 {
     /**
-     * @return list<array{size: list<int>}>
+     * @return list<array{size: int}>
      */
     public function sizes() : array
     {
         return [
-            ['size' => [1024, 1024]],
-            ['size' => [8192, 8192]],
+            ['size' => 1024 * 1024],
+            ['size' => 8192 * 8192],
         ];
     }
 
@@ -27,8 +27,8 @@ class MatrixFillBench
      * @OutputTimeUnit("milliseconds", precision=3)
      * @param array $params
      */
-    public function fill(array $params) : void
+    public function zeros(array $params) : void
     {
-        Matrix::fill(1.0, ...$params['size']);
+        Vector::zeros($params['size']);
     }
 }

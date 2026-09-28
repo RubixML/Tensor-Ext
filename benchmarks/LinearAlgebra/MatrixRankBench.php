@@ -17,7 +17,7 @@ class MatrixRankBench
 
     public function setUp() : void
     {
-        $this->a = Matrix::uniform(500, 500);
+        $this->a = Matrix::uniform(1024, 1024);
     }
 
     /**

@@ -2,22 +2,29 @@
 
 namespace Tensor\Benchmarks\LinearAlgebra;
 
-use Tensor\Matrix;
+use Tensor\Vector;
 
 /**
  * @Groups({"LinearAlgebra"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixL1NormBench
+class VectorDotBench
 {
     /**
-     * @var Matrix
+     * @var Vector
      */
     protected $a;
 
+    /**
+     * @var Vector
+     */
+    protected $b;
+
     public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(...$params['size']);
+        $this->a = Vector::uniform($params['size']);
+
+        $this->b = Vector::uniform($params['size']);
     }
 
     /**
@@ -26,8 +33,8 @@ class MatrixL1NormBench
     public function sizes() : array
     {
         return [
-            ['size' => [1024, 1024]],
-            ['size' => [8192, 8192]],
+            ['size' => 1024 * 1024],
+            ['size' => 8192 * 8192],
         ];
     }
 
@@ -37,8 +44,8 @@ class MatrixL1NormBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function l1Norm() : void
+    public function dot() : void
     {
-        $this->a->l1Norm();
+        $this->a->dot($this->b);
     }
 }

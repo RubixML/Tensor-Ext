@@ -8,7 +8,7 @@ use Tensor\Matrix;
  * @Groups({"LinearAlgebra"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixL1NormBench
+class CholeskyBench
 {
     /**
      * @var Matrix
@@ -17,7 +17,9 @@ class MatrixL1NormBench
 
     public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(...$params['size']);
+        $a = Matrix::rand(...$params['size']);
+
+        $this->a = $a->transpose()->matmul($a);
     }
 
     /**
@@ -35,10 +37,10 @@ class MatrixL1NormBench
      * @Subject
      * @Iterations(5)
      * @ParamProviders({"sizes"})
-     * @OutputTimeUnit("milliseconds", precision=3)
+     * @OutputTimeUnit("seconds", precision=3)
      */
-    public function l1Norm() : void
+    public function cholesky() : void
     {
-        $this->a->l1Norm();
+        $this->a->cholesky();
     }
 }

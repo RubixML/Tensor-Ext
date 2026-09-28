@@ -1,11 +1,11 @@
 <?php
 
-namespace Tensor\Benchmarks\Statistical;
+namespace Tensor\Benchmarks\LinearAlgebra;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"Statistical"})
+ * @Groups({"LinearAlgebra"})
  */
 class CovarianceBench
 {

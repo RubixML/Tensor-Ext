@@ -1,20 +1,24 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Arithmetic;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"LinearAlgebra"})
+ * @Groups({"Reductions"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixL1NormBench
+class MatrixMaxBench
 {
     /**
      * @var Matrix
      */
     protected $a;
 
+    /**
+     * @ParamProviders({"sizes"})
+     * @param array $params
+     */
     public function setUp(array $params) : void
     {
         $this->a = Matrix::uniform(...$params['size']);
@@ -37,8 +41,8 @@ class MatrixL1NormBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function l1Norm() : void
+    public function max() : void
     {
-        $this->a->l1Norm();
+        $this->a->max();
     }
 }

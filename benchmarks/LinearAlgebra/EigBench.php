@@ -1,11 +1,11 @@
 <?php
 
-namespace Tensor\Benchmarks\Decompositions;
+namespace Tensor\Benchmarks\LinearAlgebra;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"Decompositions"})
+ * @Groups({"LinearAlgebra"})
  */
 class EigBench
 {
@@ -16,7 +16,7 @@ class EigBench
 
     public function setUpGeneral() : void
     {
-        $this->a = Matrix::uniform(500, 500);
+        $this->a = Matrix::uniform(512, 1536);
     }
 
     /**
@@ -32,7 +32,7 @@ class EigBench
 
     public function setUpSymmetric() : void
     {
-        $this->a = Matrix::uniform(500, 500);
+        $this->a = Matrix::uniform(1024, 1024);
 
         $this->a = $this->a->matmul($this->a);
     }

@@ -21,17 +21,31 @@ class MatrixVectorGreaterBench
      */
     protected $b;
 
-    public function setUp() : void
+    public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(1000, 1000);
+        [$m, $n] = $params['size'];
 
-        $this->b = Vector::uniform(1000);
+        $this->a = Matrix::uniform($m, $n);
+
+        $this->b = Vector::uniform($m);
+    }
+
+    /**
+     * @return list<array{size: list<int>}>
+     */
+    public function sizes() : array
+    {
+        return [
+            ['size' => [1024, 1024]],
+            ['size' => [8192, 8192]],
+        ];
     }
 
     /**
      * @Subject
      * @Iterations(5)
-     * @OutputTimeUnit("seconds", precision=3)
+     * @ParamProviders({"sizes"})
+     * @OutputTimeUnit("milliseconds", precision=3)
      */
     public function greater() : void
     {

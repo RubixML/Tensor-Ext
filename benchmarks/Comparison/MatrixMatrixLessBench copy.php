@@ -1,23 +1,32 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Comparison;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"LinearAlgebra"})
+ * @Groups({"Comparison"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixL1NormBench
+class MatrixMatrixLessBench
 {
     /**
      * @var Matrix
      */
     protected $a;
 
+    /**
+     * @var Matrix
+     */
+    protected $b;
+
     public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(...$params['size']);
+        [$m, $n] = $params['size'];
+
+        $this->a = Matrix::uniform($m, $n);
+
+        $this->b = Matrix::uniform($m, $n);
     }
 
     /**
@@ -37,8 +46,8 @@ class MatrixL1NormBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function l1Norm() : void
+    public function less() : void
     {
-        $this->a->l1Norm();
+        $this->a->less($this->b);
     }
 }

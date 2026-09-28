@@ -8,7 +8,7 @@ use Tensor\Matrix;
  * @Groups({"LinearAlgebra"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixL1NormBench
+class LUBench
 {
     /**
      * @var Matrix
@@ -35,10 +35,10 @@ class MatrixL1NormBench
      * @Subject
      * @Iterations(5)
      * @ParamProviders({"sizes"})
-     * @OutputTimeUnit("milliseconds", precision=3)
+     * @OutputTimeUnit("seconds", precision=3)
      */
-    public function l1Norm() : void
+    public function lu() : void
     {
-        $this->a->l1Norm();
+        $this->a->lu();
     }
 }

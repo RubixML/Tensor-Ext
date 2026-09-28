@@ -1,23 +1,27 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Arithmetic;
 
-use Tensor\Matrix;
+use Tensor\Vector;
 
 /**
- * @Groups({"LinearAlgebra"})
+ * @Groups({"Reductions"})
  * @BeforeMethods({"setUp"})
  */
-class MatrixL1NormBench
+class VectorArgmaxBench
 {
     /**
-     * @var Matrix
+     * @var Vector
      */
     protected $a;
 
+    /**
+     * @ParamProviders({"sizes"})
+     * @param array $params
+     */
     public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(...$params['size']);
+        $this->a = Vector::uniform($params['size']);
     }
 
     /**
@@ -26,8 +30,8 @@ class MatrixL1NormBench
     public function sizes() : array
     {
         return [
-            ['size' => [1024, 1024]],
-            ['size' => [8192, 8192]],
+            ['size' => 1024 * 1024],
+            ['size' => 8192 * 8192],
         ];
     }
 
@@ -37,8 +41,8 @@ class MatrixL1NormBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function l1Norm() : void
+    public function argmax() : void
     {
-        $this->a->l1Norm();
+        $this->a->argmax();
     }
 }

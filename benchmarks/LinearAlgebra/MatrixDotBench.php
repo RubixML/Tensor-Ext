@@ -23,15 +23,14 @@ class MatrixDotBench
 
     public function setUp() : void
     {
-        $this->a = Matrix::uniform(1000, 1000);
+        $this->a = Matrix::uniform(1024, 1024);
 
-        $this->b = Vector::uniform(1000);
+        $this->b = Vector::uniform(1024);
     }
 
     /**
      * @Subject
      * @Iterations(5)
-     * @Revs(100)
      * @OutputTimeUnit("milliseconds", precision=3)
      */
     public function dot() : void

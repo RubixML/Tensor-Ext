@@ -1,25 +1,14 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Factories;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"LinearAlgebra"})
- * @BeforeMethods({"setUp"})
+ * @Groups({"Factories"})
  */
-class MatrixL1NormBench
+class MatrixUniformBench
 {
-    /**
-     * @var Matrix
-     */
-    protected $a;
-
-    public function setUp(array $params) : void
-    {
-        $this->a = Matrix::uniform(...$params['size']);
-    }
-
     /**
      * @return list<array{size: list<int>}>
      */
@@ -36,9 +25,10 @@ class MatrixL1NormBench
      * @Iterations(5)
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
+     * @param array $params
      */
-    public function l1Norm() : void
+    public function uniform(array $params) : void
     {
-        $this->a->l1Norm();
+        Matrix::uniform(...$params['size']);
     }
 }

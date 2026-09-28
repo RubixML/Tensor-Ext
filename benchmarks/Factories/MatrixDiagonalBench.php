@@ -1,11 +1,11 @@
 <?php
 
-namespace Tensor\Benchmarks\Factory;
+namespace Tensor\Benchmarks\Factories;
 
 use Tensor\Matrix;
 
 /**
- * @Groups({"Factory"})
+ * @Groups({"Factories"})
  * @BeforeMethods({"setUp"})
  */
 class MatrixDiagonalBench
@@ -19,7 +19,7 @@ class MatrixDiagonalBench
     {
         $elements = [];
 
-        for ($i = 0; $i < 500; ++$i) {
+        for ($i = 0; $i < 1024; ++$i) {
             $elements[$i] = (float) $i;
         }
 
