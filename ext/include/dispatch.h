@@ -4,7 +4,7 @@
 #include <Zend/zend.h>
 
 /**
- * Runtime CPU dispatch for the elementwise kernels.
+ * Runtime CPU kernel dispatch.
  *
  * The extension is compiled with a plain -O3 and no ISA flags, so the baseline
  * code generation for x86-64 tops out at the SSE2 baseline: two doubles per
@@ -32,19 +32,11 @@
  * dispatch, which keeps <immintrin.h> -- and the portability caveats that come
  * with it -- out of the build entirely.
  *
- * Four sets of kernels are dispatched: the arithmetic kernels in
+ * Five sets of kernels are dispatched: the arithmetic kernels in
  * include/arithmetic.c, the elementwise comparison kernels in
- * include/comparison.c, the elementwise unary kernels in include/unary.c, and
- * the convolution kernels in include/signal_processing.c. The remaining kernels
- * in the first three files keep a single baseline route, because they are
- * per-element libm calls.
- *
- * A fifth set is dispatched from include/linear_algebra.c: the row update, row
- * scale, and outer product fill that the row reductions and `outer()` are built
- * out of. Those are not entry points but the innermost loop of a larger
- * algorithm, so the route pointer there replaces the loop and the caller keeps
- * its own control flow. The three routes, and the reason the wider kernels can
- * only be reached through a pointer, are the same.
+ * include/comparison.c, the elementwise unary kernels in include/unary.c, linear
+ * algebra kernels in include/linear_algebra.c, and the convolution kernels in
+ * include/signal_processing.c.
  *
  * Per-element libm calls -- pow, fmod, and exp, log, sin and the rest of the
  * transcendental unary operations -- are scalar no matter which ISA is
@@ -80,9 +72,7 @@ typedef void (*tensor_convolve_2d_fn)(zval * return_value, zval * a, zval * b, z
 /* The FMA routes are separate from the AVX and AVX-512 ones above, and neither
  * implies the other: a CPU can have 256-bit AVX and no FMA3 (Sandy Bridge, Ivy
  * Bridge), and `target("avx512f")` on its own leaves GCC emitting a packed
- * multiply and add rather than a fused one. The convolution kernels are the
- * only ones that want these, because they are the only ones with a
- * multiply-accumulate inner loop wide enough for the single rounding to show. */
+ * multiply and add rather than a fused one. */
 #	define TENSOR_TARGET_FMA __attribute__((target("avx,fma")))
 #	define TENSOR_TARGET_AVX512_FMA __attribute__((target("avx512f,fma")))
 #else
@@ -97,16 +87,20 @@ typedef void (*tensor_convolve_2d_fn)(zval * return_value, zval * a, zval * b, z
  * AVX-512 variant, so an extension whose initializer never ran still computes
  * the right answers, just without the wider vectors. */
 void tensor_arithmetic_dispatch_avx_init(void);
-void tensor_unary_dispatch_avx_init(void);
-void tensor_comparison_dispatch_avx_init(void);
 void tensor_arithmetic_dispatch_avx512_init(void);
-void tensor_unary_dispatch_avx512_init(void);
+
+void tensor_comparison_dispatch_avx_init(void);
 void tensor_comparison_dispatch_avx512_init(void);
-void tensor_signal_processing_dispatch_avx_init(void);
-void tensor_signal_processing_dispatch_fma_init(void);
-void tensor_signal_processing_dispatch_avx512_init(void);
+
+void tensor_unary_dispatch_avx_init(void);
+void tensor_unary_dispatch_avx512_init(void);
+
 void tensor_linear_algebra_dispatch_avx_init(void);
 void tensor_linear_algebra_dispatch_fma_init(void);
 void tensor_linear_algebra_dispatch_avx512_init(void);
+
+void tensor_signal_processing_dispatch_avx_init(void);
+void tensor_signal_processing_dispatch_fma_init(void);
+void tensor_signal_processing_dispatch_avx512_init(void);
 
 #endif
