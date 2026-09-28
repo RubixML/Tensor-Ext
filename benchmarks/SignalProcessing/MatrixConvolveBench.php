@@ -30,7 +30,7 @@ class MatrixConvolveBench
     /**
      * @Subject
      * @Iterations(5)
-     * @OutputTimeUnit("seconds", precision=3)
+     * @OutputTimeUnit("milliseconds", precision=3)
      */
     public function convolve() : void
     {
@@ -46,7 +46,7 @@ class MatrixConvolveBench
      *
      * @Subject
      * @Iterations(5)
-     * @OutputTimeUnit("seconds", precision=3)
+     * @OutputTimeUnit("milliseconds", precision=3)
      */
     public function convolveStrideTwo() : void
     {

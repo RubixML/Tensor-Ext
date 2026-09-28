@@ -21,16 +21,33 @@ class MatrixVectorMultiplyBench
      */
     protected $b;
 
-    public function setUp() : void
+    /**
+     * @ParamProviders({"sizes"})
+     */
+    public function setUp(array $params) : void
     {
-        $this->a = Matrix::uniform(1024, 1024);
+        [$m, $n] = $params['size'];
 
-        $this->b = Vector::uniform(1024);
+        $this->a = Matrix::uniform($m, $n);
+
+        $this->b = Vector::uniform($m);
+    }
+
+    /**
+     * @return list<array{size: list<int>}>
+     */
+    public function sizes() : array
+    {
+        return [
+            ['size' => [1024, 1024]],
+            ['size' => [4096, 4096]],
+        ];
     }
 
     /**
      * @Subject
      * @Iterations(5)
+     * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
     public function multiply() : void
