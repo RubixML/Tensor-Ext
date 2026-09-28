@@ -3526,6 +3526,32 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function logInvalidBaseThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ])->log(0.0);
+    }
+
+    /**
+     * @test
+     */
+    public function logInvalidNegativeBaseThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ])->log(-1.0);
+    }
+
+    /**
+     * @test
+     */
     public function log1p() : void
     {
         $a = Matrix::fromArray([

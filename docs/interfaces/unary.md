@@ -43,6 +43,7 @@ Return the exponential of the tensor minus 1.
 Return the logarithm of the tensor in a specified base.
 
 - **Parameters:** `$base` — the logarithm base (default `M_E`, i.e. the natural logarithm).
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$base` is not greater than `0`.
 
 ### `log1p() : mixed`
 

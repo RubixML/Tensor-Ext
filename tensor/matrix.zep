@@ -1376,6 +1376,11 @@ class Matrix implements Tensor
      */
     public function log(const float base = self::M_E) -> <Matrix>
     {
+        if unlikely base <= 0.0 {
+            throw new InvalidArgumentException("Log base must be greater"
+                . " than 0, " . strval(base) . " given.");
+        }
+
         if base === self::M_E {
             return new self(tensor_log(this->a), this->m, this->n);
         }

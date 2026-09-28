@@ -1783,10 +1783,6 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
 }
 
 /* Point every dispatched row kernel in this file at its AVX variant.
- *
- * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the CPU
- * actually supporting AVX. The routes are all already pointing at the baseline
- * variants before this runs, so the effect is strictly an upgrade.
  */
 void tensor_linear_algebra_dispatch_avx_init(void)
 {
@@ -1813,10 +1809,6 @@ void tensor_linear_algebra_dispatch_fma_init(void)
 
 /**
  * Point every dispatched row kernel in this file at its AVX-512 variant.
- *
- * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the CPU
- * actually supporting AVX-512 -- and on FMA, since only one of the three
- * initializers runs. The effect is strictly an upgrade to the widest route.
  */
 void tensor_linear_algebra_dispatch_avx512_init(void)
 {
