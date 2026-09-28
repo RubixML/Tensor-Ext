@@ -1,6 +1,6 @@
 <?php
 
-namespace Tensor\Benchmarks\Trigonometric;
+namespace Tensor\Benchmarks\Unary;
 
 use Tensor\Matrix;
 
@@ -8,7 +8,7 @@ use Tensor\Matrix;
  * @Groups({"Trigonometric"})
  * @BeforeMethods({"setUp"})
  */
-class TanMatrixBench
+class SinMatrixBench
 {
     /**
      * @var Matrix
@@ -25,8 +25,8 @@ class TanMatrixBench
      * @Iterations(5)
      * @OutputTimeUnit("seconds", precision=3)
      */
-    public function tangent() : void
+    public function sine() : void
     {
-        $this->a->tan();
+        $this->a->sin();
     }
 }

@@ -1,29 +1,29 @@
 <?php
 
-namespace Tensor\Benchmarks\Trigonometric;
+namespace Tensor\Benchmarks\Unary;
 
-use Tensor\Vector;
+use Tensor\Matrix;
 
 /**
  * @Groups({"Trigonometric"})
  * @BeforeMethods({"setUp"})
  */
-class CosVectorBench
+class CosMatrixBench
 {
     /**
-     * @var Vector
+     * @var Matrix
      */
     protected $a;
 
     public function setUp() : void
     {
-        $this->a = Vector::uniform(100000);
+        $this->a = Matrix::uniform(500, 500);
     }
 
     /**
      * @Subject
      * @Iterations(5)
-     * @OutputTimeUnit("milliseconds", precision=3)
+     * @OutputTimeUnit("seconds", precision=3)
      */
     public function cosine() : void
     {

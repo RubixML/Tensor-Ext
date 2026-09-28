@@ -1,6 +1,6 @@
 <?php
 
-namespace Tensor\Benchmarks\Functions;
+namespace Tensor\Benchmarks\Unary;
 
 use Tensor\Matrix;
 

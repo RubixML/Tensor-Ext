@@ -1,11 +1,11 @@
 <?php
 
-namespace Tensor\Benchmarks\Statistical;
+namespace Tensor\Benchmarks\LinearAlgebra;
 
 use Tensor\Vector;
 
 /**
- * @Groups({"Statistical"})
+ * @Groups({"LinearAlgebra"})
  * @BeforeMethods({"setUp"})
  */
 class VectorPNormBench
@@ -17,7 +17,7 @@ class VectorPNormBench
 
     public function setUp() : void
     {
-        $this->a = Vector::uniform(100000);
+        $this->a = Vector::uniform(1024 * 1024);
     }
 
     /**
