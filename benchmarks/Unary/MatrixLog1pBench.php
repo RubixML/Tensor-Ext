@@ -1,30 +1,26 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Unary;
 
-use Tensor\Vector;
+use Tensor\Matrix;
 
 /**
- * @Groups({"LinearAlgebra"})
+ * @Groups({"Functions"})
  * @BeforeMethods({"setUp"})
  */
-class VectorOuterBench
+class MatrixLog1pBench
 {
     /**
-     * @var Vector
+     * @var Matrix
      */
     protected $a;
 
     /**
-     * @var Vector
+     * @param array $params
      */
-    protected $b;
-
     public function setUp(array $params) : void
     {
-        $this->a = Vector::uniform($params['size']);
-
-        $this->b = Vector::uniform($params['size']);
+        $this->a = Matrix::uniform(...$params['size']);
     }
 
     /**
@@ -33,9 +29,9 @@ class VectorOuterBench
     public function sizes() : array
     {
         return [
-            ['size' => 1024],
-            ['size' => 4096],
-            ['size' => 8192],
+            ['size' => [1024, 1024]],
+            ['size' => [4096, 4096]],
+            ['size' => [8192, 8192]],
         ];
     }
 
@@ -45,8 +41,8 @@ class VectorOuterBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function outer() : void
+    public function log1p() : void
     {
-        $this->a->outer($this->b);
+        $this->a->log1p();
     }
 }

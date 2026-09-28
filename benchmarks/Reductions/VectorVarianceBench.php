@@ -1,14 +1,14 @@
 <?php
 
-namespace Tensor\Benchmarks\LinearAlgebra;
+namespace Tensor\Benchmarks\Reductions;
 
 use Tensor\Vector;
 
 /**
- * @Groups({"LinearAlgebra"})
+ * @Groups({"Reductions"})
  * @BeforeMethods({"setUp"})
  */
-class VectorOuterBench
+class VectorVarianceBench
 {
     /**
      * @var Vector
@@ -16,26 +16,21 @@ class VectorOuterBench
     protected $a;
 
     /**
-     * @var Vector
+     * @param array $params
      */
-    protected $b;
-
     public function setUp(array $params) : void
     {
         $this->a = Vector::uniform($params['size']);
-
-        $this->b = Vector::uniform($params['size']);
     }
 
     /**
-     * @return list<array{size: list<int>}>
+     * @return list<array{size: int}>
      */
     public function sizes() : array
     {
         return [
-            ['size' => 1024],
-            ['size' => 4096],
-            ['size' => 8192],
+            ['size' => 1024 * 1024],
+            ['size' => 4096 * 4096],
         ];
     }
 
@@ -45,8 +40,8 @@ class VectorOuterBench
      * @ParamProviders({"sizes"})
      * @OutputTimeUnit("milliseconds", precision=3)
      */
-    public function outer() : void
+    public function variance() : void
     {
-        $this->a->outer($this->b);
+        $this->a->variance();
     }
 }

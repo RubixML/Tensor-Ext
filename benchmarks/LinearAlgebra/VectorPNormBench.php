@@ -15,11 +15,7 @@ class VectorPNormBench
      */
     protected $a;
 
-    /**
-     * @ParamProviders({"sizes"})
-     * @param array $params
-     */
-    public function setUp(array $params) : void
+    public function setUp() : void
     {
         $this->a = Vector::uniform(1024 * 1024);
     }
