@@ -3,6 +3,7 @@
 namespace Tensor\Benchmarks\Structural;
 
 use Tensor\Matrix;
+use Generator;
 
 /**
  * @Groups({"Structural"})
@@ -33,12 +34,10 @@ class AugmentMatrixLeftBench
     /**
      * @return list<array{size: list<int>}>
      */
-    public function sizes() : array
+    public function sizes() : Generator
     {
-        return [
-            ['size' => [1024, 1024]],
-            ['size' => [4096, 4096]],
-        ];
+        yield 'small' => ['size' => [1024, 1024]];
+        yield 'medium' => ['size' => [4096, 4096]];
     }
 
     /**

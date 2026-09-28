@@ -3,6 +3,7 @@
 namespace Tensor\Benchmarks\Unary;
 
 use Tensor\Vector;
+use Generator;
 
 /**
  * @Groups({"Functions"})
@@ -26,11 +27,9 @@ class ProductVectorBench
     /**
      * @return list<array{size: int}>
      */
-    public function sizes() : array
+    public function sizes() : Generator
     {
-        return [
-            ['size' => 1024 * 1024],
-        ];
+        yield 'small' => ['size' => 1024 * 1024];
     }
 
     /**

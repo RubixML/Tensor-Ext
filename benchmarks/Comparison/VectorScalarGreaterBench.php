@@ -3,6 +3,7 @@
 namespace Tensor\Benchmarks\Comparison;
 
 use Tensor\Vector;
+use Generator;
 
 /**
  * @Groups({"Comparison", "Scalar"})
@@ -23,12 +24,10 @@ class VectorScalarGreaterBench
     /**
      * @return list<array{size: list<int>}>
      */
-    public function sizes() : array
+    public function sizes() : Generator
     {
-        return [
-            ['size' => 1024 * 1024],
-            ['size' => 4096 * 4096],
-        ];
+        yield 'small' => ['size' => 1024 * 1024];
+        yield 'medium' => ['size' => 4096 * 4096];
     }
 
     /**

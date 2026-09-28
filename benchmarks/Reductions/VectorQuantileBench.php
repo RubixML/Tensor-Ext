@@ -3,6 +3,7 @@
 namespace Tensor\Benchmarks\Reductions;
 
 use Tensor\Vector;
+use Generator;
 
 /**
  * @Groups({"Reductions"})
@@ -26,11 +27,9 @@ class VectorQuantileBench
     /**
      * @return list<array{size: int}>
      */
-    public function sizes() : array
+    public function sizes() : Generator
     {
-        return [
-            ['size' => 1024 * 1024],
-        ];
+        yield 'small' => ['size' => 1024 * 1024];
     }
 
     /**
