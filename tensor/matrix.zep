@@ -2114,10 +2114,10 @@ class Matrix implements Tensor
      */
     public function multiplyVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_multiply_row(this->a, b->buffer(), this->n);
@@ -2134,10 +2134,10 @@ class Matrix implements Tensor
      */
     public function divideVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_divide_row(this->a, b->buffer(), this->n);
@@ -2154,10 +2154,10 @@ class Matrix implements Tensor
      */
     public function addVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
     
         var buffer = tensor_add_row(this->a, b->buffer(), this->n);
@@ -2174,10 +2174,10 @@ class Matrix implements Tensor
      */
     public function subtractVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
     
         var buffer = tensor_subtract_row(this->a, b->buffer(), this->n);
@@ -2194,10 +2194,10 @@ class Matrix implements Tensor
      */
     public function powVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
     
         var buffer = tensor_pow_row(this->a, b->buffer(), this->n);
@@ -2214,10 +2214,10 @@ class Matrix implements Tensor
      */
     public function modVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
     
         var buffer = tensor_mod_row(this->a, b->buffer(), this->n);
@@ -2235,10 +2235,10 @@ class Matrix implements Tensor
      */
     public function equalVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_equal_row(this->a, b->buffer(), this->n);
@@ -2255,10 +2255,10 @@ class Matrix implements Tensor
      */
     public function notEqualVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_not_equal_row(this->a, b->buffer(), this->n);
@@ -2275,10 +2275,10 @@ class Matrix implements Tensor
      */
     public function greaterVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_greater_row(this->a, b->buffer(), this->n);
@@ -2295,10 +2295,10 @@ class Matrix implements Tensor
      */
     public function greaterEqualVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_greater_equal_row(this->a, b->buffer(), this->n);
@@ -2315,10 +2315,10 @@ class Matrix implements Tensor
      */
     public function lessVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_less_row(this->a, b->buffer(), this->n);
@@ -2336,10 +2336,10 @@ class Matrix implements Tensor
      */
     public function lessEqualVector(const <Vector> b) -> <Matrix>
     {
-        if unlikely b->size() !== this->n {
+        if unlikely b->n() !== this->n {
             throw new DimensionalityMismatch("Matrix A expects "
                 . (string) this->n . " columns but Vector B has "
-                . (string) b->size() . ".");
+                . (string) b->n() . ".");
         }
 
         var buffer = tensor_less_equal_row(this->a, b->buffer(), this->n);
