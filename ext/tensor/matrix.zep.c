@@ -2298,12 +2298,12 @@ PHP_METHOD(Tensor_Matrix, dot)
 }
 
 /**
- * Return the 2D convolution of this matrix and a kernel matrix with given stride using the "same" method for zero padding.
+ * Return the 2D convolution of this matrix and a kernel matrix with given stride using
+ * the "same" method for zero padding.
  *
  * The result holds the "same" shape as this matrix, i.e. ceil(m / stride) x
  * ceil(n / stride) elements. The kernel's centre sample is aligned with each
- * output sample, matching numpy and scipy's `mode='same'` for even-sized
- * kernels as well as odd ones.
+ * output sample.
  *
  * @param \Tensor\Matrix b
  * @param int stride
