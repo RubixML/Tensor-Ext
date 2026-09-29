@@ -27,7 +27,7 @@
  *
  * @return 1 on success, 0 on failure (throwing).
  */
-int tensor_matrix_doubles(zval * obj, zval * n_zval, double ** ptr, zend_long * m, zend_long * n)
+int tensor_matrix_doubles_len(zval * obj, zend_long n_hat, double ** ptr, zend_long * m, zend_long * n)
 {
 	zend_long total = 0;
 	int ok = 0;
@@ -37,8 +37,6 @@ int tensor_matrix_doubles(zval * obj, zval * n_zval, double ** ptr, zend_long * 
 	if (UNEXPECTED(!ok)) {
 		return 0;
 	}
-
-	zend_long n_hat = zephir_get_intval(n_zval);
 
 	if (UNEXPECTED(n_hat < 1)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
@@ -57,6 +55,26 @@ int tensor_matrix_doubles(zval * obj, zval * n_zval, double ** ptr, zend_long * 
 	*m = total / n_hat;
 
 	return 1;
+}
+
+/**
+ * Unwrap the flat row-major buffer as before, taking the row length straight
+ * from a zend_long rather than a zval.
+ *
+ * The split exists so that softmax.c can fold an empty vector, which arrives as
+ * a zero row length, into a single empty row before validation instead of
+ * having to build a zval to hand to tensor_matrix_doubles.
+ *
+ * @param obj
+ * @param n_zval
+ * @param ptr
+ * @param m
+ * @param n
+ * @return 1 on success, 0 on failure (throwing).
+ */
+int tensor_matrix_doubles(zval * obj, zval * n_zval, double ** ptr, zend_long * m, zend_long * n)
+{
+	return tensor_matrix_doubles_len(obj, zephir_get_intval(n_zval), ptr, m, n);
 }
 
 /**

@@ -10,43 +10,57 @@
 #include "kernel/buffer.h"
 #include "kernel/operators.h"
 #include "include/buffer.h"
+#include "include/reductions.h"
 #include "include/shape.h"
 
-/* The block width is derived from the row count rather than fixed, because the
- * useful block depends on the shape: a short matrix keeps many columns in flight
- * and can afford a wide block, a tall one only ever has a few rows per column to
- * work with. TENSOR_SOFTMAX_WORKING_SET doubles is derived from the L1 budget,
- * TENSOR_SOFTMAX_TILE caps the block so the per-column state stays cheap in
- * registers, and the floor below keeps the inner loop long enough to vectorize.
+/* Rows, not columns, are the reduction axis, and the buffer is row-major, so a
+ * row is already one contiguous run and every pass below walks it forwards.
+ * That is the whole reason this kernel is not tiled over columns the way the
+ * per-column version had to be: a column of the same buffer is strided, and
+ * dividing along a stride is the one pass that neither prefetches nor
+ * vectorizes.
  *
- * The floor matters more than the cap. Deriving the width as working-set/rows
- * alone collapses it to a single column once the matrix is taller than the
- * working set, and a one-wide inner loop both fails to vectorize and re-walks
- * the whole buffer once per column. Measured on a 4096x4096 matrix, 4096 blocks
- * of one column took 381ms against 258ms for a floor of 32; every width from 32
- * to 128 was within noise of every other, so the floor is what matters and the
- * cap is only there to bound the stack arrays. */
-#define TENSOR_SOFTMAX_TILE 128
+ * The lane count is the number of rows carried through the three passes at
+ * once, and it is derived from the row length rather than fixed, because the
+ * useful value depends on the shape. A wide row is self-sufficient -- the
+ * exponentials inside it are independent and the sum helper already unrolls
+ * eight ways -- so one at a time is all it needs, and more would only push the
+ * block past the cache and make the normalization re-read from memory. A narrow
+ * row has almost no work to interleave, so several are kept in flight and the
+ * per-row overhead is amortized across them.
+ *
+ * TENSOR_SOFTMAX_WORKING_SET doubles is the L1 budget a lane block is sized
+ * against and TENSOR_SOFTMAX_LANES caps it so the per-row state stays in
+ * registers. */
 #define TENSOR_SOFTMAX_WORKING_SET 2048
-#define TENSOR_SOFTMAX_MIN_WIDTH 32
+#define TENSOR_SOFTMAX_LANES 2
 
 /**
- * Softmax over the columns of a matrix or vector.
+ * Softmax over the rows of a matrix or vector.
  *
- * A single kernel replaces the transpose, maximum, subtract, exponential, sum,
- * clip, divide, transpose sequence.
- *
- * Three sweeps over a block of columns. The first takes the per-column maximum
- * so the exponentials cannot overflow, the second exponentiates and sums, the
- * third divides. The block is sized so that a block's input and output both stay
- * resident across all three.
+ * A single kernel replaces the maximum, subtract, exponential, sum, divide
+ * sequence. Three sweeps over a block of rows. The first takes the per-row
+ * maximum so the exponentials cannot overflow, the second exponentiates and
+ * sums, the third divides. The block is sized so that a block's input and
+ * output both stay resident across all three.
  */
 void tensor_softmax(zval * return_value, zval * a, zval * n)
 {
 	double * va = NULL;
-	zend_long m = 0, cols = 0, i, j, j0, tile, width;
+	zend_long m = 0, cols = 0, i, j, i0, tile, lanes;
 
-	if (UNEXPECTED(!tensor_matrix_doubles(a, n, &va, &m, &cols))) {
+	/* A vector arrives as a single row of its own length, and an empty vector as
+	 * a zero length. Folding the zero into a single empty row keeps the empty
+	 * vector normalizing to an empty result rather than being rejected as a
+	 * non-positive row length, which is what the column-wise version got for
+	 * free by always being called with a width of one. */
+	zend_long cols_hat = zephir_get_intval(n);
+
+	if (cols_hat < 1) {
+		cols_hat = 1;
+	}
+
+	if (UNEXPECTED(!tensor_matrix_doubles_len(a, cols_hat, &va, &m, &cols))) {
 		return;
 	}
 
@@ -64,76 +78,67 @@ void tensor_softmax(zval * return_value, zval * a, zval * n)
 
 	const double * restrict input = va;
 	double * restrict vc = zephir_buffer_doubles(&c);
-	double maxima[TENSOR_SOFTMAX_TILE];
-	double sums[TENSOR_SOFTMAX_TILE];
+	double maxima[TENSOR_SOFTMAX_LANES];
+	double sums[TENSOR_SOFTMAX_LANES];
 
-	tile = TENSOR_SOFTMAX_WORKING_SET / m;
+	lanes = TENSOR_SOFTMAX_WORKING_SET / cols;
 
-	if (UNEXPECTED(tile > TENSOR_SOFTMAX_TILE)) {
-		tile = TENSOR_SOFTMAX_TILE;
-	} else if (UNEXPECTED(tile < TENSOR_SOFTMAX_MIN_WIDTH)) {
-		tile = TENSOR_SOFTMAX_MIN_WIDTH;
+	if (UNEXPECTED(lanes > TENSOR_SOFTMAX_LANES)) {
+		lanes = TENSOR_SOFTMAX_LANES;
+	} else if (UNEXPECTED(lanes < 1)) {
+		lanes = 1;
 	}
 
-	for (j0 = 0; j0 < cols; j0 += tile) {
-		width = cols - j0 < tile ? cols - j0 : tile;
+	for (i0 = 0; i0 < m; i0 += lanes) {
+		tile = m - i0 < lanes ? m - i0 : lanes;
 
-		/* Pass 1, the per-column maximum. The inner loop is the block of
-		 * columns and the outer loop the rows, so the reduction runs across the
-		 * vector register rather than along it: each column carries its own
-		 * accumulator in `maxima`, which is what leaves a vector unit free to
-		 * widen. Reversing the loops, so each register held one column's
-		 * vertical max, does not vectorize at all. */
-		for (j = 0; j < width; ++j) {
-			maxima[j] = -INFINITY;
-		}
+		/* Pass 1, the per-row maximum. */
+		for (i = 0; i < tile; ++i) {
+			const double * restrict src = input + (i0 + i) * cols;
+			double best = src[0];
 
-		for (i = 0; i < m; ++i) {
-			const double * restrict src = input + i * cols + j0;
-
-			for (j = 0; j < width; ++j) {
+			for (j = 1; j < cols; ++j) {
 				double v = src[j];
 
-				maxima[j] = v > maxima[j] ? v : maxima[j];
+				best = v > best ? v : best;
 			}
+
+			maxima[i] = best;
 		}
 
-		/* Pass 2, the exponential and its running sum. The subtraction is
-		 * stable: at least one element per column is exactly exp(0) = 1.0, so
-		 * every value in the sum is in (0, 1] and the sum cannot underflow.
-		 * One accumulator per column is what breaks the floating point
-		 * dependency chain -- the columns are independent, so a wide block
-		 * already supplies as many concurrent chains as it has columns, and
-		 * there is no need to unroll the inner loop to get them. */
-		for (j = 0; j < width; ++j) {
-			sums[j] = 0.0;
-		}
+		/* Pass 2, the exponential and its sum. The subtraction is stable: at
+		 * least one element per row is exactly exp(0) = 1.0, so every value in
+		 * the sum is in (0, 1] and the sum cannot underflow.
+		 *
+		 * The sum is left to tensor_sum_doubles rather than accumulated here.
+		 * That helper is the same one the sum reduction runs, so the total is
+		 * bit-for-bit the total a subtract/maximum/exp/sum/divide composition
+		 * produces, which is what lets the kernel stand in for that sequence
+		 * without a tolerance. Its eight partial sums also keep the row's
+		 * dependency chain from serializing the exponentials. */
+		for (i = 0; i < tile; ++i) {
+			const double * restrict src = input + (i0 + i) * cols;
+			double * restrict dst = vc + (i0 + i) * cols;
+			const double shift = maxima[i];
 
-		for (i = 0; i < m; ++i) {
-			const double * restrict src = input + i * cols + j0;
-			double * restrict dst = vc + i * cols + j0;
-
-			for (j = 0; j < width; ++j) {
-				double e = exp(src[j] - maxima[j]);
-
-				dst[j] = e;
-				sums[j] += e;
+			for (j = 0; j < cols; ++j) {
+				dst[j] = exp(src[j] - shift);
 			}
+
+			sums[i] = tensor_sum_doubles(dst, cols);
 		}
 
-		/* Pass 3, the normalization. A true division rather than a
-		 * multiplication by a cached reciprocal, so the result matches what a
-		 * divide() by the same total produces bit for bit. Here the inner loop
-		 * is the rows and the outer loop the columns, the opposite of the two
-		 * passes above, because a column is what has to run down a stride: put
-		 * the column in the accumulator instead and the loop is sequential in
-		 * memory, which is the form the division actually vectorizes in. */
-		for (j = 0; j < width; ++j) {
-			const double total = sums[j];
-			double * restrict col = vc + j0 + j;
+		/* Pass 3, the normalization. Contiguous along the row, so unlike the
+		 * strided form the column-wise version needed this is the shape the
+		 * division vectorizes in. A true division rather than a multiplication
+		 * by a cached reciprocal, so the result matches what a divide() by the
+		 * same total produces bit for bit. */
+		for (i = 0; i < tile; ++i) {
+			double * restrict dst = vc + (i0 + i) * cols;
+			const double total = sums[i];
 
-			for (i = 0; i < m; ++i) {
-				col[i * cols] /= total;
+			for (j = 0; j < cols; ++j) {
+				dst[j] /= total;
 			}
 		}
 	}

@@ -467,7 +467,7 @@ See [Reductions](interfaces/reductions.md). For a `Matrix`, row-wise reductions 
 
 See [Special](interfaces/special.md). These preserve the shape of the matrix without being element-wise.
 
-- `softmax() : self` — exponentials normalized so each **column** sums to `1.0`; transpose on either side to normalize each row
+- `softmax() : self` — exponentials normalized so each **row** sums to `1.0`; transpose on either side to normalize each column
 
 ## Array Access
 

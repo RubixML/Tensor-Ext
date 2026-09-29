@@ -1237,11 +1237,14 @@ class Vector implements Tensor
     /**
      * Return the softmax of the vector i.e. the whole vector normalized to sum to 1.
      *
+     * A vector is presented to the kernel as a single row, so it normalizes as
+     * one group. An empty vector normalizes to an empty vector.
+     *
      * @return self
      */
     public function softmax() -> <Vector>
     {
-        return new static(tensor_softmax(this->a, 1));
+        return new static(tensor_softmax(this->a, this->n));
     }
 
     /**

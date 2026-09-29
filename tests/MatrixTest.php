@@ -3955,7 +3955,7 @@ class MatrixTest extends TestCase
     }
 
     /**
-     * Softmax normalizes down each column, so the three columns below normalize
+     * Softmax normalizes along each row, so the three rows below normalize
      * independently of one another.
      *
      * @test
@@ -3971,9 +3971,9 @@ class MatrixTest extends TestCase
         $b = $a->softmax();
 
         $expected = Matrix::fromArray([
-            [0.09003057317038046, 0.9755587549443865, 0.0024282580295913376],
-            [0.24472847105479764, 0.0178679818703045, 0.9796292071670796],
-            [0.6652409557748218, 0.006573263185309083, 0.017942534803329194],
+            [0.017970118068812064, 0.9811352024343174, 0.0008946794968705335],
+            [0.11419519938459449, 0.04201006613406605, 0.8437947344813395],
+            [0.909442998512742, 0.045278500743629074, 0.045278500743629074],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
@@ -3981,21 +3981,21 @@ class MatrixTest extends TestCase
 
     /**
      * The defining property, over shapes that straddle the kernel's block
-     * boundary: every column of the result sums to one. Note that Matrix::sum()
-     * runs along a row, so the transposed result is what sums down a column.
+     * boundary: every row of the result sums to one. Matrix::sum() already runs
+     * along a row, so no transpose is needed to read the totals off.
      *
      * @test
      * @dataProvider shapeProvider
      * @param int $m
      * @param int $n
      */
-    public function softmaxColumnsSumToOne(int $m, int $n) : void
+    public function softmaxRowsSumToOne(int $m, int $n) : void
     {
         $a = Matrix::rand($m, $n)->multiply(20.0);
 
-        $totals = $a->softmax()->transpose()->sum()->asArray();
+        $totals = $a->softmax()->sum()->asArray();
 
-        $this->assertCount($n, $totals);
+        $this->assertCount($m, $totals);
 
         foreach ($totals as $total) {
             $this->assertEqualsWithDelta(1.0, $total, self::MAX_DELTA);
@@ -4003,10 +4003,15 @@ class MatrixTest extends TestCase
     }
 
     /**
-     * Subtracting a per-column constant leaves the exponentials scaled by the
-     * same factor, which cancels in the division, so the result is unchanged.
-     * This is the property the maximum subtraction inside the kernel relies on,
-     * and it is what makes it safe to subtract the maximum rather than nothing.
+     * Subtracting a constant from a whole row leaves the exponentials scaled by
+     * the same factor, which cancels in the division, so the result is
+     * unchanged. This is the property the maximum subtraction inside the kernel
+     * relies on, and it is what makes it safe to subtract the maximum rather
+     * than nothing.
+     *
+     * The constant has to be constant down a row: adding a Vector instead would
+     * offset each column by a different amount, which is a shift of the matrix
+     * across its rows and does move the answer.
      *
      * @test
      */
@@ -4020,15 +4025,15 @@ class MatrixTest extends TestCase
 
         $this->assertEqualsWithDelta(
             $a->softmax()->asArray(),
-            $a->add(Vector::fromArray([7.0, -13.0, 100.0]))->softmax()->asArray(),
+            $a->add(ColumnVector::fromArray([7.0, -13.0, 100.0]))->softmax()->asArray(),
             self::MAX_DELTA
         );
     }
 
     /**
-     * A column of large magnitudes must not overflow the exponential. Taking the
-     * maximum of each column is what keeps the exponentials in range: without it
-     * the first column would be an infinity throughout, and the second would
+     * A row of large magnitudes must not overflow the exponential. Taking the
+     * maximum of each row is what keeps the exponentials in range: without it
+     * the first row would be an infinity throughout, and the second would
      * underflow to nothing but zeroes.
      *
      * @test
@@ -4037,20 +4042,23 @@ class MatrixTest extends TestCase
     {
         $a = Matrix::fromArray([
             [1000.0, -1000.0, 710.0],
-            [1001.0, 0.0, 0.0],
-            [1002.0, 1000.0, -710.0],
+            [1001.0, 0.0, -1001.0],
+            [-710.0, 1002.0, 0.0],
         ]);
 
         $b = $a->softmax()->asArray();
 
-        $this->assertEqualsWithDelta([0.09003057317038046, 0.24472847105479764, 0.6652409557748218], array_column($b, 0), self::MAX_DELTA);
-        $this->assertEqualsWithDelta([0.0, 0.0, 1.0], array_column($b, 1), self::MAX_DELTA);
-        $this->assertEqualsWithDelta([1.0, 0.0, 0.0], array_column($b, 2), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 0.0, 0.0], $b[0], self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 0.0, 0.0], $b[1], self::MAX_DELTA);
+        $this->assertEqualsWithDelta([0.0, 1.0, 0.0], $b[2], self::MAX_DELTA);
     }
 
     /**
-     * The fused kernel must reproduce the transpose, maximum, subtract,
-     * exponential, sum, clip, divide, transpose sequence it replaces.
+     * The fused kernel must reproduce the maximum, subtract, exponential, sum,
+     * divide sequence it replaces. The kernel leans on the same summation
+     * helper the sum reduction runs, so this is exact rather than within a
+     * tolerance: no clip is needed either, since a row's total is always at
+     * least exp(0) = 1.
      *
      * @test
      */
@@ -4062,11 +4070,10 @@ class MatrixTest extends TestCase
             [20.0, -6.0, -9.0],
         ]);
 
-        $t = $a->transpose();
-        $expected = $t->subtractColumnVector($t->max())->exp();
-        $expected = $expected->divide($expected->sum()->clipLower(1e-8))->transpose();
+        $z = $a->subtractColumnVector($a->max())->exp();
+        $expected = $z->divide($z->sum());
 
-        $this->assertEqualsWithDelta($expected->asArray(), $a->softmax()->asArray(), self::MAX_DELTA);
+        $this->assertEquals($expected->asArray(), $a->softmax()->asArray());
     }
 
     /**
@@ -4090,7 +4097,7 @@ class MatrixTest extends TestCase
     }
 
     /**
-     * A single row leaves one column with a single entry, which normalizes to 1.
+     * A single row is one group, so it normalizes to one across its width.
      *
      * @test
      */
@@ -4098,13 +4105,37 @@ class MatrixTest extends TestCase
     {
         $a = Matrix::fromArray([[1.0, 2.0, 3.0]]);
 
-        $this->assertEqualsWithDelta([[1.0, 1.0, 1.0]], $a->softmax()->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(
+            [[0.09003057317038046, 0.24472847105479764, 0.6652409557748218]],
+            $a->softmax()->asArray(),
+            self::MAX_DELTA
+        );
     }
 
     /**
-     * Shapes on both sides of the kernel's block boundary: a single column, a
-     * block narrower than the floor, a block wider than the cap, and a tall
-     * matrix where the derived block width would collapse to a single column.
+     * The degenerate axis: a single column makes every row a one-element group,
+     * and a lone element is its own maximum, so the result is all ones. Worth
+     * pinning down because it is the one shape where the output carries no
+     * information, and it is what a caller gets for a one-hot classifier.
+     *
+     * @test
+     */
+    public function softmaxSingleColumn() : void
+    {
+        $a = Matrix::fromArray([
+            [1000.0],
+            [0.0],
+            [-1000.0],
+        ]);
+
+        $this->assertEqualsWithDelta([[1.0], [1.0], [1.0]], $a->softmax()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * Shapes on both sides of the kernel's lane block: a single row and a single
+     * column, a row narrower than a cache line, a row far wider than the
+     * working set, and a tall matrix where the derived lane count collapses to
+     * one row at a time.
      *
      * @return Generator<mixed[]>
      */

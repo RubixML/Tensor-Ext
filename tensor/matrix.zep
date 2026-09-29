@@ -1603,7 +1603,7 @@ class Matrix implements Tensor
     }
 
     /**
-     * Return the softmax of the matrix i.e. each column normalized to sum to 1.
+     * Return the softmax of the matrix i.e. each row normalized to sum to 1.
      *
      * @return self
      */

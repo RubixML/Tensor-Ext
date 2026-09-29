@@ -2075,7 +2075,7 @@ class VectorTest extends TestCase
     }
 
     /**
-     * A vector softmax normalizes the whole vector, as a single column, so the
+     * A vector softmax normalizes the whole vector, as a single row, so the
      * result sums to one.
      *
      * @test

@@ -21,16 +21,18 @@ interface Special
 Return the softmax of the tensor, i.e. the exponentials of its elements
 normalized so that they sum to one.
 
-For a `Matrix` this normalizes **each column independently**, so the transpose of
-the result sums to `1.0` down every column. To normalize each row instead, call
-`transpose()` on either side:
+For a `Matrix` this normalizes **each row independently**, so every row of the
+result sums to `1.0`. To normalize each column instead, call `transpose()` on
+either side:
 
 ```php
 $normalized = $matrix->transpose()->softmax()->transpose();
 ```
 
-For a `Vector` the whole vector is normalized as a single column.
+For a `Vector` the whole vector is normalized as a single row, and an empty
+vector normalizes to an empty vector.
 
-The maximum of each column is subtracted before exponentiating, so no
-intermediate can overflow regardless of the magnitude of the input, and a
-single-element column normalizes to `1.0`.
+The maximum of each row is subtracted before exponentiating, so no intermediate
+can overflow regardless of the magnitude of the input, and a single-element row
+normalizes to `1.0`. Note the degenerate case this implies: a matrix with a
+single *column* has one-element rows, so it normalizes to all ones.
