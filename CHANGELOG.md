@@ -20,6 +20,7 @@
     - Added `sigmoid()` to `Unary` interface and `tanh()` to `Trigonometric`
     - Added `softmax()` as a fused kernel in the new `Special` interface
     - Moved `Statistical` interface into `Reductions` interface
+    - Added padding argument to convolve()
 
 - 3.1.2
     - Fix extension name
