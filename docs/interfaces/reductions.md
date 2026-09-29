@@ -42,3 +42,24 @@ Return the index of the minimum of the tensor. For a `Vector`, this is an `int`;
 ### `argmax() : mixed`
 
 Return the index of the maximum of the tensor. For a `Vector`, this is an `int`; for a `Matrix`, this is a `ColumnVector` of the per-row maximum indices. Ties resolve to the first occurrence.
+
+### `mean() : mixed`
+
+Return the mean of the tensor.
+
+### `variance($mean = null) : mixed`
+
+Compute the variance of the tensor.
+
+- **Parameters:** `$mean` — an optional pre-computed mean to avoid recomputation. If omitted, the mean is computed internally.
+
+### `median() : mixed`
+
+Return the median of the tensor.
+
+### `quantile(float $q) : mixed`
+
+Return the q'th quantile of the tensor.
+
+- **Parameters:** `$q` — the quantile in the range `[0, 1]`.
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$q` is outside `[0, 1]`.

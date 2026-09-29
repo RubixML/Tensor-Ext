@@ -3,7 +3,7 @@
 A one dimensional (rank 1) tensor with integer and/or floating point elements.
 
 - **Namespace:** `Tensor\Vector`
-- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Statistical`, `Reductions`
+- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Reductions`, `Special`
 - **Also implements:** `ArrayAccess`, `IteratorAggregate`, `Countable`
 
 ## Overview
@@ -306,6 +306,7 @@ See [Unary](interfaces/unary.md). Each method returns a new `Vector`.
 - `expm1() : self` — exponential of each element minus 1
 - `log(float $base = M_E) : self` — log to the given base of each element
 - `log1p() : self` — log of 1 plus each element
+- `sigmoid() : self` — element-wise logistic function, `1 / (1 + exp(-x))`
 - `round(int $precision = 0) : self` — round the elements to a given decimal place (throws `InvalidArgumentException` if `$precision < 0`)
 - `floor() : self` — round down to the nearest integer
 - `ceil() : self` — round up to the nearest integer
@@ -325,12 +326,13 @@ See [Trigonometric](interfaces/trigonometric.md). Each method returns a new `Vec
 - `acos()` — arc cosine of the vector
 - `tan()` — tangent of the vector
 - `atan()` — arc tangent of the vector
+- `tanh() : self` — element-wise hyperbolic tangent
 - `rad2deg()` — convert angles from radians to degrees
 - `deg2rad()` — convert angles from degrees to radians
 
-## Statistical & Reductions
+## Reductions
 
-See [Statistical](interfaces/statistical.md) and [Reductions](interfaces/reductions.md). For a `Vector` these return scalar `float`s.
+See [Reductions](interfaces/reductions.md). For a `Vector` these return scalar `float`s.
 
 - `sum() : float` — the sum of the vector
 - `product() : float` — the product of the vector
@@ -342,6 +344,12 @@ See [Statistical](interfaces/statistical.md) and [Reductions](interfaces/reducti
 - `median() : float` — the median of the vector
 - `quantile(float $q) : float` — the q'th quantile (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)
 - `variance($mean = null) : float` — the variance; `$mean` optionally provides a pre-computed mean
+
+## Special
+
+See [Special](interfaces/special.md). These preserve the shape of the vector without being element-wise.
+
+- `softmax() : self` — the exponentials of the vector normalized so they sum to `1.0`
 
 ## Array Access
 

@@ -10,7 +10,7 @@ use Tensor\ArrayLike;
 use Tensor\Unary;
 use Tensor\Arithmetic;
 use Tensor\Comparable;
-use Tensor\Statistical;
+use Tensor\Special;
 use Tensor\ColumnVector;
 use Tensor\Trigonometric;
 use Tensor\Exceptions\DimensionalityMismatch;
@@ -46,7 +46,7 @@ class ColumnVectorTest extends TestCase
         $this->assertInstanceOf(Comparable::class, $vector);
         $this->assertInstanceOf(Unary::class, $vector);
         $this->assertInstanceOf(Trigonometric::class, $vector);
-        $this->assertInstanceOf(Statistical::class, $vector);
+        $this->assertInstanceOf(Special::class, $vector);
         $this->assertInstanceOf(Reductions::class, $vector);
     }
 
@@ -405,6 +405,48 @@ class ColumnVectorTest extends TestCase
 
         $this->assertInstanceOf(Vector::class, $b);
         $this->assertEquals(Vector::fromArray([1.0, 2.0, 3.0])->asArray(), $b->asArray());
+    }
+
+    /**
+     * The univariate operations are inherited from Vector, so the only thing
+     * worth pinning down here is that they stay a ColumnVector when they are.
+     *
+     * @test
+     */
+    public function softmaxReturnsColumnVector() : void
+    {
+        $a = ColumnVector::fromArray([1.0, 2.0, 3.0]);
+
+        $b = $a->softmax();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta(
+            Vector::fromArray([0.09003057317038046, 0.24472847105479764, 0.6652409557748218])->asArray(),
+            $b->asArray(),
+            1e-8
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function sigmoidReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->sigmoid();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([0.7310585786300049, 0.2689414213699951, 0.5], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function tanhReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->tanh();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([0.76159415595576485, -0.76159415595576485, 0.0], $b->asArray(), 1e-8);
     }
 
     /**

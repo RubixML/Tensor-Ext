@@ -10,6 +10,8 @@ void tensor_expm1(zval * return_value, zval * a);
 void tensor_log(zval * return_value, zval * a);
 void tensor_log_base(zval * return_value, zval * a, zval * b);
 void tensor_log1p(zval * return_value, zval * a);
+void tensor_sigmoid(zval * return_value, zval * a);
+void tensor_tanh(zval * return_value, zval * a);
 void tensor_sin(zval * return_value, zval * a);
 void tensor_asin(zval * return_value, zval * a);
 void tensor_cos(zval * return_value, zval * a);

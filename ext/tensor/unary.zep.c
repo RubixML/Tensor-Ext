@@ -65,6 +65,12 @@ ZEPHIR_DOC_METHOD(Tensor_Unary, log);
  */
 ZEPHIR_DOC_METHOD(Tensor_Unary, log1p);
 /**
+ * Return the element-wise logistic function i.e. 1 / (1 + exp(-x)).
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Unary, sigmoid);
+/**
  * Round the elements in the tensor to a given decimal place.
  *
  * @param int precision

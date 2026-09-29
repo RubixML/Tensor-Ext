@@ -60,6 +60,12 @@ ZEPHIR_DOC_METHOD(Tensor_Trigonometric, tan);
  */
 ZEPHIR_DOC_METHOD(Tensor_Trigonometric, atan);
 /**
+ * Return the element-wise hyperbolic tangent.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Trigonometric, tanh);
+/**
  * Convert angles from radians to degrees.
  *
  * @return mixed

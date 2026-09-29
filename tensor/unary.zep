@@ -55,6 +55,13 @@ interface Unary
     public function log1p();
 
     /**
+     * Return the element-wise logistic function i.e. 1 / (1 + exp(-x)).
+     *
+     * @return mixed
+     */
+    public function sigmoid();
+
+    /**
      * Round the elements in the tensor to a given decimal place.
      *
      * @param int precision

@@ -14,7 +14,7 @@ if test "$PHP_TENSOR" = "yes"; then
 	tensor/comparable.zep.c
 	tensor/exceptions/tensorexception.zep.c
 	tensor/reductions.zep.c
-	tensor/statistical.zep.c
+	tensor/special.zep.c
 	tensor/trigonometric.zep.c
 	tensor/unary.zep.c
 	tensor/tensor.zep.c
@@ -39,6 +39,7 @@ if test "$PHP_TENSOR" = "yes"; then
 	include/factories.c
 	include/reductions.c
 	include/shape.c
+	include/softmax.c
 	include/unary.c
 	include/linear_algebra.c
 	include/signal_processing.c

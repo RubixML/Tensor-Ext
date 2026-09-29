@@ -987,6 +987,16 @@ class Vector implements Tensor
     }
 
     /**
+     * Return the element-wise logistic function i.e. 1 / (1 + exp(-x)).
+     *
+     * @return self
+     */
+    public function sigmoid() -> <Vector>
+    {
+        return new static(tensor_sigmoid(this->a));
+    }
+
+    /**
      * Return the sine of this vector.
      *
      * @return self
@@ -1044,6 +1054,16 @@ class Vector implements Tensor
     public function atan() -> <Vector>
     {
         return new static(tensor_atan(this->a));
+    }
+
+    /**
+     * Return the element-wise hyperbolic tangent of the vector.
+     *
+     * @return self
+     */
+    public function tanh() -> <Vector>
+    {
+        return new static(tensor_tanh(this->a));
     }
 
     /**
@@ -1212,6 +1232,16 @@ class Vector implements Tensor
         var buffer = tensor_quantile(this->a, this->n, q);
 
         return (float) buffer->get(0);
+    }
+
+    /**
+     * Return the softmax of the vector i.e. the whole vector normalized to sum to 1.
+     *
+     * @return self
+     */
+    public function softmax() -> <Vector>
+    {
+        return new static(tensor_softmax(this->a, 1));
     }
 
     /**

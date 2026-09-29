@@ -31,7 +31,7 @@ zend_class_entry *tensor_arraylike_ce;
 zend_class_entry *tensor_comparable_ce;
 zend_class_entry *tensor_exceptions_tensorexception_ce;
 zend_class_entry *tensor_reductions_ce;
-zend_class_entry *tensor_statistical_ce;
+zend_class_entry *tensor_special_ce;
 zend_class_entry *tensor_trigonometric_ce;
 zend_class_entry *tensor_unary_ce;
 zend_class_entry *tensor_tensor_ce;
@@ -78,7 +78,7 @@ static PHP_MINIT_FUNCTION(tensor)
 	ZEPHIR_INIT(Tensor_Comparable);
 	ZEPHIR_INIT(Tensor_Exceptions_TensorException);
 	ZEPHIR_INIT(Tensor_Reductions);
-	ZEPHIR_INIT(Tensor_Statistical);
+	ZEPHIR_INIT(Tensor_Special);
 	ZEPHIR_INIT(Tensor_Trigonometric);
 	ZEPHIR_INIT(Tensor_Unary);
 	ZEPHIR_INIT(Tensor_Tensor);

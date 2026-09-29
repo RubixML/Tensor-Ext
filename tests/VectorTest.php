@@ -10,7 +10,7 @@ use Tensor\ArrayLike;
 use Tensor\Unary;
 use Tensor\Arithmetic;
 use Tensor\Comparable;
-use Tensor\Statistical;
+use Tensor\Special;
 use Tensor\ColumnVector;
 use Tensor\Trigonometric;
 use Tensor\Exceptions\DimensionalityMismatch;
@@ -49,7 +49,7 @@ class VectorTest extends TestCase
         $this->assertInstanceOf(Comparable::class, $vector);
         $this->assertInstanceOf(Unary::class, $vector);
         $this->assertInstanceOf(Trigonometric::class, $vector);
-        $this->assertInstanceOf(Statistical::class, $vector);
+        $this->assertInstanceOf(Special::class, $vector);
         $this->assertInstanceOf(Reductions::class, $vector);
     }
 
@@ -144,6 +144,7 @@ class VectorTest extends TestCase
             'log1p',
             'negate',
             'round',
+            'sigmoid',
             'sign',
             'sqrt',
             'square',
@@ -168,9 +169,13 @@ class VectorTest extends TestCase
             'argmax',
             'argmin',
             'max',
+            'mean',
+            'median',
             'min',
             'product',
+            'quantile',
             'sum',
+            'variance',
         ], $methods);
     }
 
@@ -1970,6 +1975,223 @@ class VectorTest extends TestCase
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function sigmoid() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = $a->sigmoid();
+
+        $expected = Vector::fromArray([
+            0.98201379003790845, 0.99849881774326299, 0.94784643692158232,
+            0.99999999793884631, 0.93086157965665328, 0.99999320964130201,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large negative input must not overflow the exponential that sigmoid
+     * evaluates, and a large positive one must saturate to exactly 1.0.
+     *
+     * @test
+     */
+    public function sigmoidSaturates() : void
+    {
+        $a = Vector::fromArray([-800.0, 800.0, 0.0, -1000.0]);
+
+        $this->assertSame([0.0, 1.0, 0.5, 0.0], $a->sigmoid()->asArray());
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function sigmoidMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(8.0)->subtract(4.0);
+
+        $e = $a->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->divide($e->add(1.0))->asArray(),
+            $a->sigmoid()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function tanh() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = $a->tanh();
+
+        $expected = Vector::fromArray([
+            0.99932929973906703, 0.9999954793514042, 0.9939631673505831,
+            1.0, 0.98902740220109919, 0.99999999990778077,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large input must saturate to exactly +/-1.0 rather than returning an
+     * infinity.
+     *
+     * @test
+     */
+    public function tanhSaturates() : void
+    {
+        $a = Vector::fromArray([100.0, -100.0, 0.0, -800.0]);
+
+        $this->assertSame([1.0, -1.0, 0.0, -1.0], $a->tanh()->asArray());
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function tanhMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(8.0)->subtract(4.0);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->subtract($em)->divide($e->add($em))->asArray(),
+            $a->tanh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * A vector softmax normalizes the whole vector, as a single column, so the
+     * result sums to one.
+     *
+     * @test
+     */
+    public function softmax() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0, 3.0]);
+
+        $b = $a->softmax();
+
+        $expected = Vector::fromArray([0.09003057317038046, 0.24472847105479764, 0.6652409557748218]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta(1.0, $b->sum(), self::MAX_DELTA);
+    }
+
+    /**
+     * The defining property, over sizes that straddle the kernel's block
+     * boundary.
+     *
+     * @test
+     * @dataProvider lengthProvider
+     * @param int $length
+     */
+    public function softmaxSumsToOne(int $length) : void
+    {
+        $a = Vector::rand($length)->multiply(20.0);
+
+        $this->assertEqualsWithDelta(1.0, $a->softmax()->sum(), self::MAX_DELTA);
+    }
+
+    /**
+     * Subtracting a constant leaves the exponentials scaled by the same factor,
+     * which cancels in the division, so the result is unchanged. This is the
+     * property the maximum subtraction inside the kernel relies on.
+     *
+     * @test
+     */
+    public function softmaxIsShiftInvariant() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0, 3.0, -4.0]);
+
+        $this->assertEqualsWithDelta(
+            $a->softmax()->asArray(),
+            $a->add(13.0)->softmax()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * Large magnitudes must not overflow the exponential.
+     *
+     * @test
+     */
+    public function softmaxDoesNotOverflow() : void
+    {
+        $a = Vector::fromArray([1000.0, 1001.0, 1002.0]);
+
+        $expected = Vector::fromArray([0.09003057317038046, 0.24472847105479764, 0.6652409557748218]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $a->softmax()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * The fused kernel must reproduce the transpose, maximum, subtract,
+     * exponential, sum, clip, divide, transpose sequence it replaces.
+     *
+     * @test
+     */
+    public function softmaxMatchesComposition() : void
+    {
+        $a = Vector::fromArray([22.0, -17.0, 12.0, 4.0, 11.0, -2.0]);
+
+        $e = $a->subtract($a->max())->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->divide($e->sum())->asArray(),
+            $a->softmax()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel writes to a fresh buffer, so the operand must come back
+     * untouched.
+     *
+     * @test
+     */
+    public function softmaxDoesNotMutate() : void
+    {
+        $a = Vector::fromArray([1.0, 2.0, 3.0]);
+
+        $before = $a->asArray();
+        $a->softmax();
+
+        $this->assertSame($before, $a->asArray());
+    }
+
+    /**
+     * Lengths on both sides of the kernel's block boundary: a single element, a
+     * block narrower than the floor, and one wider than the cap.
+     *
+     * @return Generator<mixed[]>
+     */
+    public function lengthProvider() : Generator
+    {
+        yield [1];
+        yield [2];
+        yield [31];
+        yield [32];
+        yield [33];
+        yield [127];
+        yield [128];
+        yield [129];
+        yield [1000];
+        yield [4096];
     }
 
     /**

@@ -4,11 +4,11 @@ A one dimensional (rank 1) tensor expanded along the vertical axis, paired with 
 
 - **Namespace:** `Tensor\ColumnVector`
 - **Extends:** [`Tensor\Vector`](Vector.md)
-- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Statistical`, `Reductions`
+- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Reductions`, `Special`
 
 ## Overview
 
-`ColumnVector` is a `Vector` oriented vertically. It inherits the entire `Vector` API — see [Vector](Vector.md) — including all factories, scalar/vector element-wise operators, unary, trigonometric, and statistical methods.
+`ColumnVector` is a `Vector` oriented vertically. It inherits the entire `Vector` API — see [Vector](Vector.md) — including all factories, scalar/vector element-wise operators, unary, trigonometric, and reduction methods.
 
 This page documents only the methods **defined on `ColumnVector`** and how they differ from `Vector`:
 
@@ -65,4 +65,4 @@ Each operation requires `$b->m() === $this->m` and throws `Tensor\Exceptions\Dim
 
 ## Inherited API
 
-Everything else — factories, structure accessors, higher-order functions, linear algebra (`dot`, `inner`, `outer`, norms), universal arithmetic/comparison functions, vector and scalar element-wise operators, unary, trigonometric, statistical, and reduction methods, plus array access — is inherited from [`Tensor\Vector`](Vector.md).
+Everything else — factories, structure accessors, higher-order functions, linear algebra (`dot`, `inner`, `outer`, norms), universal arithmetic/comparison functions, vector and scalar element-wise operators, unary, trigonometric, reduction, and special methods, plus array access — is inherited from [`Tensor\Vector`](Vector.md).

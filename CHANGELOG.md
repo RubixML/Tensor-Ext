@@ -17,6 +17,9 @@
     - Add `Eigen::eigenvaluesImaginary()` exposes imaginary part of each eigenvalue
     - `Matrix::eig()` no longer discards imaginary part of complex eigenvalue pairs
     - Convolutions now use tiled kernels with FMA and vectorization
+    - Added `sigmoid()` to `Unary` interface and `tanh()` to `Trigonometric`
+    - Added `softmax()` as a fused kernel in the new `Special` interface
+    - Moved `Statistical` interface into `Reductions` interface
     
 - 3.1.2
     - Fix extension name

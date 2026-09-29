@@ -10,7 +10,7 @@ use Tensor\ArrayLike;
 use Tensor\Unary;
 use Tensor\Arithmetic;
 use Tensor\Comparable;
-use Tensor\Statistical;
+use Tensor\Special;
 use Tensor\ColumnVector;
 use Tensor\Trigonometric;
 use Tensor\Reductions\REF;
@@ -60,7 +60,7 @@ class MatrixTest extends TestCase
         $this->assertInstanceOf(Comparable::class, $matrix);
         $this->assertInstanceOf(Unary::class, $matrix);
         $this->assertInstanceOf(Trigonometric::class, $matrix);
-        $this->assertInstanceOf(Statistical::class, $matrix);
+        $this->assertInstanceOf(Special::class, $matrix);
         $this->assertInstanceOf(Reductions::class, $matrix);
     }
 
@@ -3460,6 +3460,132 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function sigmoid() : void
+    {
+        $a = Matrix::fromArray([
+            [13.0, 1.0, -13.0, 0.5],
+            [11.0, -1.0, -11.0, -0.5],
+            [9.0, 0.0, -9.0, 2.5],
+        ]);
+
+        $b = $a->sigmoid();
+
+        $expected = Matrix::fromArray([
+            [0.99999773967570205, 0.7310585786300049, 2.2603242979035746e-6, 0.62245933120185459],
+            [0.99998329857815205, 0.2689414213699951, 1.6701421848095181e-5, 0.37754066879814541],
+            [0.99987660542401369, 0.5, 0.00012339457598623172, 0.92414181997875655],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large negative input must not overflow the exponential that sigmoid
+     * evaluates, and a large positive one must saturate to exactly 1.0.
+     *
+     * @test
+     */
+    public function sigmoidSaturates() : void
+    {
+        $a = Matrix::fromArray([
+            [-800.0, 800.0, -1000.0],
+            [-745.0, 745.0, 0.0],
+        ]);
+
+        $b = $a->sigmoid()->asArray();
+
+        $this->assertSame(0.0, $b[0][0]);
+        $this->assertSame(1.0, $b[0][1]);
+        $this->assertSame(0.0, $b[0][2]);
+        $this->assertSame(0.0, $b[1][0]);
+        $this->assertSame(1.0, $b[1][1]);
+        $this->assertSame(0.5, $b[1][2]);
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function sigmoidMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(8.0)->subtract(4.0);
+
+        $e = $a->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->divide($e->add(1.0))->asArray(),
+            $a->sigmoid()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function tanh() : void
+    {
+        $a = Matrix::fromArray([
+            [13.0, 1.0, -13.0, 0.5],
+            [11.0, -1.0, -11.0, -0.5],
+            [9.0, 0.0, -9.0, 2.5],
+        ]);
+
+        $b = $a->tanh();
+
+        $expected = Matrix::fromArray([
+            [0.99999999998978184, 0.76159415595576485, -0.99999999998978184, 0.46211715726000974],
+            [0.99999999944210638, -0.76159415595576485, -0.99999999944210638, -0.46211715726000974],
+            [0.999999969540041, 0.0, -0.999999969540041, 0.98661429815143031],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large input must saturate to exactly +/-1.0 rather than returning an
+     * infinity.
+     *
+     * @test
+     */
+    public function tanhSaturates() : void
+    {
+        $a = Matrix::fromArray([
+            [100.0, -100.0, 0.0],
+            [-800.0, 800.0, 0.5],
+        ]);
+
+        $b = $a->tanh()->asArray();
+
+        $this->assertSame(1.0, $b[0][0]);
+        $this->assertSame(-1.0, $b[0][1]);
+        $this->assertSame(0.0, $b[0][2]);
+        $this->assertSame(-1.0, $b[1][0]);
+        $this->assertSame(1.0, $b[1][1]);
+        $this->assertSame(0.46211715726000974, $b[1][2]);
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function tanhMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(4.0)->subtract(2.0);
+
+        $this->assertEqualsWithDelta(
+            $a->exp()->subtract($a->multiply(-1.0)->exp())
+                ->divide($a->exp()->add($a->multiply(-1.0)->exp()))
+                ->asArray(),
+            $a->tanh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
     public function sin() : void
     {
         $a = Matrix::fromArray([
@@ -3826,6 +3952,173 @@ class MatrixTest extends TestCase
             [1.0, 2.0, 3.0],
             [4.0, 5.0, 6.0],
         ]))->quantile(NAN);
+    }
+
+    /**
+     * Softmax normalizes down each column, so the three columns below normalize
+     * independently of one another.
+     *
+     * @test
+     */
+    public function softmax() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 5.0, -2.0],
+            [2.0, 1.0, 4.0],
+            [3.0, 0.0, 0.0],
+        ]);
+
+        $b = $a->softmax();
+
+        $expected = Matrix::fromArray([
+            [0.09003057317038046, 0.9755587549443865, 0.0024282580295913376],
+            [0.24472847105479764, 0.0178679818703045, 0.9796292071670796],
+            [0.6652409557748218, 0.006573263185309083, 0.017942534803329194],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * The defining property, over shapes that straddle the kernel's block
+     * boundary: every column of the result sums to one. Note that Matrix::sum()
+     * runs along a row, so the transposed result is what sums down a column.
+     *
+     * @test
+     * @dataProvider shapeProvider
+     * @param int $m
+     * @param int $n
+     */
+    public function softmaxColumnsSumToOne(int $m, int $n) : void
+    {
+        $a = Matrix::rand($m, $n)->multiply(20.0);
+
+        $totals = $a->softmax()->transpose()->sum()->asArray();
+
+        $this->assertCount($n, $totals);
+
+        foreach ($totals as $total) {
+            $this->assertEqualsWithDelta(1.0, $total, self::MAX_DELTA);
+        }
+    }
+
+    /**
+     * Subtracting a per-column constant leaves the exponentials scaled by the
+     * same factor, which cancels in the division, so the result is unchanged.
+     * This is the property the maximum subtraction inside the kernel relies on,
+     * and it is what makes it safe to subtract the maximum rather than nothing.
+     *
+     * @test
+     */
+    public function softmaxIsShiftInvariant() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 5.0, -2.0],
+            [2.0, 1.0, 4.0],
+            [3.0, 0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            $a->softmax()->asArray(),
+            $a->add(Vector::fromArray([7.0, -13.0, 100.0]))->softmax()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * A column of large magnitudes must not overflow the exponential. Taking the
+     * maximum of each column is what keeps the exponentials in range: without it
+     * the first column would be an infinity throughout, and the second would
+     * underflow to nothing but zeroes.
+     *
+     * @test
+     */
+    public function softmaxDoesNotOverflow() : void
+    {
+        $a = Matrix::fromArray([
+            [1000.0, -1000.0, 710.0],
+            [1001.0, 0.0, 0.0],
+            [1002.0, 1000.0, -710.0],
+        ]);
+
+        $b = $a->softmax()->asArray();
+
+        $this->assertEqualsWithDelta([0.09003057317038046, 0.24472847105479764, 0.6652409557748218], array_column($b, 0), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([0.0, 0.0, 1.0], array_column($b, 1), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([1.0, 0.0, 0.0], array_column($b, 2), self::MAX_DELTA);
+    }
+
+    /**
+     * The fused kernel must reproduce the transpose, maximum, subtract,
+     * exponential, sum, clip, divide, transpose sequence it replaces.
+     *
+     * @test
+     */
+    public function softmaxMatchesComposition() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $t = $a->transpose();
+        $expected = $t->subtractColumnVector($t->max())->exp();
+        $expected = $expected->divide($expected->sum()->clipLower(1e-8))->transpose();
+
+        $this->assertEqualsWithDelta($expected->asArray(), $a->softmax()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * The kernel writes to a fresh buffer, so the operand must come back
+     * untouched.
+     *
+     * @test
+     */
+    public function softmaxDoesNotMutate() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 5.0, -2.0],
+            [2.0, 1.0, 4.0],
+            [3.0, 0.0, 0.0],
+        ]);
+
+        $before = $a->asArray();
+        $a->softmax();
+
+        $this->assertSame($before, $a->asArray());
+    }
+
+    /**
+     * A single row leaves one column with a single entry, which normalizes to 1.
+     *
+     * @test
+     */
+    public function softmaxSingleRow() : void
+    {
+        $a = Matrix::fromArray([[1.0, 2.0, 3.0]]);
+
+        $this->assertEqualsWithDelta([[1.0, 1.0, 1.0]], $a->softmax()->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * Shapes on both sides of the kernel's block boundary: a single column, a
+     * block narrower than the floor, a block wider than the cap, and a tall
+     * matrix where the derived block width would collapse to a single column.
+     *
+     * @return Generator<mixed[]>
+     */
+    public function shapeProvider() : Generator
+    {
+        yield [1, 1];
+        yield [1, 200];
+        yield [200, 1];
+        yield [3, 17];
+        yield [17, 3];
+        yield [4, 4096];
+        yield [4096, 4];
+        yield [512, 512];
+        yield [129, 257];
     }
 
     /**

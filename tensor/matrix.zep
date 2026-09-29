@@ -1399,6 +1399,16 @@ class Matrix implements Tensor
     {
         return new self(tensor_log1p(this->a), this->m, this->n);
     }
+
+    /**
+     * Return the element-wise logistic function i.e. 1 / (1 + exp(-x)).
+     *
+     * @return self
+     */
+    public function sigmoid() -> <Matrix>
+    {
+        return new self(tensor_sigmoid(this->a), this->m, this->n);
+    }
  
     /**
      * Return the sine of the matrix.
@@ -1458,6 +1468,16 @@ class Matrix implements Tensor
     public function atan() -> <Matrix>
     {
         return new self(tensor_atan(this->a), this->m, this->n);
+    }
+
+    /**
+     * Return the element-wise hyperbolic tangent of the matrix.
+     *
+     * @return self
+     */
+    public function tanh() -> <Matrix>
+    {
+        return new self(tensor_tanh(this->a), this->m, this->n);
     }
  
     /**
@@ -1580,6 +1600,16 @@ class Matrix implements Tensor
         }
 
         return ColumnVector::fromBuffer(tensor_quantile(this->a, this->n, q));
+    }
+
+    /**
+     * Return the softmax of the matrix i.e. each column normalized to sum to 1.
+     *
+     * @return self
+     */
+    public function softmax() -> <Matrix>
+    {
+        return new self(tensor_softmax(this->a, this->n), this->m, this->n);
     }
 
     /**

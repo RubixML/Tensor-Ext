@@ -10,7 +10,7 @@ Interface implemented by all tensor objects.
 
 ```php
 interface Tensor extends ArrayLike, Arithmetic, Comparable,
-    Unary, Trigonometric, Statistical, Reductions
+    Unary, Trigonometric, Reductions, Special
 ```
 
 ## Inherited Method Groups
@@ -20,10 +20,16 @@ interface Tensor extends ArrayLike, Arithmetic, Comparable,
 | [ArrayLike](arraylike.md) | `shape`, `shapeString`, `size`, `map`, `reduce`, `asArray` |
 | [Arithmetic](arithmetic.md) | `multiply`, `divide`, `add`, `subtract`, `pow`, `mod` |
 | [Comparable](comparable.md) | `equal`, `notEqual`, `greater`, `greaterEqual`, `less`, `lessEqual` |
-| [Unary](unary.md) | `abs`, `square`, `sqrt`, `reciprocal`, `exp`, `expm1`, `log`, `log1p`, `round`, `floor`, `ceil`, `sign`, `negate`, `clip`, `clipLower`, `clipUpper` |
-| [Trigonometric](trigonometric.md) | `sin`, `asin`, `cos`, `acos`, `tan`, `atan`, `rad2deg`, `deg2rad` |
-| [Statistical](statistical.md) | `mean`, `variance`, `median`, `quantile` |
-| [Reductions](reductions.md) | `sum`, `product`, `min`, `max`, `argmin`, `argmax` |
+| [Unary](unary.md) | `abs`, `square`, `sqrt`, `exp`, `expm1`, `log`, `log1p`, `sigmoid`, `round`, `floor`, `ceil`, `sign`, `negate`, `clip`, `clipLower`, `clipUpper` |
+| [Trigonometric](trigonometric.md) | `sin`, `asin`, `cos`, `acos`, `tan`, `atan`, `tanh`, `rad2deg`, `deg2rad` |
+| [Reductions](reductions.md) | `sum`, `product`, `min`, `max`, `argmin`, `argmax`, `mean`, `variance`, `median`, `quantile` |
+| [Special](special.md) | `softmax` |
+
+Every group is homogeneous in what it does to the tensor's shape: `Arithmetic`,
+`Comparable`, `Unary`, and `Trigonometric` are element-wise and preserve it,
+`Reductions` collapse it, and `ArrayLike` is about access rather than arithmetic.
+`Special` is the escape hatch for operations that preserve the shape without being
+element-wise.
 
 Additionally, because `ArrayLike` extends `ArrayAccess`, `IteratorAggregate`, and `Countable`, every tensor is array-accessible, iterable, and countable.
 

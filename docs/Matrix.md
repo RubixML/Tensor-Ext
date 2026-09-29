@@ -3,7 +3,7 @@
 A two dimensional (rank 2) tensor with integer and/or floating point elements.
 
 - **Namespace:** `Tensor\Matrix`
-- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Statistical`, `Reductions`
+- **Implements:** `Tensor` — i.e. `ArrayLike`, `Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Reductions`, `Special`
 - **Also implements:** `ArrayAccess`, `IteratorAggregate`, `Countable`
 
 ## Overview
@@ -423,6 +423,7 @@ See [Unary](interfaces/unary.md). Each method returns a new `Matrix`.
 - `expm1() : self` — exponential of each element minus 1
 - `log(float $base = M_E) : self` — logarithm of the matrix in the specified base
 - `log1p() : self` — log of 1 plus each element
+- `sigmoid() : self` — element-wise logistic function, `1 / (1 + exp(-x))`
 - `round(int $precision = 0) : self` — round the elements to a given decimal place (throws `InvalidArgumentException` if `$precision < 0`)
 - `floor() : self` — round down to the nearest integer
 - `ceil() : self` — round up to the nearest integer
@@ -442,12 +443,13 @@ See [Trigonometric](interfaces/trigonometric.md). Each method returns a new `Mat
 - `acos()` — arc cosine of the matrix
 - `tan()` — tangent of the matrix
 - `atan()` — arc tangent of the matrix
+- `tanh() : self` — element-wise hyperbolic tangent
 - `rad2deg()` — convert angles from radians to degrees
 - `deg2rad()` — convert angles from degrees to radians
 
-## Statistical & Reductions
+## Reductions
 
-See [Statistical](interfaces/statistical.md) and [Reductions](interfaces/reductions.md). For a `Matrix`, row-wise reductions return a `ColumnVector`.
+See [Reductions](interfaces/reductions.md). For a `Matrix`, row-wise reductions return a `ColumnVector`.
 
 - `sum() : ColumnVector` — sum the rows of the matrix
 - `product() : ColumnVector` — calculate the row product of the matrix
@@ -460,6 +462,12 @@ See [Statistical](interfaces/statistical.md) and [Reductions](interfaces/reducti
 - `quantile(float $q) : ColumnVector` — q'th quantile of each row (throws `InvalidArgumentException` if `$q` is outside `[0, 1]`)
 - `variance($mean = null) : ColumnVector` — row variance of the matrix; `$mean` optionally provides a pre-computed mean `ColumnVector` (throws `DimensionalityMismatch` if `$mean->m() !== $this->m`)
 - `covariance() : self` — compute the covariance matrix
+
+## Special
+
+See [Special](interfaces/special.md). These preserve the shape of the matrix without being element-wise.
+
+- `softmax() : self` — exponentials normalized so each **column** sums to `1.0`; transpose on either side to normalize each row
 
 ## Array Access
 

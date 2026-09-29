@@ -49,6 +49,13 @@ Return the logarithm of the tensor in a specified base.
 
 Return the log of 1 plus the tensor, i.e. a transform.
 
+### `sigmoid() : mixed`
+
+Return the element-wise logistic function, `1 / (1 + exp(-x))`.
+
+A large negative input saturates to exactly `0.0` and a large positive one to
+exactly `1.0`, so the result never overflows to an infinity.
+
 ### `round(int $precision = 0) : self`
 
 Round the elements in the tensor to a given decimal place.

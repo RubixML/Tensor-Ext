@@ -55,3 +55,29 @@ ZEPHIR_DOC_METHOD(Tensor_Reductions, argmin);
  * @return mixed
  */
 ZEPHIR_DOC_METHOD(Tensor_Reductions, argmax);
+/**
+ * Return the mean of the tensor.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Reductions, mean);
+/**
+ * Compute the variance of the tensor.
+ *
+ * @param mixed mean
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Reductions, variance);
+/**
+ * Return the median of the tensor.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Reductions, median);
+/**
+ * Return the q'th quantile of the tensor.
+ *
+ * @param float q
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Reductions, quantile);

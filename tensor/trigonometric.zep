@@ -49,6 +49,13 @@ interface Trigonometric
     public function atan();
 
     /**
+     * Return the element-wise hyperbolic tangent.
+     *
+     * @return mixed
+     */
+    public function tanh();
+
+    /**
      * Convert angles from radians to degrees.
      *
      * @return mixed

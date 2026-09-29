@@ -129,12 +129,14 @@ TENSOR_UNARY(exp, exp(va[i]))
 TENSOR_UNARY(expm1, expm1(va[i]))
 TENSOR_UNARY(log, log(va[i]))
 TENSOR_UNARY(log1p, log1p(va[i]))
+TENSOR_UNARY(sigmoid, 1.0 / (1.0 + exp(-va[i])))
 TENSOR_UNARY(sin, sin(va[i]))
 TENSOR_UNARY(asin, asin(va[i]))
 TENSOR_UNARY(cos, cos(va[i]))
 TENSOR_UNARY(acos, acos(va[i]))
 TENSOR_UNARY(tan, tan(va[i]))
 TENSOR_UNARY(atan, atan(va[i]))
+TENSOR_UNARY(tanh, tanh(va[i]))
 
 #undef TENSOR_UNARY
 

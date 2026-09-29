@@ -9,7 +9,7 @@
 #include "tensor/comparable.zep.h"
 #include "tensor/exceptions/tensorexception.zep.h"
 #include "tensor/reductions.zep.h"
-#include "tensor/statistical.zep.h"
+#include "tensor/special.zep.h"
 #include "tensor/trigonometric.zep.h"
 #include "tensor/unary.zep.h"
 #include "tensor/tensor.zep.h"

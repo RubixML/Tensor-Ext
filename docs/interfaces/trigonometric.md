@@ -45,3 +45,10 @@ Convert angles from radians to degrees.
 ### `deg2rad() : mixed`
 
 Convert angles from degrees to radians.
+
+### `tanh() : mixed`
+
+Return the element-wise hyperbolic tangent.
+
+A large input saturates to exactly `1.0` or `-1.0` rather than returning an
+infinity.
