@@ -27,7 +27,7 @@
 #include "include/signal_processing.h"
 #include "include/unary.h"
 #include "include/reductions.h"
-#include "include/softmax.h"
+#include "include/special.h"
 #include "include/arithmetic.h"
 #include "include/comparison.h"
 

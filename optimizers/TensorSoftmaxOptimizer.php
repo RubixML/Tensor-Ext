@@ -51,7 +51,7 @@ class TensorSoftmaxOptimizer extends OptimizerAbstract
         }
 
         $context->headersManager->add(
-            'include/softmax',
+            'include/special',
             HeadersManager::POSITION_LAST
         );
 

@@ -39,7 +39,7 @@ if test "$PHP_TENSOR" = "yes"; then
 	include/factories.c
 	include/reductions.c
 	include/shape.c
-	include/softmax.c
+	include/special.c
 	include/unary.c
 	include/linear_algebra.c
 	include/signal_processing.c
