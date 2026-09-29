@@ -2,7 +2,7 @@
 
 Benchmark comparison of the Tensor extension between release **3.1.1** and **4.0.0-rc3**. Each row lists the three measured dataset sizes — **small / medium / large** — followed by the observed speedup, computed as _3.1.1 ÷ 4.0.0_. A value below 1.0x indicates a regression.
 
-Some operations were benchmarked on fewer than three sizes. Where an operation was only measured at one or two sizes, only those values are shown.
+Some operations were benchmarked on fewer than three sizes. Where an operation was only measured at one or two sizes, only those values are shown. Note that each benchmark measures only a single operation - the benefit of the contiguous C buffer is realized increasingly over chains of multiple operations. That speedup is not measured in these particular benchmarks.
 
 ## Results
 
@@ -30,6 +30,12 @@ Some operations were benchmarked on fewer than three sizes. Where an operation w
 | Matrix Exp | 28.66 / 440.60 / 1765.33 ms | 13.2 / 116.51 / 536.88 ms | 2.2x / 3.8x / 3.3x |
 
 All values are wall-clock milliseconds (or seconds where noted) of the single measured run.
+
+## Visual Summary
+
+![Tensor 4.0.0 vs 3.1.1 — speedup by operation](images/tensor-performance-3.1.1-vs-4.0.0.png)
+
+The chart omits two table entries to keep the linear axis legible: `Matrix Flatten` (3,926x–248,250x, far beyond the axis) and `Matrix Fill` (a regression, discussed below).
 
 ## Gains by cause
 
