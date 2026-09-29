@@ -60,7 +60,7 @@
 	zval_ptr_dtor(&b);
 
 #define TENSOR_UNARY_DISPATCH(name, expr)                                       \
-	static void tensor_##name##_baseline(zval * return_value, zval * a)     \
+	static void tensor_##name##_sse(zval * return_value, zval * a)     \
 	{                                                                       \
 		TENSOR_UNARY_BODY(expr)                                         \
 	}                                                                       \
@@ -77,7 +77,7 @@
 		TENSOR_UNARY_BODY(expr)                                         \
 	}                                                                       \
                                                                                  \
-	static tensor_unary_fn tensor_##name##_route = tensor_##name##_baseline;\
+	static tensor_unary_fn tensor_##name##_route = tensor_##name##_sse;\
                                                                                 \
 	void tensor_##name(zval * return_value, zval * a)                       \
 	{                                                                       \
@@ -376,7 +376,7 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 	zval_ptr_dtor(&c);
 
 #define TENSOR_CLIP_DISPATCH(name, TENSOR_CLIP_EXPR)                                 \
-	static void tensor_##name##_baseline(                                        \
+	static void tensor_##name##_sse(                                        \
 		zval * return_value, zval * a, zval * lo_zval, zval * hi_zval)       \
 	{                                                                            \
 		const double lo = zephir_get_doubleval(lo_zval);                     \
@@ -402,7 +402,7 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                   \
 	}                                                                            \
                                                                                       \
-	static tensor_unary_clip_fn tensor_##name##_route = tensor_##name##_baseline;\
+	static tensor_unary_clip_fn tensor_##name##_route = tensor_##name##_sse;\
                                                                                      \
 	void tensor_##name(                                                          \
 		zval * return_value, zval * a, zval * lo_zval, zval * hi_zval)       \
@@ -415,7 +415,7 @@ TENSOR_CLIP_DISPATCH(clip, va[i] > hi ? hi : (va[i] < lo ? lo : va[i]))
 #undef TENSOR_CLIP_DISPATCH
 
 #define TENSOR_CLIP_BOUND_DISPATCH(name, TENSOR_CLIP_EXPR)                            \
-	static void tensor_##name##_baseline(zval * return_value, zval * a, zval * b) \
+	static void tensor_##name##_sse(zval * return_value, zval * a, zval * b) \
 	{                                                                             \
 		const double bound = zephir_get_doubleval(b);                         \
 		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                    \
@@ -435,7 +435,7 @@ TENSOR_CLIP_DISPATCH(clip, va[i] > hi ? hi : (va[i] < lo ? lo : va[i]))
 		TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                    \
 	}                                                                             \
                                                                                        \
-	static tensor_unary_bound_fn tensor_##name##_route = tensor_##name##_baseline;\
+	static tensor_unary_bound_fn tensor_##name##_route = tensor_##name##_sse;\
                                                                                       \
 	void tensor_##name(zval * return_value, zval * a, zval * b)                   \
 	{                                                                             \
@@ -449,13 +449,25 @@ TENSOR_CLIP_BOUND_DISPATCH(clip_upper, va[i] > bound ? bound : va[i])
 #undef TENSOR_CLIP_BODY
 
 /**
+ * Point every dispatched kernel in this file back at its baseline variant.
+ */
+void tensor_unary_dispatch_sse_init(void)
+{
+	tensor_abs_route = tensor_abs_sse;
+	tensor_sqrt_route = tensor_sqrt_sse;
+	tensor_floor_route = tensor_floor_sse;
+	tensor_ceil_route = tensor_ceil_sse;
+	tensor_negate_route = tensor_negate_sse;
+	tensor_sign_route = tensor_sign_sse;
+	tensor_rad2deg_route = tensor_rad2deg_sse;
+	tensor_deg2rad_route = tensor_deg2rad_sse;
+	tensor_clip_route = tensor_clip_sse;
+	tensor_clip_lower_route = tensor_clip_lower_sse;
+	tensor_clip_upper_route = tensor_clip_upper_sse;
+}
+
+/**
  * Point every dispatched kernel in this file at its AVX variant.
- *
- * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
- * CPU actually supporting AVX -- and runs it only when AVX-512 is not in use,
- * since the two initializers are mutually exclusive. The routes are all already
- * pointing at the baseline variants before this runs, so the effect is strictly
- * an upgrade.
  */
 void tensor_unary_dispatch_avx_init(void)
 {
@@ -474,12 +486,6 @@ void tensor_unary_dispatch_avx_init(void)
 
 /**
  * Point every dispatched kernel in this file at its AVX-512 variant.
- *
- * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
- * CPU actually supporting AVX-512. The effect is strictly an upgrade to the
- * widest route. The libm paths stay excluded here for the reason given in
- * include/dispatch.h: widening the register does not help a scalar library
- * call.
  */
 void tensor_unary_dispatch_avx512_init(void)
 {

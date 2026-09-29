@@ -217,12 +217,12 @@ typedef void (*tensor_conv_1d_dot_fn)(double * out, const double * restrict va, 
 typedef void (*tensor_conv_2d_tile_fn)(double * out, const double * restrict img, const double * restrict vbr, zend_long ncol, zend_long jbase, zend_long mb, zend_long nb);
 typedef void (*tensor_conv_2d_dot_fn)(double * out, const double * restrict va, const double * restrict vbr, zend_long ncol, zend_long xbase, zend_long jcol, zend_long nb, zend_long klo, zend_long khi, zend_long mlo, zend_long mhi);
 
-static void tensor_conv_1d_tile_baseline(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb)
+static void tensor_conv_1d_tile_sse(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb)
 {
 	TENSOR_CONV_1D_TILE_BODY
 }
 
-static void tensor_conv_1d_dot_baseline(double * out, const double * restrict va, const double * restrict vbr, zend_long jmin, zend_long jmax, zend_long base)
+static void tensor_conv_1d_dot_sse(double * out, const double * restrict va, const double * restrict vbr, zend_long jmin, zend_long jmax, zend_long base)
 {
 	TENSOR_CONV_1D_DOT_BODY
 }
@@ -239,15 +239,15 @@ static void tensor_conv_1d_dot_avx(double * out, const double * restrict va, con
 	TENSOR_CONV_1D_DOT_BODY
 }
 
-static tensor_conv_1d_tile_fn tensor_conv_1d_tile_route = tensor_conv_1d_tile_baseline;
-static tensor_conv_1d_dot_fn tensor_conv_1d_dot_route = tensor_conv_1d_dot_baseline;
+static tensor_conv_1d_tile_fn tensor_conv_1d_tile_route = tensor_conv_1d_tile_sse;
+static tensor_conv_1d_dot_fn tensor_conv_1d_dot_route = tensor_conv_1d_dot_sse;
 
-static void tensor_conv_2d_tile_baseline(double * out, const double * restrict img, const double * restrict vbr, zend_long ncol, zend_long jbase, zend_long mb, zend_long nb)
+static void tensor_conv_2d_tile_sse(double * out, const double * restrict img, const double * restrict vbr, zend_long ncol, zend_long jbase, zend_long mb, zend_long nb)
 {
 	TENSOR_CONV_2D_TILE_BODY
 }
 
-static void tensor_conv_2d_dot_baseline(double * out, const double * restrict va, const double * restrict vbr, zend_long ncol, zend_long xbase, zend_long jcol, zend_long nb, zend_long klo, zend_long khi, zend_long mlo, zend_long mhi)
+static void tensor_conv_2d_dot_sse(double * out, const double * restrict va, const double * restrict vbr, zend_long ncol, zend_long xbase, zend_long jcol, zend_long nb, zend_long klo, zend_long khi, zend_long mlo, zend_long mhi)
 {
 	TENSOR_CONV_2D_DOT_BODY
 }
@@ -264,8 +264,8 @@ static void tensor_conv_2d_dot_avx(double * out, const double * restrict va, con
 	TENSOR_CONV_2D_DOT_BODY
 }
 
-static tensor_conv_2d_tile_fn tensor_conv_2d_tile_route = tensor_conv_2d_tile_baseline;
-static tensor_conv_2d_dot_fn tensor_conv_2d_dot_route = tensor_conv_2d_dot_baseline;
+static tensor_conv_2d_tile_fn tensor_conv_2d_tile_route = tensor_conv_2d_tile_sse;
+static tensor_conv_2d_dot_fn tensor_conv_2d_dot_route = tensor_conv_2d_dot_sse;
 
 /* The two FMA routes. A redefined accumulate step is the only difference between
  * these and the four above; see the note on TENSOR_CONV_ACC. */
@@ -630,6 +630,21 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 	zval_ptr_dtor(&c);
 }
 
+/**
+ * Point every dispatched convolution kernel in this file back at its
+ * baseline variant.
+ */
+void tensor_signal_processing_dispatch_sse_init(void)
+{
+	tensor_conv_1d_tile_route = tensor_conv_1d_tile_sse;
+	tensor_conv_1d_dot_route = tensor_conv_1d_dot_sse;
+	tensor_conv_2d_tile_route = tensor_conv_2d_tile_sse;
+	tensor_conv_2d_dot_route = tensor_conv_2d_dot_sse;
+}
+
+/**
+ * Point every dispatched convolution kernel in this file at its AVX variant.
+ */
 void tensor_signal_processing_dispatch_avx_init(void)
 {
 	tensor_conv_1d_tile_route = tensor_conv_1d_tile_avx;
@@ -638,6 +653,9 @@ void tensor_signal_processing_dispatch_avx_init(void)
 	tensor_conv_2d_dot_route = tensor_conv_2d_dot_avx;
 }
 
+/**
+ * Point every dispatched convolution kernel in this file at its FMA variant.
+ */
 void tensor_signal_processing_dispatch_fma_init(void)
 {
 	tensor_conv_1d_tile_route = tensor_conv_1d_tile_fma;
@@ -646,6 +664,9 @@ void tensor_signal_processing_dispatch_fma_init(void)
 	tensor_conv_2d_dot_route = tensor_conv_2d_dot_fma;
 }
 
+/**
+ * Point every dispatched convolution kernel in this file at its AVX-512 variant.
+ */
 void tensor_signal_processing_dispatch_avx512_init(void)
 {
 	tensor_conv_1d_tile_route = tensor_conv_1d_tile_avx512;

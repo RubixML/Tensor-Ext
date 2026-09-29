@@ -56,7 +56,7 @@
 	zval_ptr_dtor(&c);
 
 #define TENSOR_BINARY_DISPATCH(name, op)                                          \
-	static void tensor_##name##_baseline(zval * return_value, zval * a, zval * b) \
+	static void tensor_##name##_sse(zval * return_value, zval * a, zval * b) \
 	{                                                                            \
 		TENSOR_BINARY_BODY(op)                                                   \
 	}                                                                            \
@@ -73,7 +73,7 @@
 		TENSOR_BINARY_BODY(op)                                                   \
 	}                                                                            \
 	                                                                             \
-	static tensor_binary_fn tensor_##name##_route = tensor_##name##_baseline;   \
+	static tensor_binary_fn tensor_##name##_route = tensor_##name##_sse;   \
 	                                                                             \
 	void tensor_##name(zval * return_value, zval * a, zval * b)                 \
 	{                                                                            \
@@ -120,7 +120,7 @@ TENSOR_BINARY_DISPATCH(less_equal, va[i] <= vb[i] ? 1.0 : 0.0)
 	zval_ptr_dtor(&c);
 
 #define TENSOR_SCALAR_DISPATCH(name, op)                                         \
-	static void tensor_##name##_baseline(zval * return_value, zval * a, zval * b) \
+	static void tensor_##name##_sse(zval * return_value, zval * a, zval * b) \
 	{                                                                            \
 		TENSOR_SCALAR_BODY(op)                                                   \
 	}                                                                            \
@@ -137,7 +137,7 @@ TENSOR_BINARY_DISPATCH(less_equal, va[i] <= vb[i] ? 1.0 : 0.0)
 		TENSOR_SCALAR_BODY(op)                                                   \
 	}                                                                            \
 	                                                                             \
-	static tensor_binary_fn tensor_##name##_route = tensor_##name##_baseline;   \
+	static tensor_binary_fn tensor_##name##_route = tensor_##name##_sse;   \
 	                                                                             \
 	void tensor_##name(zval * return_value, zval * a, zval * b)                 \
 	{                                                                            \
@@ -197,7 +197,7 @@ TENSOR_SCALAR_DISPATCH(less_equal_scalar, va[i] <= ab ? 1.0 : 0.0)
 	zval_ptr_dtor(&c);
 
 #define TENSOR_COL_DISPATCH(name, op)                                            \
-	static void tensor_##name##_baseline(                                         \
+	static void tensor_##name##_sse(                                         \
 		zval * return_value, zval * a, zval * b, zval * n_zval)                  \
 	{                                                                            \
 		TENSOR_COL_DISPATCH_BODY(op)                                             \
@@ -217,7 +217,7 @@ TENSOR_SCALAR_DISPATCH(less_equal_scalar, va[i] <= ab ? 1.0 : 0.0)
 		TENSOR_COL_DISPATCH_BODY(op)                                             \
 	}                                                                            \
 	                                                                             \
-	static tensor_dim_fn tensor_##name##_route = tensor_##name##_baseline;      \
+	static tensor_dim_fn tensor_##name##_route = tensor_##name##_sse;      \
 	                                                                             \
 	void tensor_##name(                                                         \
 		zval * return_value, zval * a, zval * b, zval * n_zval)                  \
@@ -284,7 +284,7 @@ TENSOR_COL_DISPATCH(less_equal_col_reverse, vb[i] <= va[i * nHat + j] ? 1.0 : 0.
 	zval_ptr_dtor(&c);
 
 #define TENSOR_ROW_DISPATCH(name, op)                                            \
-	static void tensor_##name##_baseline(                                         \
+	static void tensor_##name##_sse(                                         \
 		zval * return_value, zval * a, zval * b, zval * n_zval)                  \
 	{                                                                            \
 		TENSOR_ROW_DISPATCH_BODY(op)                                             \
@@ -304,7 +304,7 @@ TENSOR_COL_DISPATCH(less_equal_col_reverse, vb[i] <= va[i * nHat + j] ? 1.0 : 0.
 		TENSOR_ROW_DISPATCH_BODY(op)                                             \
 	}                                                                            \
 	                                                                             \
-	static tensor_dim_fn tensor_##name##_route = tensor_##name##_baseline;      \
+	static tensor_dim_fn tensor_##name##_route = tensor_##name##_sse;      \
 	                                                                             \
 	void tensor_##name(                                                         \
 		zval * return_value, zval * a, zval * b, zval * n_zval)                  \
@@ -324,11 +324,49 @@ TENSOR_ROW_DISPATCH(less_equal_row, va[i * nHat + j] <= vb[j] ? 1.0 : 0.0)
 TENSOR_ROW_DISPATCH(less_equal_row_reverse, vb[j] <= va[i * nHat + j] ? 1.0 : 0.0)
 
 /**
+ * Point every dispatched kernel in this file back at its SSE variant.
+ */
+void tensor_comparison_dispatch_sse_init(void)
+{
+	tensor_equal_route = tensor_equal_sse;
+	tensor_not_equal_route = tensor_not_equal_sse;
+	tensor_greater_route = tensor_greater_sse;
+	tensor_greater_equal_route = tensor_greater_equal_sse;
+	tensor_less_route = tensor_less_sse;
+	tensor_less_equal_route = tensor_less_equal_sse;
+
+	tensor_equal_scalar_route = tensor_equal_scalar_sse;
+	tensor_not_equal_scalar_route = tensor_not_equal_scalar_sse;
+	tensor_greater_scalar_route = tensor_greater_scalar_sse;
+	tensor_greater_equal_scalar_route = tensor_greater_equal_scalar_sse;
+	tensor_less_scalar_route = tensor_less_scalar_sse;
+	tensor_less_equal_scalar_route = tensor_less_equal_scalar_sse;
+
+	tensor_equal_col_route = tensor_equal_col_sse;
+	tensor_not_equal_col_route = tensor_not_equal_col_sse;
+	tensor_greater_col_route = tensor_greater_col_sse;
+	tensor_greater_col_reverse_route = tensor_greater_col_reverse_sse;
+	tensor_greater_equal_col_route = tensor_greater_equal_col_sse;
+	tensor_greater_equal_col_reverse_route = tensor_greater_equal_col_reverse_sse;
+	tensor_less_col_route = tensor_less_col_sse;
+	tensor_less_col_reverse_route = tensor_less_col_reverse_sse;
+	tensor_less_equal_col_route = tensor_less_equal_col_sse;
+	tensor_less_equal_col_reverse_route = tensor_less_equal_col_reverse_sse;
+
+	tensor_equal_row_route = tensor_equal_row_sse;
+	tensor_not_equal_row_route = tensor_not_equal_row_sse;
+	tensor_greater_row_route = tensor_greater_row_sse;
+	tensor_greater_row_reverse_route = tensor_greater_row_reverse_sse;
+	tensor_greater_equal_row_route = tensor_greater_equal_row_sse;
+	tensor_greater_equal_row_reverse_route = tensor_greater_equal_row_reverse_sse;
+	tensor_less_row_route = tensor_less_row_sse;
+	tensor_less_row_reverse_route = tensor_less_row_reverse_sse;
+	tensor_less_equal_row_route = tensor_less_equal_row_sse;
+	tensor_less_equal_row_reverse_route = tensor_less_equal_row_reverse_sse;
+}
+
+/**
  * Point every dispatched kernel in this file at its AVX variant.
- *
- * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
- * CPU actually supporting AVX. The routes are all already pointing at the
- * baseline variants before this runs, so the effect is strictly an upgrade.
  */
 void tensor_comparison_dispatch_avx_init(void)
 {
@@ -371,10 +409,6 @@ void tensor_comparison_dispatch_avx_init(void)
 
 /**
  * Point every dispatched kernel in this file at its AVX-512 variant.
- *
- * Called once from tensor_cpu_init() in include/cpu.c, which gates it on the
- * CPU actually supporting AVX-512 -- and on AVX, since only one of the two
- * initializers runs. The effect is strictly an upgrade to the widest route.
  */
 void tensor_comparison_dispatch_avx512_init(void)
 {

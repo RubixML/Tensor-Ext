@@ -109,3 +109,66 @@ PHP_METHOD(Tensor_Settings, cpuFeatures)
 	return;
 }
 
+/**
+ * Reset the dispatched C kernels to their scalar baseline variants.
+ *
+ * The elementwise arithmetic, comparison, unary, linear algebra, and
+ * convolution kernels each have a baseline (scalar) variant and a wide
+ * SIMD variant, selected once at load time by the CPU feature bits; this
+ * method walks every route back to its baseline variant for the rest of
+ * the process. The OpenBLAS/LAPACKE-backed routines and the per-elem libm
+ * transcendental ops are unaffected: they are scalar either way, and the
+ * thread pool is controlled by `setNumThreads`.
+ *
+ * This is one half of a pair: `enableOptimizedKernels` puts the widest
+ * route the CPU supports back in place. It is idempotent, and safe to call
+ * multiple times.
+ *
+ * Call this from a single worker before any tensor op runs so the route
+ * pointer resets do not race a concurrent kernel call.
+ *
+ * @return void
+ */
+PHP_METHOD(Tensor_Settings, disableOptimizedKernels)
+{
+	zval status;
+	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
+
+	ZVAL_UNDEF(&status);
+	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
+	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
+
+	ZEPHIR_INIT_VAR(&status);
+	tensor_disable_optimized_kernels(&status);
+	ZEPHIR_MM_RESTORE();
+}
+
+/**
+ * Route the dispatched C kernels back through their widest usable variants.
+ *
+ * The inverse of `disableOptimizedKernels`: the CPU feature bits were
+ * sampled once and cached when the extension loaded, so this replays the
+ * same selection the module initializer made, restoring the AVX, FMA, or
+ * AVX-512 route as appropriate. On a CPU with no usable wide instruction
+ * set the routes stay on their baseline variants, which is the correct
+ * outcome rather than a failed upgrade.
+ *
+ * Idempotent, and safe to call multiple times. Call this from a single
+ * worker before any tensor op runs, for the same reason as the disable.
+ *
+ * @return void
+ */
+PHP_METHOD(Tensor_Settings, enableOptimizedKernels)
+{
+	zval status;
+	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
+
+	ZVAL_UNDEF(&status);
+	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
+	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
+
+	ZEPHIR_INIT_VAR(&status);
+	tensor_enable_optimized_kernels(&status);
+	ZEPHIR_MM_RESTORE();
+}
+

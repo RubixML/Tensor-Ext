@@ -82,23 +82,24 @@ typedef void (*tensor_convolve_2d_fn)(zval * return_value, zval * a, zval * b, z
 #	define TENSOR_TARGET_AVX512_FMA
 #endif
 
-/* Installed once from the module initializer in config.json. The hooks are
- * idempotent and only ever upgrade a kernel from its baseline to its AVX, FMA or
- * AVX-512 variant, so an extension whose initializer never ran still computes
- * the right answers, just without the wider vectors. */
+void tensor_arithmetic_dispatch_sse_init(void);
 void tensor_arithmetic_dispatch_avx_init(void);
 void tensor_arithmetic_dispatch_avx512_init(void);
 
+void tensor_comparison_dispatch_sse_init(void);
 void tensor_comparison_dispatch_avx_init(void);
 void tensor_comparison_dispatch_avx512_init(void);
 
+void tensor_unary_dispatch_sse_init(void);
 void tensor_unary_dispatch_avx_init(void);
 void tensor_unary_dispatch_avx512_init(void);
 
+void tensor_linear_algebra_dispatch_sse_init(void);
 void tensor_linear_algebra_dispatch_avx_init(void);
 void tensor_linear_algebra_dispatch_fma_init(void);
 void tensor_linear_algebra_dispatch_avx512_init(void);
 
+void tensor_signal_processing_dispatch_sse_init(void);
 void tensor_signal_processing_dispatch_avx_init(void);
 void tensor_signal_processing_dispatch_fma_init(void);
 void tensor_signal_processing_dispatch_avx512_init(void);

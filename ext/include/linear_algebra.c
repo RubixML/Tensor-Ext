@@ -82,8 +82,8 @@ typedef void (*tensor_row_update_fn)(double * restrict dst, const double * restr
 typedef void (*tensor_row_scale_fn)(double * restrict row, double pivot, unsigned int len);
 typedef void (*tensor_outer_fill_fn)(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb);
 
-#define TENSOR_ROW_UPDATE_BASELINE(name)                                           \
-	static void name##_baseline(double * restrict dst, const double * restrict src, double alpha, unsigned int len) \
+#define TENSOR_ROW_UPDATE_sse(name)                                           \
+	static void name##_sse(double * restrict dst, const double * restrict src, double alpha, unsigned int len) \
 	{                                                                             \
 		TENSOR_ROW_UPDATE_BODY                                                    \
 	}
@@ -101,10 +101,10 @@ typedef void (*tensor_outer_fill_fn)(double * restrict vc, const double * restri
 		TENSOR_ROW_UPDATE_BODY                                                    \
 	}
 
-TENSOR_ROW_UPDATE_BASELINE(tensor_row_update)
+TENSOR_ROW_UPDATE_sse(tensor_row_update)
 TENSOR_ROW_UPDATE_ROUTE(tensor_row_update)
 
-static tensor_row_update_fn tensor_row_update_route = tensor_row_update_baseline;
+static tensor_row_update_fn tensor_row_update_route = tensor_row_update_sse;
 
 /* The FMA route is a separate function rather than a separate route pointer: a
  * route can only point at one variant, and cpu.c picks exactly one of the three
@@ -118,13 +118,13 @@ static void tensor_row_update_fma(double * restrict dst, const double * restrict
 	TENSOR_ROW_UPDATE_BODY
 }
 
-#define TENSOR_ROW_SCALE_BASELINE(name)                                            \
-	static void name##_baseline(double * restrict row, double pivot, unsigned int len) \
+#define TENSOR_ROW_SCALE_sse(name)                                            \
+	static void name##_sse(double * restrict row, double pivot, unsigned int len) \
 	{                                                                             \
 		TENSOR_ROW_SCALE_BODY                                                     \
 	}
 
-TENSOR_ROW_SCALE_BASELINE(tensor_row_scale)
+TENSOR_ROW_SCALE_sse(tensor_row_scale)
 
 TENSOR_TARGET_AVX
 static void tensor_row_scale_avx(double * restrict row, double pivot, unsigned int len)
@@ -138,15 +138,15 @@ static void tensor_row_scale_avx512(double * restrict row, double pivot, unsigne
 	TENSOR_ROW_SCALE_BODY
 }
 
-static tensor_row_scale_fn tensor_row_scale_route = tensor_row_scale_baseline;
+static tensor_row_scale_fn tensor_row_scale_route = tensor_row_scale_sse;
 
-#define TENSOR_OUTER_FILL_BASELINE(name)                                           \
-	static void name##_baseline(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb) \
+#define TENSOR_OUTER_FILL_sse(name)                                           \
+	static void name##_sse(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb) \
 	{                                                                             \
 		TENSOR_OUTER_FILL_BODY                                                    \
 	}
 
-TENSOR_OUTER_FILL_BASELINE(tensor_outer_fill)
+TENSOR_OUTER_FILL_sse(tensor_outer_fill)
 
 TENSOR_TARGET_AVX
 static void tensor_outer_fill_avx(double * restrict vc, const double * restrict va, const double * restrict vb, unsigned int na, unsigned int nb)
@@ -160,7 +160,7 @@ static void tensor_outer_fill_avx512(double * restrict vc, const double * restri
 	TENSOR_OUTER_FILL_BODY
 }
 
-static tensor_outer_fill_fn tensor_outer_fill_route = tensor_outer_fill_baseline;
+static tensor_outer_fill_fn tensor_outer_fill_route = tensor_outer_fill_sse;
 
 /**
  * Matrix-matrix multiplication i.e. linear transformation of matrices A and B.
@@ -1690,6 +1690,16 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
     efree(vb);
 
     zval_ptr_dtor(&c);
+}
+
+/**
+ * Point every dispatched row kernel in this file back at its SSE variant.
+ */
+void tensor_linear_algebra_dispatch_sse_init(void)
+{
+	tensor_row_update_route = tensor_row_update_sse;
+	tensor_row_scale_route = tensor_row_scale_sse;
+	tensor_outer_fill_route = tensor_outer_fill_sse;
 }
 
 /* Point every dispatched row kernel in this file at its AVX variant.
