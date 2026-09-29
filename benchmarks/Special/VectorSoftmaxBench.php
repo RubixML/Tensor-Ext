@@ -1,6 +1,6 @@
 <?php
 
-namespace Tensor\Benchmarks\Reductions;
+namespace Tensor\Benchmarks\Special;
 
 use Tensor\Vector;
 use Generator;
