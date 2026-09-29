@@ -41,12 +41,6 @@
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
-	if (UNEXPECTED(na != nb)) {                                                  \
-		zephir_throw_exception_string(spl_ce_LengthException,                    \
-			SL("Input buffers must be the same length."));                     \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) { \
@@ -194,7 +188,7 @@ void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      
 	                                                                             \
 	zend_long nHat = zephir_get_intval(n_zval);                                  \
 	                                                                             \
-	if (UNEXPECTED(nHat < 1 || total != m * nHat)) {                             \
+	if (UNEXPECTED(nHat < 1)) {                                                  \
 		zephir_throw_exception_string(spl_ce_LengthException,                    \
 			SL("Matrix and vector dimensions must agree."));                     \
 		return;                                                                  \
@@ -248,7 +242,7 @@ void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      
 	                                                                             \
 	nHat = zephir_get_intval(n_zval);                                            \
 	                                                                             \
-	if (UNEXPECTED(nHat < 1 || nb != nHat || total < nHat || total % nHat != 0)) { \
+	if (UNEXPECTED(nHat < 1 || total < nHat)) {                                  \
 		zephir_throw_exception_string(spl_ce_LengthException,                    \
 			SL("Matrix and vector dimensions must agree."));                     \
 		return;                                                                  \
@@ -296,7 +290,7 @@ TENSOR_ROW_APPLY(mod_row_reverse, fmod(vb[j], va[i * nHat + j]))
 	                                                                             \
 	zend_long nHat = zephir_get_intval(n_zval);                                  \
 	                                                                             \
-	if (UNEXPECTED(nHat < 1 || total != m * nHat)) {                             \
+	if (UNEXPECTED(nHat < 1)) {                                                  \
 		zephir_throw_exception_string(spl_ce_LengthException,                    \
 			SL("Matrix and vector dimensions must agree."));                     \
 		return;                                                                  \
@@ -372,7 +366,7 @@ TENSOR_COL_DISPATCH(subtract_col_reverse, vb[i] - va[i * nHat + j])
 	                                                                             \
 	nHat = zephir_get_intval(n_zval);                                            \
 	                                                                             \
-	if (UNEXPECTED(nHat < 1 || nb != nHat || total < nHat || total % nHat != 0)) { \
+	if (UNEXPECTED(nHat < 1 || total < nHat)) {                                  \
 		zephir_throw_exception_string(spl_ce_LengthException,                    \
 			SL("Matrix and vector dimensions must agree."));                     \
 		return;                                                                  \

@@ -39,17 +39,14 @@ PHPAPI zend_long php_mt_rand_range(zend_long min, zend_long max);
 #  define PHP_MT_RAND_MAX ((zend_long) 0x7FFFFFFF) /* (1<<31) - 1 */
 #endif
 
+/**
+ * Create a tensor filled with a specific value.
+ */
 void tensor_fill(zval * return_value, zval * value, zval * n)
 {
 	zend_long length = zephir_get_intval(n);
 	double v = zephir_get_doubleval(value);
 	zval c;
-
-	if (UNEXPECTED(length < 1)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("N must be greater than 0."));
-		return;
-	}
 
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, length, &c) == FAILURE)) {
 		return;
@@ -66,20 +63,12 @@ void tensor_fill(zval * return_value, zval * value, zval * n)
 	zval_ptr_dtor(&c);
 }
 
+/**
+ * Create a diagonal matrix from an array of elements.
+ */
 void tensor_diagonal(zval * return_value, zval * elements)
 {
-	if (UNEXPECTED(Z_TYPE_P(elements) != IS_ARRAY)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Diagonal elements must be an array."));
-		return;
-	}
-
 	zend_long length = (zend_long) zend_hash_num_elements(Z_ARRVAL_P(elements));
-
-	if (UNEXPECTED(length < 0)) {
-		ZVAL_NULL(return_value);
-		return;
-	}
 
 	zval c;
 
@@ -105,16 +94,13 @@ void tensor_diagonal(zval * return_value, zval * elements)
 	zval_ptr_dtor(&c);
 }
 
+/**
+ * Create a tensor filled with random values uniformly distributed in the range [0, 1).
+ */
 void tensor_random_uniform_01(zval * return_value, zval * n)
 {
 	zend_long length = zephir_get_intval(n);
 	zval c;
-
-	if (UNEXPECTED(length < 1)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("N must be greater than 0."));
-		return;
-	}
 
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, length, &c) == FAILURE)) {
 		return;
@@ -130,17 +116,13 @@ void tensor_random_uniform_01(zval * return_value, zval * n)
 
 	zval_ptr_dtor(&c);
 }
-
+/**
+ * Create a tensor filled with random values uniformly distributed in the range [-1, 1).
+ */
 void tensor_random_uniform_pm1(zval * return_value, zval * n)
 {
 	zend_long length = zephir_get_intval(n);
 	zval c;
-
-	if (UNEXPECTED(length < 1)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("N must be greater than 0."));
-		return;
-	}
 
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, length, &c) == FAILURE)) {
 		return;
@@ -156,17 +138,13 @@ void tensor_random_uniform_pm1(zval * return_value, zval * n)
 
 	zval_ptr_dtor(&c);
 }
-
+/**
+ * Create a tensor filled with random values drawn from a standard Gaussian distribution (mean 0, variance 1).
+ */
 void tensor_random_gaussian(zval * return_value, zval * n)
 {
 	zend_long length = zephir_get_intval(n);
 	zval c;
-
-	if (UNEXPECTED(length < 1)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("N must be greater than 0."));
-		return;
-	}
 
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, length, &c) == FAILURE)) {
 		return;

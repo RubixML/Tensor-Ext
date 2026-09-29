@@ -212,8 +212,16 @@ void tensor_pool_seal(void)
  */
 int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
 {
-	if (UNEXPECTED(len < 0)) {
+	/* `bytes` is a size_t, so a count between SIZE_MAX / sizeof(double) and
+	 * ZEND_LONG_MAX wraps it to a small allocation while the caller's fill loop
+	 * still writes `len` elements through it. Reject that here rather than in
+	 * every caller: Matrix::fill() reaches it with len = m * n, which overflows
+	 * nothing on the Zephir side. */
+	if (UNEXPECTED(len < 0 || (uint64_t) len > (uint64_t) (SIZE_MAX / sizeof(double)))) {
 		ZVAL_NULL(buffer);
+
+		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			SL("The requested buffer size is too large to allocate."));
 
 		return FAILURE;
 	}
@@ -422,19 +430,12 @@ void tensor_buffer_sort(zval * return_value, zval * obj, zval * ascending)
 void tensor_buffer_slice(zval * return_value, zval * obj, zval * offset, zval * length)
 {
 	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
 	zend_long offsetHat = zephir_get_intval(offset);
 	zend_long lengthHat = zephir_get_intval(length);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
-		return;
-	}
-
-	if (UNEXPECTED(offsetHat < 0 || lengthHat < 0 || offsetHat > len - lengthHat)) {
-		zephir_throw_exception_string(spl_ce_OutOfBoundsException,
-			SL("Slice offset and length must be within the bounds of the buffer."));
 		return;
 	}
 
@@ -467,7 +468,6 @@ void tensor_buffer_slice(zval * return_value, zval * obj, zval * offset, zval * 
 void tensor_buffer_slice_strided(zval * return_value, zval * obj, zval * offset, zval * length, zval * stride)
 {
 	uint8_t kind = zephir_buffer_kind(obj);
-	zend_long len = zephir_buffer_len(obj);
 	zend_long offsetHat = zephir_get_intval(offset);
 	zend_long lengthHat = zephir_get_intval(length);
 	zend_long strideHat = zephir_get_intval(stride);
@@ -476,26 +476,6 @@ void tensor_buffer_slice_strided(zval * return_value, zval * obj, zval * offset,
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
 		return;
-	}
-
-	if (UNEXPECTED(offsetHat < 0 || lengthHat < 0 || strideHat < 1)) {
-		zephir_throw_exception_string(spl_ce_OutOfBoundsException,
-			SL("Slice offset, length, and stride must be within the bounds of the buffer."));
-		return;
-	}
-
-	if (lengthHat > 0) {
-		zend_long last = len - 1 - offsetHat;
-
-		/* Integer division on non-negative operands is exact and immune to the
-		 * signed overflow of (lengthHat - 1) * strideHat, which wraps for huge
-		 * arguments and previously let the guard pass while the copy below read
-		 * far out of bounds. */
-		if (UNEXPECTED(last < 0 || (lengthHat - 1) > last / strideHat)) {
-			zephir_throw_exception_string(spl_ce_OutOfBoundsException,
-				SL("Slice offset, length, and stride must be within the bounds of the buffer."));
-			return;
-		}
 	}
 
 	if (UNEXPECTED(zephir_buffer_create(return_value, lengthHat, kind) == FAILURE)) {
@@ -554,13 +534,7 @@ void tensor_buffer_concat(zval * return_value, zval * obj, zval * others)
 		return;
 	}
 
-	HashTable * ht;
-
-	if (UNEXPECTED((ht = Z_ARRVAL_P(others)) == NULL)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be an array of Buffer objects."));
-		return;
-	}
+	HashTable * ht = Z_ARRVAL_P(others);
 
 	zend_long total = len;
 	zval * other;
@@ -628,12 +602,6 @@ void tensor_buffer_split(zval * return_value, zval * obj, zval * chunk_length)
 		return;
 	}
 
-	if (UNEXPECTED(chunkHat < 1)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Chunk length must be greater than 0."));
-		return;
-	}
-
 	zend_long chunks;
 
 	if (UNEXPECTED(len == 0)) {
@@ -691,12 +659,6 @@ void tensor_buffer_repeat(zval * return_value, zval * obj, zval * times)
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
 			SL("Argument must be a Buffer object."));
-		return;
-	}
-
-	if (UNEXPECTED(timesHat < 1)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Times must be greater than 0."));
 		return;
 	}
 

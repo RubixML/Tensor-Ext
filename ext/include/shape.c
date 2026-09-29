@@ -44,12 +44,6 @@ int tensor_matrix_doubles_len(zval * obj, zend_long n_hat, double ** ptr, zend_l
 		return 0;
 	}
 
-	if (UNEXPECTED(total % n_hat != 0)) {
-		zephir_throw_exception_string(spl_ce_LengthException,
-			SL("Matrix and row dimensions must agree."));
-		return 0;
-	}
-
 	*ptr = va;
 	*n = n_hat;
 	*m = total / n_hat;
@@ -100,18 +94,6 @@ void tensor_matrix_transpose(zval * return_value, zval * a, zval * m, zval * n)
 
 	zend_long ma = zephir_get_intval(m);
 	zend_long na = zephir_get_intval(n);
-
-	if (UNEXPECTED(ma < 0 || na < 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Dimensions must be non-negative."));
-		return;
-	}
-
-	if (UNEXPECTED(total != ma * na)) {
-		zephir_throw_exception_string(spl_ce_LengthException,
-			SL("Input buffer must match the given dimensions."));
-		return;
-	}
 
 	zval c;
 

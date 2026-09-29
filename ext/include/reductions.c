@@ -188,14 +188,13 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 {
 	zval buffer;
 	uint8_t kind;
-	zend_long total = 0, groups = 0, length = 0, i;
+	zend_long groups = 0, length = 0, i;
 
 	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
 		return;
 	}
 
 	kind = zephir_buffer_kind(&buffer);
-	total = zephir_buffer_len(&buffer);
 
 	if (UNEXPECTED(kind == 0)) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
@@ -221,28 +220,10 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 		return;
 	}
 
-	if (UNEXPECTED(length < 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Group length must be non-negative."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (length > 0) {
-		if (UNEXPECTED(total % length != 0 || groups != total / length)) {
-			zephir_throw_exception_string(spl_ce_LengthException,
-				SL("Matrix and row dimensions must agree."));
-			zval_ptr_dtor(&buffer);
-			return;
-		}
-	} else if (UNEXPECTED(total != 0)) {
-		zephir_throw_exception_string(spl_ce_LengthException,
-			SL("Group length must not be zero for a non-empty buffer."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	/* Extrema need at least one element in every group. */
+	/* Extrema need at least one element in every group. The dimensions are not
+	 * rechecked here: the Zephir callers pass either Vector's n, which is set
+	 * from a->count(), or Matrix's m and n, which __construct has already
+	 * matched against that same count. */
 	if (UNEXPECTED(length == 0 && (mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_MAX
 		|| mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX))) {
 		zephir_throw_exception_string(spl_ce_InvalidArgumentException,

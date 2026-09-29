@@ -188,12 +188,6 @@ void tensor_matmul(zval * return_value, zval * a, zval * b, zval * m, zval * p, 
         return;
     }
 
-    if (UNEXPECTED(na != ma * pa || nbb != pa * nb)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffers must match the given dimensions."));
-        return;
-    }
-
     zval c;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma * nb, &c) == FAILURE)) {
@@ -230,12 +224,6 @@ void tensor_matrix_dot(zval * return_value, zval * a, zval * b, zval * m, zval *
         return;
     }
 
-    if (UNEXPECTED(na != ma * pc || nb != pc)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffers must match the given dimensions."));
-        return;
-    }
-
     zval c;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma, &c) == FAILURE)) {
@@ -268,12 +256,6 @@ void tensor_dot(zval * return_value, zval * a, zval * b)
 		return;
 	}
 
-	if (UNEXPECTED(na != nb)) {
-		zephir_throw_exception_string(spl_ce_LengthException,
-			SL("Input buffers must be the same length."));
-		return;
-	}
-
 	RETVAL_DOUBLE(cblas_ddot((blasint) na, va, 1, vb, 1));
 }
 
@@ -294,12 +276,6 @@ void tensor_inverse(zval * return_value, zval * a, zval * n)
     double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
 
     if (UNEXPECTED(!ok_a)) {
-        return;
-    }
-
-    if (UNEXPECTED(na != nn * nn)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
         return;
     }
 
@@ -412,19 +388,13 @@ void tensor_pseudoinverse(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != ma * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
     unsigned int k = MIN(ma, na);
 
     double * w = emalloc(nbuf * sizeof(double));
-    double * vu = emalloc(ma * ma * sizeof(double));
+    double * vu = safe_emalloc((size_t) ma * (size_t) ma, sizeof(double), 0);
     double * vs = emalloc(k * sizeof(double));
-    double * vvt = emalloc(na * na * sizeof(double));
-    double * vb = emalloc(na * ma * sizeof(double));
+    double * vvt = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
+    double * vb = safe_emalloc((size_t) na * (size_t) ma, sizeof(double), 0);
 
     for (i = 0; i < nbuf; ++i) {
         w[i] = va[i];
@@ -581,13 +551,7 @@ void tensor_ref(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
-    double * w = emalloc(ma * na * sizeof(double));
+    double * w = safe_emalloc((size_t) ma * (size_t) na, sizeof(double), 0);
 
     for (i = 0; i < ma * na; ++i) {
         w[i] = va[i];
@@ -662,13 +626,7 @@ void tensor_cholesky(zval * return_value, zval * a, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
-    double * w = emalloc(na * na * sizeof(double));
+    double * w = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
 
     for (i = 0; i < na * na; ++i) {
         w[i] = va[i];
@@ -735,14 +693,8 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
     unsigned int * perm;
-    double * va_ = emalloc(na * na * sizeof(double));
+    double * va_ = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
     int * pivots = emalloc(na * sizeof(int));
 
     for (i = 0; i < na * na; ++i) {
@@ -758,9 +710,9 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
         RETURN_NULL();
     }
 
-    double * lbuf = emalloc(na * na * sizeof(double));
-    double * ubuf = emalloc(na * na * sizeof(double));
-    double * pbuf = emalloc(na * na * sizeof(double));
+    double * lbuf = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
+    double * ubuf = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
+    double * pbuf = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
 
     for (i = 0; i < na; ++i) {
         for (j = 0; j < i; ++j) {
@@ -916,16 +868,10 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
-    double * w = emalloc(na * na * sizeof(double));
+    double * w = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
     double * wr = emalloc(na * sizeof(double));
     double * wi = emalloc(na * sizeof(double));
-    double * vr = emalloc(na * na * sizeof(double));
+    double * vr = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
 
     for (i = 0; i < na * na; ++i) {
         w[i] = va[i];
@@ -1048,13 +994,7 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
-    double * w = emalloc(na * na * sizeof(double));
+    double * w = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
     double * wr = emalloc(na * sizeof(double));
 
     for (i = 0; i < na * na; ++i) {
@@ -1166,16 +1106,10 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
-    double * w = emalloc(ma * na * sizeof(double));
-    double * vu = emalloc(ma * ma * sizeof(double));
+    double * w = safe_emalloc((size_t) ma * (size_t) na, sizeof(double), 0);
+    double * vu = safe_emalloc((size_t) ma * (size_t) ma, sizeof(double), 0);
     double * vs = emalloc(k * sizeof(double));
-    double * vvt = emalloc(na * na * sizeof(double));
+    double * vvt = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
 
     for (i = 0; i < ma * na; ++i) {
         w[i] = va[i];
@@ -1490,13 +1424,7 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
-    double * w = emalloc(ma * na * sizeof(double));
+    double * w = safe_emalloc((size_t) ma * (size_t) na, sizeof(double), 0);
 
     for (i = 0; i < ma * na; ++i) {
         w[i] = va[i];
@@ -1579,12 +1507,6 @@ void tensor_rank(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (UNEXPECTED(nbuf != (zend_long) ma * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must match the given dimensions."));
-        return;
-    }
-
     unsigned int rank = 0;
 
     for (i = 0; i < ma; ++i) {
@@ -1620,12 +1542,6 @@ void tensor_is_symmetric(zval * return_value, zval * a, zval * n)
     double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
 
     if (UNEXPECTED(!ok_a)) {
-        return;
-    }
-
-    if (UNEXPECTED(nbuf != (zend_long) na * na)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Input buffer must be square."));
         return;
     }
 
@@ -1670,12 +1586,6 @@ void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
     double * vb = tensor_tensorbuffer_doubles(b, &nbufb, &ok_b);
 
     if (UNEXPECTED(!ok_a || !ok_b)) {
-        return;
-    }
-
-    if (UNEXPECTED(nbufa != (zend_long) naHat || nbufb != (zend_long) nbHat)) {
-        zephir_throw_exception_string(spl_ce_LengthException,
-            SL("Buffer lengths must match the given dimensions."));
         return;
     }
 
@@ -1729,7 +1639,7 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (UNEXPECTED(na < 1 || nbuf != ma * na)) {
+    if (UNEXPECTED(na < 1)) {
         zephir_throw_exception_string(spl_ce_LengthException,
             SL("Matrix and vector dimensions must agree."));
         return;

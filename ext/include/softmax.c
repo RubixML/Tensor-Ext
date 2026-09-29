@@ -13,14 +13,7 @@
 #include "include/reductions.h"
 #include "include/shape.h"
 
-/* Rows, not columns, are the reduction axis, and the buffer is row-major, so a
- * row is already one contiguous run and every pass below walks it forwards.
- * That is the whole reason this kernel is not tiled over columns the way the
- * per-column version had to be: a column of the same buffer is strided, and
- * dividing along a stride is the one pass that neither prefetches nor
- * vectorizes.
- *
- * The lane count is the number of rows carried through the three passes at
+/* The lane count is the number of rows carried through the three passes at
  * once, and it is derived from the row length rather than fixed, because the
  * useful value depends on the shape. A wide row is self-sufficient -- the
  * exponentials inside it are independent and the sum helper already unrolls
@@ -48,12 +41,7 @@ void tensor_softmax(zval * return_value, zval * a, zval * n)
 {
 	double * va = NULL;
 	zend_long m = 0, cols = 0, i, j, i0, tile, lanes;
-
-	/* A vector arrives as a single row of its own length, and an empty vector as
-	 * a zero length. Folding the zero into a single empty row keeps the empty
-	 * vector normalizing to an empty result rather than being rejected as a
-	 * non-positive row length, which is what the column-wise version got for
-	 * free by always being called with a width of one. */
+	
 	zend_long cols_hat = zephir_get_intval(n);
 
 	if (cols_hat < 1) {

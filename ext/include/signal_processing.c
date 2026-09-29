@@ -434,12 +434,6 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
 
 	zend_long s = zephir_get_intval(stride);
 
-	if (UNEXPECTED(s < 1)) {
-		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
-			SL("Stride must be at least 1."));
-		return;
-	}
-
 	/* Two empty buffers convolve to nothing, so guard the full-convolution
 	 * length against going negative before it reaches the allocation. */
 	zend_long nc = na + nb - 1;
@@ -453,13 +447,7 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
 
 	double * restrict vc = zephir_buffer_doubles(&c);
 
-	if (nb == 0) {
-		zend_long m;
-
-		for (m = 0; m < nout; ++m) {
-			vc[m] = 0.0;
-		}
-	} else if (nout > 0) {
+	if (nout > 0) {
 		double scratch[TENSOR_CONV_SCRATCH_DOUBLES];
 		double * restrict vbr = scratch;
 		double * heap = NULL;
@@ -531,12 +519,6 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 	zend_long mb_ = zephir_get_intval(mb);
 	zend_long nb_ = zephir_get_intval(nb);
 
-	if (UNEXPECTED(s < 1)) {
-		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
-			SL("Stride must be at least 1."));
-		return;
-	}
-
 	double * restrict va = tensor_tensorbuffer_doubles(a, &nbufa, &ok_a);
 
 	if (UNEXPECTED(!ok_a)) {
@@ -546,18 +528,6 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 	double * restrict vb = tensor_tensorbuffer_doubles(b, &nbufb, &ok_b);
 
 	if (UNEXPECTED(!ok_b)) {
-		return;
-	}
-
-	if (UNEXPECTED(ma_ < 0 || na_ < 0 || mb_ < 0 || nb_ < 0)) {
-		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
-			SL("Dimensions must be non-negative."));
-		return;
-	}
-
-	if (UNEXPECTED(nbufa != ma_ * na_ || nbufb != mb_ * nb_)) {
-		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
-			SL("Input buffers must match the given dimensions."));
 		return;
 	}
 
