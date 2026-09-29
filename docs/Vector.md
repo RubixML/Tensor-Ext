@@ -158,13 +158,14 @@ Transpose the vector, i.e. rotate it into a `ColumnVector`.
 
 - **Returns:** `ColumnVector`
 
-### `convolve(Vector $b, int $stride = 1) : Vector`
+### `convolve(Vector $b, int $stride = 1, int $padding = 0) : Vector`
 
-Return the 1D convolution of this vector and a kernel vector with the given stride.
+Return the 1D convolution of this vector and a kernel vector with the given
+stride, over an input zero-padded by `$padding` samples at both ends.
 
-- **Parameters:** `$b` — the kernel vector, `$stride` — the stride (default `1`)
-- **Returns:** `Vector` of length `ceil((n + nB - 1) / $stride)`, i.e. a "full" convolution sampled every `$stride` samples
-- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$b` is empty, larger than this vector, or `$stride < 1`
+- **Parameters:** `$b` — the kernel vector, `$stride` — the stride (default `1`), `$padding` — the number of zeros added at each end (default `0`)
+- **Returns:** `Vector` of length `floor((n + 2 * $padding - nB) / $stride) + 1`, the length `torch.nn.functional.conv1d()` reports for the same arguments. A padding of `0` gives the "valid" convolution (the tail of the "full" one); a padding of `nB - 1` gives the "full" convolution.
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$b` is empty, if `$b` is larger than this vector plus the padding, if `$stride < 1`, or if `$padding < 0`
 
 ### `count() : int`
 

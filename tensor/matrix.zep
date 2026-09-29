@@ -785,45 +785,64 @@ class Matrix implements Tensor
     }
 
     /**
-     * Return the 2D convolution of this matrix and a kernel matrix with given stride using
-     * the "same" method for zero padding.
+     * Return the 2D convolution of this matrix and a kernel matrix with given stride, over
+     * an input padded with `padding` zeros on all four sides.
      *
-     * The result holds the "same" shape as this matrix, i.e. ceil(m / stride) x
-     * ceil(n / stride) elements. The kernel's centre sample is aligned with each
-     * output sample.
+     * The result holds floor((m + 2 * padding - mB) / stride) + 1 by
+     * floor((n + 2 * padding - nB) / stride) + 1 elements, which is the shape
+     * torch.nn.functional.conv2d() reports for the same arguments. Padding moves
+     * neither the kernel nor the samples it reads, so a padding of 0 gives the
+     * "valid" convolution -- the leading mB - 1 by nB - 1 crop of the "same" one.
+     * The "same" convolution is not itself a padding in this sense: it centres the
+     * kernel by a different number of samples on each side, which an even-sized
+     * kernel needs and a single padding cannot express.
      *
      * @param \Tensor\Matrix b
      * @param int stride
+     * @param int padding
      * @throws \Tensor\Exceptions\InvalidArgumentException
      * @return self
      */
-    public function convolve(const <Matrix> b, const int stride = 1) -> <Matrix>
+    public function convolve(const <Matrix> b, const int stride = 1, const int padding = 0) -> <Matrix>
     {
-        if unlikely b->m() > this->m || b->n() > this->n {
-            throw new InvalidArgumentException("Matrix B cannot be"
-                . " larger than Matrix A.");
-        }
-
         if unlikely stride < 1 {
             throw new InvalidArgumentException("Stride cannot be"
                 . " less than 1, " . strval(stride) . " given.");
         }
 
-        var buffer = tensor_convolve_2d(this->a, b->buffer(), stride, this->m, this->n, b->m(), b->n());
-
-        /* Rounded up without adding the stride, which would overflow for a
-         * stride near the maximum integer and disagree with the shape the
-         * kernel computed. Must stay in step with tensor_convolve_2d. */
-        var outM = intdiv(this->m, stride);
-        var outN = intdiv(this->n, stride);
-
-        if unlikely this->m % stride !== 0 {
-            let outM = outM + 1;
+        if unlikely padding < 0 {
+            throw new InvalidArgumentException("Padding cannot be"
+                . " negative, " . strval(padding) . " given.");
         }
 
-        if unlikely this->n % stride !== 0 {
-            let outN = outN + 1;
+        var mb = b->m();
+        var nb = b->n();
+
+        /* The kernel has to fit the padded input in both dimensions or there is
+         * no output sample left. Written as mB > m + 2 * padding, but that sum
+         * would overflow for a padding near PHP_INT_MAX and compare the wrapped
+         * value, admitting a kernel that does not fit. (mB - m - 1) / 2 >= padding
+         * is the same test with a divisor, and mB - m is already bounded by the
+         * kernel's height. */
+        if unlikely mb > this->m && (mb - this->m - 1) / 2 >= padding {
+            throw new InvalidArgumentException("Matrix B cannot be larger than"
+                . " Matrix A plus the padding of " . strval(padding) . ".");
         }
+
+        if unlikely nb > this->n && (nb - this->n - 1) / 2 >= padding {
+            throw new InvalidArgumentException("Matrix B cannot be larger than"
+                . " Matrix A plus the padding of " . strval(padding) . ".");
+        }
+
+        var buffer = tensor_convolve_2d(this->a, b->buffer(), stride, padding, this->m, this->n, mb, nb);
+
+        /* Both sums overflow only for a padding near the maximum integer, and by
+         * then tensor_convolve_2d() above has already refused the output buffer
+         * it would have had to allocate. The division is a plain one, so this
+         * cannot overflow the way a rounded-up (m + stride - 1) / stride would.
+         * Must stay in step with tensor_convolve_2d. */
+        var outM = intdiv(this->m + padding * 2 - mb, stride) + 1;
+        var outN = intdiv(this->n + padding * 2 - nb, stride) + 1;
 
         return new self(buffer, outM, outN);
     }

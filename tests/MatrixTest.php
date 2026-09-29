@@ -1858,18 +1858,38 @@ class MatrixTest extends TestCase
             [1.0, 0.0, 0.0],
         ]);
 
+        // No padding is the "valid" convolution: 6 - 3 + 1 = 4 by 4 outputs, the
+        // leading 4 by 4 crop of the "same" result this returned by default
+        // before padding was an argument.
         $c = $a->convolve($b, 1);
 
         $expected = Matrix::fromArray([
-            [3.0, 32.0, 75.0, 44.0, 84.0, 50.0],
-            [32.0, 76.0, 49.0, 94.0, 72.0, 82.0],
-            [10.0, 20.0, 53.0, 71.0, 91.0, 15.0],
-            [5.0, 11.0, 26.0, 78.0, 34.0, 43.0],
-            [1.0, 4.0, 12.0, 29.0, 48.0, 27.0],
-            [0.0, 3.0, 19.0, 26.0, 27.0, 33.0],
+            [3.0, 32.0, 75.0, 44.0],
+            [32.0, 76.0, 49.0, 94.0],
+            [10.0, 20.0, 53.0, 71.0],
+            [5.0, 11.0, 26.0, 78.0],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+
+        // One zero on each of the four sides restores the "same" shape, but
+        // slides the window by a whole sample, so the alignment differs from the
+        // old default by one row and one column: the old result is this one read
+        // from index 1, with the first row and column of zeros dropped.
+        $padded = $a->convolve($b, 1, 1);
+
+        $this->assertSame([6, 6], $padded->shape());
+
+        $expected = Matrix::fromArray([
+            [0.0, 0.0, 3.0, 27.0, 66.0, 29.0],
+            [0.0, 3.0, 32.0, 75.0, 44.0, 84.0],
+            [3.0, 32.0, 76.0, 49.0, 94.0, 72.0],
+            [5.0, 10.0, 20.0, 53.0, 71.0, 91.0],
+            [1.0, 5.0, 11.0, 26.0, 78.0, 34.0],
+            [0.0, 1.0, 4.0, 12.0, 29.0, 48.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $padded->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -1931,14 +1951,16 @@ class MatrixTest extends TestCase
     }
 
     /**
-     * An even-sized kernel has no single centre sample, so the "same" method
-     * anchors its second sample rather than its third. This pins the alignment
-     * used here, which the previous mb / 2 centring differed from by one
-     * element in both dimensions.
+     * An even-sized kernel has no single centre sample, so each axis is
+     * anchored by the kernel's second sample rather than its third. This pins
+     * the alignment, which an mb / 2 centring differs from by one element in
+     * both dimensions, and which the old "same" default used: the "same" result
+     * for this kernel is the one below read from index 1, with a row and column
+     * of zeros dropped.
      *
      * @test
      */
-    public function convolveEvenKernelMatchesNumpyAlignment() : void
+    public function convolveEvenKernelAnchorsSecondSample() : void
     {
         $a = Matrix::fromArray([
             [1.0, 2.0, 3.0],
@@ -1954,12 +1976,115 @@ class MatrixTest extends TestCase
         $c = $a->convolve($b);
 
         $expected = Matrix::fromArray([
-            [1.0, 4.0, 7.0],
-            [7.0, 23.0, 33.0],
-            [19.0, 53.0, 63.0],
+            [1.0, 4.0],
+            [7.0, 23.0],
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+
+        $padded = $a->convolve($b, 1, 1);
+
+        $expected = Matrix::fromArray([
+            [0.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 4.0, 7.0],
+            [0.0, 7.0, 23.0, 33.0],
+            [0.0, 19.0, 53.0, 63.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $padded->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A kernel larger than the input is rejected unless the padding makes it
+     * fit, and the output shape is
+     * floor((dimension + 2 * padding - kernel) / stride) + 1 per axis, so a
+     * kernel one sample larger than the padded input still leaves a single
+     * output.
+     *
+     * @test
+     */
+    public function convolvePaddingMakesKernelFit() : void
+    {
+        $a = Matrix::fromArray([
+            [5.0, 2.0, 7.0],
+            [1.0, 9.0, 3.0],
+            [4.0, 6.0, 8.0],
+        ]);
+
+        $b = Matrix::fromArray([
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+            [13.0, 14.0, 15.0, 16.0],
+        ]);
+
+        $expected = Matrix::fromArray([
+            [5.0, 12.0],
+            [26.0, 51.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $a->convolve($b, 1, 1)->asArray(), self::MAX_DELTA);
+
+        $this->assertEqualsWithDelta([[5.0]], $a->convolve($b, 2, 1)->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A padding past the point where every sample is inside some output window
+     * is still zero padding: the extra outputs are zeros rather than being
+     * dropped.
+     *
+     * @test
+     */
+    public function convolvePaddingLargerThanNeededIsStillZeroPadded() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0],
+            [3.0, 4.0],
+        ]);
+
+        $b = Matrix::fromArray([[1.0]]);
+
+        // 2 + 2 * 2 - 1 + 1 = 6 outputs per axis, of which only the four in the
+        // middle read an input sample at all.
+        $result = $a->convolve($b, 1, 2);
+
+        $this->assertSame([6, 6], $result->shape());
+
+        $expected = Matrix::fromArray([
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 2.0, 0.0, 0.0],
+            [0.0, 0.0, 3.0, 4.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $result->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function convolveNegativePaddingThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (Matrix::fill(1.0, 3, 3))->convolve(Matrix::fromArray([[1.0, 1.0], [1.0, 1.0]]), 1, -1);
+    }
+
+    /**
+     * Padding is what makes a kernel larger than its input legal, so a kernel
+     * still too large once the padding is counted has to be rejected rather than
+     * reporting an output dimension of zero or less.
+     *
+     * @test
+     */
+    public function convolveKernelLargerThanPaddedMatrixThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        // 3 + 2 * 1 = 5 padded samples per axis cannot take a six-tap kernel.
+        (Matrix::fill(1.0, 3, 3))->convolve(Matrix::fill(1.0, 6, 6), 1, 1);
     }
 
     /**
@@ -2015,8 +2140,8 @@ class MatrixTest extends TestCase
 
     /**
      * Cross-check the kernel against a straightforward reference implementation
-     * over a wide range of shapes, kernel sizes and strides, including
-     * even-sized kernels.
+     * over a wide range of shapes, kernel sizes, strides and paddings,
+     * including even-sized kernels.
      *
      * @test
      */
@@ -2027,8 +2152,9 @@ class MatrixTest extends TestCase
         for ($trial = 0; $trial < 150; ++$trial) {
             $m = mt_rand(1, 9);
             $n = mt_rand(1, 9);
-            $mb = mt_rand(1, min($m, 4));
-            $nb = mt_rand(1, min($n, 4));
+            $padding = mt_rand(0, 3);
+            $mb = mt_rand(1, min($m + 2 * $padding, 4));
+            $nb = mt_rand(1, min($n + 2 * $padding, 4));
             $stride = mt_rand(1, 4);
 
             $a = [];
@@ -2054,14 +2180,14 @@ class MatrixTest extends TestCase
                 $b[] = $row;
             }
 
-            $expected = $this->referenceConvolve2d($a, $b, $stride);
+            $expected = $this->referenceConvolve2d($a, $b, $stride, $padding);
 
-            $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), $stride);
+            $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), $stride, $padding);
 
             $this->assertSame(
                 [count($expected), count($expected[0])],
                 $actual->shape(),
-                "{$m} x {$n} by {$mb} x {$nb}, stride = {$stride}"
+                "{$m} x {$n} by {$mb} x {$nb}, stride = {$stride}, padding = {$padding}"
             );
 
             $this->assertEqualsWithDelta($expected, $actual->asArray(), self::MAX_DELTA);
@@ -2077,7 +2203,8 @@ class MatrixTest extends TestCase
      * inside the tiled row band while no whole column tile fits at all; this
      * crosses both bounds from either side, and steps the kernel across the tile
      * width and across the stack scratch the reversed kernel is built in so the
-     * heap fallback is covered as well.
+     * heap fallback is covered as well. The padding moves both bands, so it is
+     * what makes either of them cross the tile grid at a different point.
      *
      * @test
      */
@@ -2086,53 +2213,57 @@ class MatrixTest extends TestCase
         mt_srand(1234);
 
         $sizes = [1, 31, 32, 33, 40, 64, 65];
+        $paddings = [0, 1, 16, 32, 33];
 
         foreach ($sizes as $m) {
             foreach ($sizes as $n) {
                 foreach ([[1, 1], [3, 3], [2, 5], [16, 16], [17, 17]] as [$mb, $nb]) {
-                    if ($mb > $m || $nb > $n) {
-                        continue;
-                    }
-
-                    $a = [];
-                    $b = [];
-
-                    for ($i = 0; $i < $m; ++$i) {
-                        $row = [];
-
-                        for ($j = 0; $j < $n; ++$j) {
-                            $row[] = mt_rand(-500, 500) / 7.0;
+                    foreach ($paddings as $padding) {
+                        // The API rejects a kernel that padding cannot make fit.
+                        if ($mb > $m + 2 * $padding || $nb > $n + 2 * $padding) {
+                            continue;
                         }
 
-                        $a[] = $row;
-                    }
+                        $a = [];
+                        $b = [];
 
-                    for ($i = 0; $i < $mb; ++$i) {
-                        $row = [];
+                        for ($i = 0; $i < $m; ++$i) {
+                            $row = [];
 
-                        for ($j = 0; $j < $nb; ++$j) {
-                            $row[] = mt_rand(-500, 500) / 7.0;
+                            for ($j = 0; $j < $n; ++$j) {
+                                $row[] = mt_rand(-500, 500) / 7.0;
+                            }
+
+                            $a[] = $row;
                         }
 
-                        $b[] = $row;
+                        for ($i = 0; $i < $mb; ++$i) {
+                            $row = [];
+
+                            for ($j = 0; $j < $nb; ++$j) {
+                                $row[] = mt_rand(-500, 500) / 7.0;
+                            }
+
+                            $b[] = $row;
+                        }
+
+                        $expected = $this->referenceConvolve2d($a, $b, 1, $padding);
+
+                        $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), 1, $padding);
+
+                        $this->assertSame(
+                            [count($expected), count($expected[0])],
+                            $actual->shape(),
+                            "{$m} x {$n} by {$mb} x {$nb}, padding = {$padding}"
+                        );
+
+                        $this->assertEqualsWithDelta(
+                            $expected,
+                            $actual->asArray(),
+                            self::MAX_DELTA,
+                            "{$m} x {$n} by {$mb} x {$nb}, padding = {$padding}"
+                        );
                     }
-
-                    $expected = $this->referenceConvolve2d($a, $b, 1);
-
-                    $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), 1);
-
-                    $this->assertSame(
-                        [count($expected), count($expected[0])],
-                        $actual->shape(),
-                        "{$m} x {$n} by {$mb} x {$nb}, stride = 1"
-                    );
-
-                    $this->assertEqualsWithDelta(
-                        $expected,
-                        $actual->asArray(),
-                        self::MAX_DELTA,
-                        "{$m} x {$n} by {$mb} x {$nb}, stride = 1"
-                    );
                 }
             }
         }
@@ -2142,50 +2273,52 @@ class MatrixTest extends TestCase
         foreach ($sizes as $m) {
             foreach ($sizes as $n) {
                 foreach ([2, 3] as $stride) {
-                    // The API rejects a kernel larger than the input outright.
-                    if ($m < 3 || $n < 3) {
-                        continue;
-                    }
-
-                    $a = [];
-                    $b = [];
-
-                    for ($i = 0; $i < $m; ++$i) {
-                        $row = [];
-
-                        for ($j = 0; $j < $n; ++$j) {
-                            $row[] = mt_rand(-500, 500) / 7.0;
+                    foreach ([0, 1, 17] as $padding) {
+                        // A 3 x 3 kernel needs three padded samples an axis.
+                        if ($m + 2 * $padding < 3 || $n + 2 * $padding < 3) {
+                            continue;
                         }
 
-                        $a[] = $row;
-                    }
+                        $a = [];
+                        $b = [];
 
-                    for ($i = 0; $i < 3; ++$i) {
-                        $row = [];
+                        for ($i = 0; $i < $m; ++$i) {
+                            $row = [];
 
-                        for ($j = 0; $j < 3; ++$j) {
-                            $row[] = mt_rand(-500, 500) / 7.0;
+                            for ($j = 0; $j < $n; ++$j) {
+                                $row[] = mt_rand(-500, 500) / 7.0;
+                            }
+
+                            $a[] = $row;
                         }
 
-                        $b[] = $row;
+                        for ($i = 0; $i < 3; ++$i) {
+                            $row = [];
+
+                            for ($j = 0; $j < 3; ++$j) {
+                                $row[] = mt_rand(-500, 500) / 7.0;
+                            }
+
+                            $b[] = $row;
+                        }
+
+                        $expected = $this->referenceConvolve2d($a, $b, $stride, $padding);
+
+                        $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), $stride, $padding);
+
+                        $this->assertSame(
+                            [count($expected), count($expected[0])],
+                            $actual->shape(),
+                            "{$m} x {$n} by 3 x 3, stride = {$stride}, padding = {$padding}"
+                        );
+
+                        $this->assertEqualsWithDelta(
+                            $expected,
+                            $actual->asArray(),
+                            self::MAX_DELTA,
+                            "{$m} x {$n} by 3 x 3, stride = {$stride}, padding = {$padding}"
+                        );
                     }
-
-                    $expected = $this->referenceConvolve2d($a, $b, $stride);
-
-                    $actual = Matrix::fromArray($a)->convolve(Matrix::fromArray($b), $stride);
-
-                    $this->assertSame(
-                        [count($expected), count($expected[0])],
-                        $actual->shape(),
-                        "{$m} x {$n} by 3 x 3, stride = {$stride}"
-                    );
-
-                    $this->assertEqualsWithDelta(
-                        $expected,
-                        $actual->asArray(),
-                        self::MAX_DELTA,
-                        "{$m} x {$n} by 3 x 3, stride = {$stride}"
-                    );
                 }
             }
         }
@@ -5571,41 +5704,46 @@ class MatrixTest extends TestCase
     }
 
     /**
-     * Naive "same" convolution sub-sampled every $stride elements, with the
+     * Naive "valid" convolution sub-sampled every $stride elements, with the
      * kernel anchored by its second sample for even sizes, used as the oracle
      * for convolveMatchesReference().
      *
      * @param list<list<float>> $a
      * @param list<list<float>> $b
      * @param int $stride
+     * @param int $padding
      *
      * @return list<list<float>>
      */
-    private function referenceConvolve2d(array $a, array $b, int $stride) : array
+    private function referenceConvolve2d(array $a, array $b, int $stride, int $padding = 0) : array
     {
         $m = count($a);
         $n = count($a[0]);
         $mb = count($b);
         $nb = count($b[0]);
-        $p = ($mb - 1) >> 1;
-        $q = ($nb - 1) >> 1;
-        $om = intdiv($m, $stride) + ($m % $stride ? 1 : 0);
-        $on = intdiv($n, $stride) + ($n % $stride ? 1 : 0);
+        $c0 = ($mb - 1) >> 1;
+        $c1 = ($nb - 1) >> 1;
+        $om = intdiv($m + 2 * $padding - $mb, $stride) + 1;
+        $on = intdiv($n + 2 * $padding - $nb, $stride) + 1;
         $out = array_fill(0, $om, array_fill(0, $on, 0.0));
 
-        for ($i = 0, $r = 0; $i < $m; $i += $stride, ++$r) {
-            for ($j = 0, $c = 0; $j < $n; $j += $stride, ++$c) {
+        // Output ($r, $c) reads the kernel window that the padding slides to
+        // $r * $stride - $padding, and each axis is anchored by the kernel's own
+        // centre, which is what keeps the sample the kernel is centred on lined
+        // up with the output sample at a padding of 0.
+        for ($r = 0; $r < $om; ++$r) {
+            for ($c = 0; $c < $on; ++$c) {
                 $sigma = 0.0;
 
                 for ($k = 0; $k < $mb; ++$k) {
-                    $x = $i + $p - $k;
+                    $x = $r * $stride - $padding + $c0 - $k;
 
                     if ($x < 0 || $x >= $m) {
                         continue;
                     }
 
                     for ($l = 0; $l < $nb; ++$l) {
-                        $y = $j + $q - $l;
+                        $y = $c * $stride - $padding + $c1 - $l;
 
                         if ($y >= 0 && $y < $n) {
                             $sigma += $a[$x][$y] * $b[$k][$l];

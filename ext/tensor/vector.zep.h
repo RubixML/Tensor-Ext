@@ -241,6 +241,7 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_convolve, 0, 1, Tensor\\Vector, 0)
 	ZEND_ARG_OBJ_INFO(0, b, Tensor\\Vector, 0)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, stride, IS_LONG, 0, "1")
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, padding, IS_LONG, 0, "0")
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_matmul, 0, 1, Tensor\\Matrix, 0)

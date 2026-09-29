@@ -86,7 +86,7 @@ composer fix
 - **Exceptions** are typed under `Tensor\Exceptions` (e.g. `InvalidArgumentException`, `DimensionalityMismatch`, `RuntimeException`). Use the existing ones rather than `Exception`.
 - **Math is float-only.** Values stored/computed as `float`; don't introduce integer-only branches. When adding a new operation, mirror it across the `Tensor` sub-interfaces (`Arithmetic`, `Comparable`, `Unary`, `Trigonometric`, `Reductions`, `Special`).
 - Optimizations should be accompanied by a before and after benchmark to measure and prove the performance gain.
-- Avoid inline comments and excessive commenting in general.
+- No inline comments or excessive commenting in general. Use expressive syntax and naming.
 
 ## Adding or changing an operation
 

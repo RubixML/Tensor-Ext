@@ -799,20 +799,50 @@ class VectorTest extends TestCase
 
         $b = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
 
-        $c = $a->convolve($b, 1);
+        // No padding is the "valid" convolution: the eight samples and the six
+        // kernel taps give three outputs, each a full six-tap window.
+        $this->assertEqualsWithDelta(
+            [370.1, 462.20000000000005, 10.000000000000114],
+            $a->convolve($b, 1)->asArray(),
+            self::MAX_DELTA
+        );
 
-        $expected = Vector::fromArray([
-            -60.0, 2.5, 259.0, -144.0, 40.5, 370.1, 462.20000000000005,
-            10.000000000000114, 1764.3000000000002, 1625.1, 2234.7, 1378.4, 535.5,
-        ]);
+        // One zero at each end adds one output on either side, the first and
+        // last of which read four and two real samples respectively.
+        $this->assertEqualsWithDelta(
+            [40.5, 370.1, 462.20000000000005, 10.000000000000114, 1764.3000000000002],
+            $a->convolve($b, 1, 1)->asArray(),
+            self::MAX_DELTA
+        );
 
-        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+        // Five zeros at each end is the whole of the "full" convolution, which
+        // is what this used to return with no padding argument at all.
+        $this->assertEqualsWithDelta(
+            [
+                -60.0, 2.5, 259.0, -144.0, 40.5, 370.1, 462.20000000000005,
+                10.000000000000114, 1764.3000000000002, 1625.1, 2234.7, 1378.4, 535.5,
+            ],
+            $a->convolve($b, 1, 5)->asArray(),
+            self::MAX_DELTA
+        );
+
+        // The stride selects every n-th output of the same padded convolution,
+        // so a padding of nB - 1 at stride 2 is the sampling of the "full" one
+        // that convolveStrideTwo() below still asserts.
+        $this->assertEqualsWithDelta(
+            [-144.0, 370.1, 10.000000000000114, 1625.1],
+            $a->convolve($b, 2, 2)->asArray(),
+            self::MAX_DELTA
+        );
     }
 
     /**
      * Regression test for the out-of-bounds read in the final output slot
      * reached when an output index equals the size of A (na), i.e. when the
      * size of A is a multiple of the stride and nb >= 2.
+     *
+     * Only the "full" convolution reaches an output index of na, so this needs
+     * a padding of nb - 1 to arrive at the slot that used to be the last one.
      *
      * @test
      */
@@ -822,7 +852,7 @@ class VectorTest extends TestCase
 
         $b = Vector::fromArray([1.0, 2.0, 3.0]);
 
-        $c = $a->convolve($b, 1);
+        $c = $a->convolve($b, 1, 2);
 
         $expected = Vector::fromArray([5.0, 12.0, 26.0, 21.0, 32.0, 24.0, 33.0, 9.0]);
 
@@ -840,14 +870,13 @@ class VectorTest extends TestCase
 
         $c = $a->convolve($b, 2);
 
-        $expected = Vector::fromArray([5.0, 26.0, 32.0, 33.0]);
-
-        $this->assertEqualsWithDelta($expected->asArray(), $c->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([26.0, 32.0], $c->asArray(), self::MAX_DELTA);
     }
 
     /**
-     * A stride at least as large as the length of the full convolution samples
-     * exactly one output element, and a stride just below it samples two.
+     * The unpadded length is na - nb + 1, so a stride at least as large as that
+     * samples exactly one output element, and a smaller stride emits one per
+     * stride step of it.
      *
      * @test
      */
@@ -857,21 +886,23 @@ class VectorTest extends TestCase
 
         $b = Vector::fromArray([1.0, 2.0]);
 
-        // Full convolution has 3 + 2 - 1 = 4 samples, so strides of 4 and above
-        // emit only the first one, a[0] * b[0].
-        $this->assertEqualsWithDelta([5.0], $a->convolve($b, 4)->asArray(), self::MAX_DELTA);
+        // The "valid" convolution has 3 - 2 + 1 = 2 samples, so a stride of 2
+        // and above emits only the first of them, a[1] * b[0] + a[0] * b[1].
+        $this->assertEqualsWithDelta([12.0], $a->convolve($b, 2)->asArray(), self::MAX_DELTA);
 
-        $this->assertEqualsWithDelta([5.0], $a->convolve($b, 5)->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([12.0], $a->convolve($b, 3)->asArray(), self::MAX_DELTA);
 
-        // Stride 3 emits samples 0 and 3, i.e. a[0] * b[0] and a[2] * b[1].
-        $this->assertEqualsWithDelta([5.0, 14.0], $a->convolve($b, 3)->asArray(), self::MAX_DELTA);
+        $this->assertEqualsWithDelta([12.0], $a->convolve($b, 4)->asArray(), self::MAX_DELTA);
+
+        // A stride of 1 emits both, the second being a[2] * b[0].
+        $this->assertEqualsWithDelta([12.0, 11.0], $a->convolve($b, 1)->asArray(), self::MAX_DELTA);
     }
 
     /**
      * Regression test for the segmentation fault caused by a signed integer
      * overflow in the output length. Computing the length as
-     * (na + nb - 1 + stride - 1) / stride overflowed near PHP_INT_MAX and
-     * produced a length of 0, i.e. a NULL data pointer, while the convolve
+     * (na + 2 * padding - nb + stride - 1) / stride overflowed near PHP_INT_MAX
+     * and produced a length of 0, i.e. a NULL data pointer, while the convolve
      * loop still emitted one sample and wrote through it.
      *
      * @test
@@ -886,8 +917,16 @@ class VectorTest extends TestCase
             $c = $a->convolve($b, $stride);
 
             $this->assertCount(1, $c);
-            $this->assertEqualsWithDelta([1.0], $c->asArray(), self::MAX_DELTA);
+            $this->assertEqualsWithDelta([3.0], $c->asArray(), self::MAX_DELTA);
         }
+
+        // The padding is added before the division, so a padding large enough to
+        // overflow on its own has to saturate rather than wrap round into a
+        // length of zero.
+        $c = $a->convolve($b, PHP_INT_MAX, 1);
+
+        $this->assertCount(1, $c);
+        $this->assertEqualsWithDelta([1.0], $c->asArray(), self::MAX_DELTA);
     }
 
     /**
@@ -920,7 +959,7 @@ class VectorTest extends TestCase
 
     /**
      * Cross-check the kernel against a straightforward reference implementation
-     * over a wide range of lengths, kernel sizes and strides.
+     * over a wide range of lengths, kernel sizes, strides and paddings.
      *
      * @test
      */
@@ -930,7 +969,8 @@ class VectorTest extends TestCase
 
         for ($trial = 0; $trial < 200; ++$trial) {
             $na = mt_rand(1, 12);
-            $nb = mt_rand(1, min($na, 6));
+            $padding = mt_rand(0, 4);
+            $nb = mt_rand(1, min($na + 2 * $padding, 6));
             $stride = mt_rand(1, 5);
 
             $a = [];
@@ -944,11 +984,11 @@ class VectorTest extends TestCase
                 $b[] = mt_rand(-500, 500) / 7.0;
             }
 
-            $expected = $this->referenceConvolve1d($a, $b, $stride);
+            $expected = $this->referenceConvolve1d($a, $b, $stride, $padding);
 
-            $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), $stride)->asArray();
+            $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), $stride, $padding)->asArray();
 
-            $this->assertCount(count($expected), $actual, "na = {$na}, nb = {$nb}, stride = {$stride}");
+            $this->assertCount(count($expected), $actual, "na = {$na}, nb = {$nb}, stride = {$stride}, padding = {$padding}");
 
             $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA);
         }
@@ -960,9 +1000,10 @@ class VectorTest extends TestCase
      * inputs are all shorter than one tile -- never reaches that path. This
      * crosses it from both sides: the lengths and kernel sizes step either side
      * of the tile width and of the stack scratch the reversed kernel is built
-     * in, so the first tile, the last whole tile, the two partial ranges either
-     * side of them, and the heap fallback for an oversized kernel are all
-     * covered.
+     * in, and the padding steps the band of whole tiles across the input. The
+     * padding is what makes the band move at all, so the two cases worth
+     * covering separately are a band that is present and one that is empty
+     * because the output is shorter than a tile.
      *
      * @test
      */
@@ -972,32 +1013,35 @@ class VectorTest extends TestCase
 
         $lengths = [1, 31, 32, 33, 63, 64, 65, 100, 257];
         $kernels = [1, 2, 3, 31, 32, 33, 64, 257];
+        $paddings = [0, 1, 16, 32, 33, 64];
 
         foreach ($lengths as $na) {
             foreach ($kernels as $nb) {
-                // The API rejects a kernel longer than the input outright.
-                if ($nb > $na) {
-                    continue;
+                foreach ($paddings as $padding) {
+                    // The API rejects a kernel that padding cannot make fit.
+                    if ($nb > $na + 2 * $padding) {
+                        continue;
+                    }
+
+                    $a = [];
+                    $b = [];
+
+                    for ($i = 0; $i < $na; ++$i) {
+                        $a[] = mt_rand(-500, 500) / 7.0;
+                    }
+
+                    for ($i = 0; $i < $nb; ++$i) {
+                        $b[] = mt_rand(-500, 500) / 7.0;
+                    }
+
+                    $expected = $this->referenceConvolve1d($a, $b, 1, $padding);
+
+                    $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), 1, $padding)->asArray();
+
+                    $this->assertCount(count($expected), $actual, "na = {$na}, nb = {$nb}, padding = {$padding}");
+
+                    $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA, "na = {$na}, nb = {$nb}, padding = {$padding}");
                 }
-
-                $a = [];
-                $b = [];
-
-                for ($i = 0; $i < $na; ++$i) {
-                    $a[] = mt_rand(-500, 500) / 7.0;
-                }
-
-                for ($i = 0; $i < $nb; ++$i) {
-                    $b[] = mt_rand(-500, 500) / 7.0;
-                }
-
-                $expected = $this->referenceConvolve1d($a, $b, 1);
-
-                $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), 1)->asArray();
-
-                $this->assertCount(count($expected), $actual, "na = {$na}, nb = {$nb}, stride = 1");
-
-                $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA, "na = {$na}, nb = {$nb}, stride = 1");
             }
         }
 
@@ -1005,25 +1049,70 @@ class VectorTest extends TestCase
         // same boundary lengths are worth crossing on the per-output path too.
         foreach ($lengths as $na) {
             foreach ([1, 2, 3] as $stride) {
-                $a = [];
-                $b = [];
+                foreach ([0, 1, 17, 33] as $padding) {
+                    $a = [];
+                    $b = [];
 
-                for ($i = 0; $i < $na; ++$i) {
-                    $a[] = mt_rand(-500, 500) / 7.0;
+                    for ($i = 0; $i < $na; ++$i) {
+                        $a[] = mt_rand(-500, 500) / 7.0;
+                    }
+
+                    for ($i = 0; $i < min($na + 2 * $padding, 33); ++$i) {
+                        $b[] = mt_rand(-500, 500) / 7.0;
+                    }
+
+                    $expected = $this->referenceConvolve1d($a, $b, $stride, $padding);
+
+                    $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), $stride, $padding)->asArray();
+
+                    $this->assertCount(count($expected), $actual, "na = {$na}, stride = {$stride}, padding = {$padding}");
+
+                    $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA, "na = {$na}, stride = {$stride}, padding = {$padding}");
                 }
-
-                for ($i = 0; $i < min($na, 33); ++$i) {
-                    $b[] = mt_rand(-500, 500) / 7.0;
-                }
-                $expected = $this->referenceConvolve1d($a, $b, $stride);
-
-                $actual = Vector::fromArray($a)->convolve(Vector::fromArray($b), $stride)->asArray();
-
-                $this->assertCount(count($expected), $actual, "na = {$na}, stride = {$stride}");
-
-                $this->assertEqualsWithDelta($expected, $actual, self::MAX_DELTA, "na = {$na}, stride = {$stride}");
             }
         }
+    }
+
+    /**
+     * A kernel wider than the input is rejected unless the padding makes it
+     * fit, and the output length is
+     * floor((na + 2 * padding - nb) / stride) + 1, so a kernel exactly one
+     * sample wider than the padded input still leaves a single output.
+     *
+     * @test
+     */
+    public function convolvePaddingMakesKernelFit() : void
+    {
+        $a = Vector::fromArray([5.0, 2.0, 7.0]);
+
+        $b = Vector::fromArray([1.0, 2.0, 3.0, 4.0]);
+
+        // 3 + 2 * 1 - 4 + 1 = 2 outputs, the first of which still sees the
+        // whole kernel and the second only its first three taps.
+        $this->assertEqualsWithDelta([26.0, 40.0], $a->convolve($b, 1, 1)->asArray(), self::MAX_DELTA);
+
+        $this->assertEqualsWithDelta([26.0], $a->convolve($b, 2, 1)->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A padding past the point where every sample is inside some output window
+     * is still zero padding: the extra outputs are zeros rather than being
+     * dropped.
+     *
+     * @test
+     */
+    public function convolvePaddingLargerThanNeededIsStillZeroPadded() : void
+    {
+        $a = Vector::fromArray([5.0, 2.0, 7.0, 1.0]);
+
+        $b = Vector::fromArray([1.0, 1.0]);
+
+        // 4 + 2 * 3 - 2 + 1 = 9 outputs, of which the five at each end read
+        // nothing at all.
+        $result = $a->convolve($b, 1, 3)->asArray();
+
+        $this->assertCount(9, $result);
+        $this->assertEqualsWithDelta([0.0, 0.0, 5.0, 7.0, 9.0, 8.0, 1.0, 0.0, 0.0], $result, self::MAX_DELTA);
     }
 
     /**
@@ -3057,6 +3146,31 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function convolveNegativePaddingThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (Vector::fromArray([1.0, 2.0, 3.0]))->convolve(Vector::fromArray([1.0, 1.0]), 1, -1);
+    }
+
+    /**
+     * Padding is what makes a kernel wider than its input legal, so a kernel
+     * still too wide once the padding is counted has to be rejected rather than
+     * reporting an output length of zero or less.
+     *
+     * @test
+     */
+    public function convolveKernelLargerThanPaddedVectorThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        // 3 + 2 * 1 = 5 padded samples still cannot take a six-tap kernel.
+        (Vector::fromArray([1.0, 2.0, 3.0]))->convolve(Vector::fromArray([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]), 1, 1);
+    }
+
+    /**
+     * @test
+     */
     public function offsetSetThrows() : void
     {
         $this->expectException(RuntimeException::class);
@@ -3091,30 +3205,38 @@ class VectorTest extends TestCase
     }
 
     /**
-     * Naive "full" convolution sampled every $stride samples, used as the
+     * Naive "valid" convolution sampled every $stride samples, used as the
      * oracle for convolveMatchesReference().
      *
      * @param list<float> $a
      * @param list<float> $b
      * @param int $stride
+     * @param int $padding
      *
      * @return list<float>
      */
-    private function referenceConvolve1d(array $a, array $b, int $stride) : array
+    private function referenceConvolve1d(array $a, array $b, int $stride, int $padding = 0) : array
     {
         $na = count($a);
         $nb = count($b);
-        $nc = $na + $nb - 1;
+        $nc = intdiv($na + 2 * $padding - $nb, $stride) + 1;
         $out = [];
 
-        for ($i = 0; $i < $nc; $i += $stride) {
+        for ($j = 0; $j < $nc; ++$j) {
             $sigma = 0.0;
 
-            for ($j = 0; $j < $na; ++$j) {
-                $k = $i - $j;
+            // Output $j is the $j-th of floor((na + 2 * padding - nb) / stride) + 1
+            // outputs, and it reads the nb-sample window of the padded input
+            // that starts $padding samples before the $j * stride-th one, against
+            // the kernel reversed. A window reaching past either end of the input
+            // contributes only the taps that do not.
+            $start = $j * $stride - $padding;
 
-                if ($k >= 0 && $k < $nb) {
-                    $sigma += $a[$j] * $b[$k];
+            for ($k = 0; $k < $nb; ++$k) {
+                $x = $start + $k;
+
+                if ($x >= 0 && $x < $na) {
+                    $sigma += $a[$x] * $b[$nb - 1 - $k];
                 }
             }
 

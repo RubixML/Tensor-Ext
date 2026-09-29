@@ -56,12 +56,12 @@ typedef void (*tensor_unary_fn)(zval * return_value, zval * a);
 typedef void (*tensor_unary_bound_fn)(zval * return_value, zval * a, zval * bound);
 typedef void (*tensor_unary_clip_fn)(zval * return_value, zval * a, zval * lo, zval * hi);
 
-/* The convolution signatures. Both carry the stride, and the 2D kernel also
- * carries the four extents the Zephir layer already knows, so that the shape of
- * the result can be validated against the buffers without a second trip through
- * the object. */
-typedef void (*tensor_convolve_1d_fn)(zval * return_value, zval * a, zval * b, zval * stride);
-typedef void (*tensor_convolve_2d_fn)(zval * return_value, zval * a, zval * b, zval * stride, zval * ma, zval * na, zval * mb, zval * nb);
+/* The convolution signatures. Both carry the stride and the padding, and the 2D
+ * kernel also carries the four extents the Zephir layer already knows, so that
+ * the shape of the result can be validated against the buffers without a second
+ * trip through the object. */
+typedef void (*tensor_convolve_1d_fn)(zval * return_value, zval * a, zval * b, zval * stride, zval * padding);
+typedef void (*tensor_convolve_2d_fn)(zval * return_value, zval * a, zval * b, zval * stride, zval * padding, zval * ma, zval * na, zval * mb, zval * nb);
 
 /* True when the target attribute below expands to a real ISA override. */
 #if (defined(__x86_64__) || defined(__i386__)) && \

@@ -450,25 +450,25 @@ class Vector implements Tensor
     }
 
     /**
-     * Return the 1D convolution of this vector and a kernel vector with given stride.
+     * Return the 1D convolution of this vector and a kernel vector with given stride,
+     * over an input padded with `padding` zeros at both ends.
      *
-     * The result is a "full" convolution sampled every `stride` samples and
-     * therefore holds ceil((n + nB - 1) / stride) elements.
+     * The result holds floor((n + 2 * padding - nB) / stride) + 1 elements, which
+     * is the length torch.nn.functional.conv1d() reports for the same arguments.
+     * Padding moves neither the kernel nor the samples it reads, so a padding of
+     * 0 gives the "valid" convolution -- the tail of the "full" one -- and a
+     * padding of nB - 1 gives the "full" convolution itself.
      *
      * @param \Tensor\Vector b
      * @param int stride
+     * @param int padding
      * @throws \Tensor\Exceptions\InvalidArgumentException
      * @return self
      */
-    public function convolve(const <Vector> b, const int stride = 1) -> <Vector>
+    public function convolve(const <Vector> b, const int stride = 1, const int padding = 0) -> <Vector>
     {
         if unlikely b->size() < 1 {
             throw new InvalidArgumentException("Vector B cannot be empty.");
-        }
-
-        if unlikely b->size() > this->n {
-            throw new InvalidArgumentException("Vector B cannot be"
-                . " larger than Vector A.");
         }
 
         if unlikely stride < 1 {
@@ -476,7 +476,22 @@ class Vector implements Tensor
                 . " less than 1, " . strval(stride). " given.");
         }
 
-        return new static(tensor_convolve_1d(this->a, b->buffer(), stride));
+        if unlikely padding < 0 {
+            throw new InvalidArgumentException("Padding cannot be"
+                . " negative, " . strval(padding). " given.");
+        }
+
+        /* The kernel has to fit the padded input or there is no output sample
+         * left. Written as nB > n + 2 * padding, but that sum would overflow for
+         * a padding near PHP_INT_MAX and compare the wrapped value, admitting a
+         * kernel that does not fit. (nB - n - 1) / 2 >= padding is the same test
+         * with a divisor, and nB - n is already bounded by the kernel's length. */
+        if unlikely b->size() > this->n && (b->size() - this->n - 1) / 2 >= padding {
+            throw new InvalidArgumentException("Vector B cannot be larger than"
+                . " Vector A plus the padding of " . strval(padding). ".");
+        }
+
+        return new static(tensor_convolve_1d(this->a, b->buffer(), stride, padding));
     }
 
     /**

@@ -43,17 +43,33 @@
 #define TENSOR_CONV_ACC(acc, x, y) ((acc) + (x) * (y))
 
 /**
- * Divide n by s, rounding the result up.
+ * Add two lengths, saturating at the ends of the range instead of wrapping.
  *
- * Written as `n / s + (n % s ? 1 : 0)` rather than the usual `(n + s - 1) / s`
- * on purpose: the latter overflows zend_long for a stride near ZEND_LONG_MAX and
- * yields a length that disagrees with the number of samples the convolve loops
- * actually emit, which previously led to a write through a NULL buffer pointer.
- * This form cannot overflow because s >= 1 is enforced by the caller.
+ * The padded length is `L + 2 * padding`, and padding comes straight from the
+ * caller, so the sum can wrap for a padding near ZEND_LONG_MAX. A wrap is worse
+ * here than a wrong answer would be elsewhere: it produces a *small* positive
+ * output length, and the convolution loops still emit every sample that length
+ * was derived for, writing past the end of the buffer.
+ *
+ * The length is then divided by the stride with a plain `/`, which cannot
+ * overflow the way the usual `(n + s - 1) / s` for the ceiling of n/s does, and
+ * the +1 is applied after the division rather than to the numerator.
+ *
+ * Saturating hands tensor_tensorbuffer_create() a length it already rejects with
+ * "too large to allocate", which is the error a genuinely enormous convolution
+ * gets from the allocator anyway. An error that says so beats a buffer overrun.
  */
-static zend_long tensor_conv_ceil_div(zend_long n, zend_long s)
+static zend_long tensor_conv_add(zend_long a, zend_long b)
 {
-	return n / s + (n % s ? 1 : 0);
+	if (UNEXPECTED(b > 0 && a > ZEND_LONG_MAX - b)) {
+		return ZEND_LONG_MAX;
+	}
+
+	if (UNEXPECTED(b < 0 && a < ZEND_LONG_MIN - b)) {
+		return ZEND_LONG_MIN;
+	}
+
+	return a + b;
 }
 
 /**
@@ -108,15 +124,22 @@ static void tensor_conv_reverse(double * restrict out, const double * restrict i
 /**
  * The kernel bodies.
  *
- * TILE accumulates TENSOR_CONV_TILE consecutive outputs of the full convolution
- * starting at output index m0, every one of which has its whole kernel window
- * inside the input. With the kernel reversed, output m0 + u is the sum over
- * reversed taps k of va[m0 - (nb - 1) + k + u] * vbr[k], and both operands
- * advance by one as u does, so the innermost loop is over the tile rather than
- * over the kernel. Its trip count is a compile-time constant, so it unrolls into
- * a block of vector multiply-adds against a single broadcast tap. The caller
- * guarantees m0 >= nb - 1, which is what makes the lowest address touched,
- * va[m0 - nb + 1], non-negative.
+ * TILE accumulates TENSOR_CONV_TILE consecutive outputs starting at output
+ * index m0, every one of which has its whole kernel window inside the input.
+ * With the kernel reversed, output m0 + u is the sum over reversed taps k of
+ * va[m0 - p + k + u] * vbr[k], and both operands advance by one as u does, so
+ * the innermost loop is over the tile rather than over the kernel. Its trip
+ * count is a compile-time constant, so it unrolls into a block of vector
+ * multiply-adds against a single broadcast tap. The caller guarantees
+ * m0 >= p, which is what makes the lowest address touched, va[m0 - p],
+ * non-negative.
+ *
+ * Note that the padding appears here only as that offset, and never as a
+ * zero-valued tap. It moves where the output *starts and stops* and, with it,
+ * where a given output reads from; the window a particular output sees is
+ * otherwise the same window it would have seen in the full convolution, and a
+ * tap that has slid past the end of the input is dropped by the caller rather
+ * than contributing a zero.
  *
  * DOT is the per-output fallback. `base` is where the reversed kernel's first
  * contributing tap sits, so both operands again advance by one as j does: va[j]
@@ -127,7 +150,7 @@ static void tensor_conv_reverse(double * restrict out, const double * restrict i
  * chains to interleave. */
 #define TENSOR_CONV_1D_TILE_BODY                                                  \
 	double acc[TENSOR_CONV_TILE];                                             \
-	const double * restrict base_ptr = va + m0 - (nb - 1);                    \
+	const double * restrict base_ptr = va + m0 - p;                           \
 	zend_long k, u;                                                           \
 	                                                                             \
 	for (u = 0; u < TENSOR_CONV_TILE; ++u) {                                   \
@@ -212,12 +235,12 @@ static void tensor_conv_reverse(double * restrict out, const double * restrict i
 	                                                                             \
 	*out = (a0 + a1) + (a2 + a3);
 
-typedef void (*tensor_conv_1d_tile_fn)(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb);
+typedef void (*tensor_conv_1d_tile_fn)(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb, zend_long p);
 typedef void (*tensor_conv_1d_dot_fn)(double * out, const double * restrict va, const double * restrict vbr, zend_long jmin, zend_long jmax, zend_long base);
 typedef void (*tensor_conv_2d_tile_fn)(double * out, const double * restrict img, const double * restrict vbr, zend_long ncol, zend_long jbase, zend_long mb, zend_long nb);
 typedef void (*tensor_conv_2d_dot_fn)(double * out, const double * restrict va, const double * restrict vbr, zend_long ncol, zend_long xbase, zend_long jcol, zend_long nb, zend_long klo, zend_long khi, zend_long mlo, zend_long mhi);
 
-static void tensor_conv_1d_tile_sse(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb)
+static void tensor_conv_1d_tile_sse(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb, zend_long p)
 {
 	TENSOR_CONV_1D_TILE_BODY
 }
@@ -228,7 +251,7 @@ static void tensor_conv_1d_dot_sse(double * out, const double * restrict va, con
 }
 
 TENSOR_TARGET_AVX
-static void tensor_conv_1d_tile_avx(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb)
+static void tensor_conv_1d_tile_avx(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb, zend_long p)
 {
 	TENSOR_CONV_1D_TILE_BODY
 }
@@ -273,7 +296,7 @@ static tensor_conv_2d_dot_fn tensor_conv_2d_dot_route = tensor_conv_2d_dot_sse;
 #define TENSOR_CONV_ACC(acc, x, y) (fma((x), (y), (acc)))
 
 TENSOR_TARGET_FMA
-static void tensor_conv_1d_tile_fma(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb)
+static void tensor_conv_1d_tile_fma(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb, zend_long p)
 {
 	TENSOR_CONV_1D_TILE_BODY
 }
@@ -297,7 +320,7 @@ static void tensor_conv_2d_dot_fma(double * out, const double * restrict va, con
 }
 
 TENSOR_TARGET_AVX512_FMA
-static void tensor_conv_1d_tile_avx512(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb)
+static void tensor_conv_1d_tile_avx512(double * out, const double * restrict va, const double * restrict vbr, zend_long m0, zend_long nb, zend_long p)
 {
 	TENSOR_CONV_1D_TILE_BODY
 }
@@ -333,28 +356,27 @@ static void tensor_conv_2d_dot_avx512(double * out, const double * restrict va, 
  * cover without testing every output to see which run it belongs to.
  */
 static void tensor_conv_1d_range(
-	zend_long from, zend_long to, zend_long s, zend_long na, zend_long nb, zend_long nc,
+	zend_long from, zend_long to, zend_long s, zend_long nout, zend_long na, zend_long nb, zend_long p,
 	double * restrict vc, const double * restrict va, const double * restrict vbr)
 {
 	zend_long m;
 
 	for (m = from; m < to; ++m) {
-		zend_long i = m * s;
+		/* Where this output sits in the full convolution. The padding slides the
+		 * whole window down by p samples, so the p zeros it adds at the front of
+		 * the input take part exactly as an input sample would, and an output
+		 * that hangs off either end of the input gets a shorter window rather
+		 * than being dropped. */
+		zend_long i = m * s + (nb - 1) - p;
 		zend_long jmin, jmax, base;
 
-		/* The traversal below trusts that every output index it reaches is a
-		 * sample of the full convolution. This is what keeps that true if the
-		 * stride arithmetic above ever disagrees with the length it allocated. */
-		if (UNEXPECTED(i >= nc)) {
+		if (UNEXPECTED(m >= nout)) {
 			break;
 		}
 
-		/* The taps that land inside the input: these were two tests per element
-		 * of the original inner loop, and here they are two clamps per output. */
 		jmin = i >= nb - 1 ? i - (nb - 1) : 0;
 		jmax = i < na ? i : na - 1;
 
-		/* Where the reversed kernel's first contributing tap sits. */
 		base = nb - 1 - i;
 
 		tensor_conv_1d_dot_route(&vc[m], va, vbr, jmin, jmax, base);
@@ -368,28 +390,23 @@ static void tensor_conv_1d_range(
 static void tensor_conv_2d_range(
 	zend_long ii, zend_long from, zend_long to, zend_long s,
 	zend_long nrows, zend_long ncol, zend_long mb, zend_long nb,
-	zend_long p, zend_long q, zend_long on, zend_long nout,
+	zend_long p, zend_long on, zend_long nout,
 	double * restrict vc, const double * restrict va, const double * restrict vbr)
 {
+	zend_long c0 = mb > 0 ? (mb - 1) / 2 : 0;
+	zend_long c1 = nb > 0 ? (nb - 1) / 2 : 0;
 	zend_long jj;
 
 	for (jj = from; jj < to; ++jj) {
-		zend_long j = jj * s;
 		zend_long idx = ii * on + jj;
 		zend_long xbase, jcol, klo, khi, mlo, mhi;
 
-		/* As in 1D: the guard that makes the write provably in bounds whatever
-		 * the stride arithmetic did. */
 		if (UNEXPECTED(idx >= nout)) {
 			break;
 		}
 
-		/* "Same" padding puts the kernel's centre sample on the output sample, so
-		 * tap k reads input row (xbase - k) and reversed tap column m reads
-		 * input column (jcol + m). Both ranges below are the two tests the
-		 * original inner loop made per element, hoisted to here. */
-		xbase = ii * s + p;
-		jcol = j + q - (nb - 1);
+		xbase = ii * s - p + c0;
+		jcol = jj * s - p + c1 - (nb - 1);
 
 		klo = xbase >= nrows ? xbase - (nrows - 1) : 0;
 		khi = xbase < mb ? xbase : mb - 1;
@@ -401,27 +418,24 @@ static void tensor_conv_2d_range(
 }
 
 /**
- * 1D convolution between a vector A and B (kernel) with a given stride.
+ * 1D convolution between a vector A and B (kernel) with a given stride and
+ * `padding` zeros added to both ends of A.
  *
  * @param return_value
  * @param a
  * @param b
  * @param stride
+ * @param padding
  */
-void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
+void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride, zval * padding)
 {
 	zend_long na = 0, nb = 0;
 	int ok_a = 0, ok_b = 0;
 
-	/* The optimizers emit this call as a statement and then pass the result
-	 * straight to a constructor, so every path out of here has to leave
-	 * *return_value defined even when it is about to throw. */
 	ZVAL_NULL(return_value);
 
 	double * restrict va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
 
-	/* Checked one at a time: unwrapping the second buffer while the first
-	 * failure is already pending would only do work that gets discarded. */
 	if (UNEXPECTED(!ok_a)) {
 		return;
 	}
@@ -433,11 +447,10 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
 	}
 
 	zend_long s = zephir_get_intval(stride);
+	zend_long p = zephir_get_intval(padding);
 
-	/* Two empty buffers convolve to nothing, so guard the full-convolution
-	 * length against going negative before it reaches the allocation. */
-	zend_long nc = na + nb - 1;
-	zend_long nout = nc > 0 ? tensor_conv_ceil_div(nc, s) : 0;
+	zend_long span = tensor_conv_add(tensor_conv_add(na, p), p) - nb;
+	zend_long nout = span >= 0 ? span / s + 1 : 0;
 
 	zval c;
 
@@ -460,30 +473,35 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
 		tensor_conv_reverse(vbr, vb, 1, nb);
 
 		/* Only a unit stride leaves consecutive outputs reading consecutive
-		 * samples, which is the precondition for the tiles. */
-		zend_long first = tensor_conv_round_up(nb - 1, TENSOR_CONV_TILE);
-		zend_long last = tensor_conv_round_down(na - 1 - TENSOR_CONV_TILE, TENSOR_CONV_TILE);
+		 * samples, which is the precondition for the tiles. A tile of TILE
+		 * outputs starting at m0 reads va[m0 - p] through
+		 * va[m0 - p + nb - 1 + TILE - 1], so its band is the set of m0 keeping
+		 * that whole span inside the input, rounded to the tile grid. */
+		zend_long first = tensor_conv_round_up(p, TENSOR_CONV_TILE);
+		zend_long last = tensor_conv_round_down(na + p - nb - TENSOR_CONV_TILE + 1, TENSOR_CONV_TILE);
 
-		/* A tile of TILE outputs starting at m0 has no padding tap at all when
-		 * every one of its outputs has the whole kernel inside the input, and the
-		 * kernel has to fit in the input as well, so the whole-tile outputs are
-		 * the ones in [nb - 1, na - 1] whose index is a multiple of TILE.
-		 *
-		 * first > last is the common case, not the exceptional one: a kernel
-		 * narrower than the tile, or an input narrower than it, leaves no whole
-		 * tile at all. The two ranges that bracket the tiles only partition the
-		 * output between them when there *are* tiles, so the no-tile case has to
-		 * fall through to the per-output path for the whole result rather than
-		 * relying on those two ranges to happen to meet. */
+		/* The band above stops the last tile reading off the end of the input,
+		 * which is all it implied while every convolution was the full one and so
+		 * ran past the input by the kernel's own length. Padding removes that
+		 * slack: the output can now be shorter than the input, and a last tile
+		 * chosen from the input alone would write TILE outputs past the end of
+		 * the buffer. Clamping the band to the output is what keeps every
+		 * unchecked load preceded by one of these, both in bounds. */
+		zend_long lastOut = tensor_conv_round_down(nout - TENSOR_CONV_TILE, TENSOR_CONV_TILE);
+
+		if (last > lastOut) {
+			last = lastOut;
+		}
+
 		if (s == 1 && first <= last) {
 			for (zend_long m0 = first; m0 <= last; m0 += TENSOR_CONV_TILE) {
-				tensor_conv_1d_tile_route(vc + m0, va, vbr, m0, nb);
+				tensor_conv_1d_tile_route(vc + m0, va, vbr, m0, nb, p);
 			}
 
-			tensor_conv_1d_range(0, first, s, na, nb, nc, vc, va, vbr);
-			tensor_conv_1d_range(last + TENSOR_CONV_TILE, nout, s, na, nb, nc, vc, va, vbr);
+			tensor_conv_1d_range(0, first, s, nout, na, nb, p, vc, va, vbr);
+			tensor_conv_1d_range(last + TENSOR_CONV_TILE, nout, s, nout, na, nb, p, vc, va, vbr);
 		} else {
-			tensor_conv_1d_range(0, nout, s, na, nb, nc, vc, va, vbr);
+			tensor_conv_1d_range(0, nout, s, nout, na, nb, p, vc, va, vbr);
 		}
 
 		if (UNEXPECTED(heap != NULL)) {
@@ -495,18 +513,20 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride)
 }
 
 /**
- * 2D convolution between a matrix A and B (kernel) with a given stride using the "same" method for zero padding.
+ * 2D convolution between a matrix A and B (kernel) with a given stride and
+ * `padding` zeros added to all four sides of A.
  *
  * @param return_value
  * @param a
  * @param b
  * @param stride
+ * @param padding
  * @param ma
  * @param na
  * @param mb
  * @param nb
  */
-void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, zval * ma, zval * na, zval * mb, zval * nb)
+void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, zval * padding, zval * ma, zval * na, zval * mb, zval * nb)
 {
 	zend_long nbufa = 0, nbufb = 0;
 	int ok_a = 0, ok_b = 0;
@@ -514,6 +534,7 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 	ZVAL_NULL(return_value);
 
 	zend_long s = zephir_get_intval(stride);
+	zend_long p = zephir_get_intval(padding);
 	zend_long ma_ = zephir_get_intval(ma);
 	zend_long na_ = zephir_get_intval(na);
 	zend_long mb_ = zephir_get_intval(mb);
@@ -531,18 +552,13 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 		return;
 	}
 
-	/* "Same" padding anchors the kernel's centre sample on the output sample.
-	 * Using (n - 1) / 2 rather than n / 2 keeps even-sized kernels aligned the
-	 * way numpy and scipy's mode='same' align them. */
-	zend_long p = mb_ > 0 ? (mb_ - 1) / 2 : 0;
-	zend_long q = nb_ > 0 ? (nb_ - 1) / 2 : 0;
+	zend_long span_m = tensor_conv_add(tensor_conv_add(ma_, p), p) - mb_;
+	zend_long span_n = tensor_conv_add(tensor_conv_add(na_, p), p) - nb_;
 
-	zend_long om = ma_ > 0 ? tensor_conv_ceil_div(ma_, s) : 0;
-	zend_long on = na_ > 0 ? tensor_conv_ceil_div(na_, s) : 0;
+	zend_long om = span_m >= 0 ? span_m / s + 1 : 0;
+	zend_long on = span_n >= 0 ? span_n / s + 1 : 0;
 
-	/* om <= ma_ and on <= na_ for s >= 1, so this product cannot overflow and
-	 * is bounded by the input size. */
-	zend_long nout = om * on;
+	zend_long nout = om != 0 && on > ZEND_LONG_MAX / om ? ZEND_LONG_MAX : om * on;
 
 	zval c;
 
@@ -571,54 +587,44 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 
 		tensor_conv_reverse(vbr, vb, mb_, nb_);
 
-		/* See tensor_convolve_1d: the tiles need a unit stride. */
 		zend_long i_first = 0, i_last = -1, j_first = 0, j_last = -1;
+		zend_long c0 = mb_ > 0 ? (mb_ - 1) / 2 : 0;
+		zend_long c1 = nb_ > 0 ? (nb_ - 1) / 2 : 0;
+		zend_long o0 = mb_ - 1 - c0;
+		zend_long o1 = nb_ - 1 - c1;
 
 		if (s == 1) {
-			/* A whole tile of TILE output columns starting at jj0 needs every
-			 * one of its TILE * nb_ taps to land inside the input, in both
-			 * directions: the first output column must sit past the kernel's
-			 * left overhang and the last must sit short of the right one. The
-			 * same argument on the rows gives the row bounds, and each is
-			 * rounded to the tile grid so the tiles neither overlap nor run off
-			 * either end. The last tile also has to fit inside the output row,
-			 * which the -TILE in j_last is what guarantees. */
-			i_first = tensor_conv_round_up(mb_ - 1 - p, TENSOR_CONV_TILE);
-			i_last = tensor_conv_round_down(ma_ - 1 - p, TENSOR_CONV_TILE);
-			j_first = tensor_conv_round_up(nb_ - 1 - q, TENSOR_CONV_TILE);
-			j_last = tensor_conv_round_down(na_ - 1 - TENSOR_CONV_TILE - q, TENSOR_CONV_TILE);
+			i_first = tensor_conv_round_up(p + o0, TENSOR_CONV_TILE);
+			i_last = tensor_conv_round_down(ma_ - 1 + p - c0, TENSOR_CONV_TILE);
+			j_first = tensor_conv_round_up(p + o1, TENSOR_CONV_TILE);
+			j_last = tensor_conv_round_down(na_ + p - c1 - TENSOR_CONV_TILE, TENSOR_CONV_TILE);
+
+			zend_long j_lastOut = tensor_conv_round_down(on - TENSOR_CONV_TILE, TENSOR_CONV_TILE);
+
+			if (j_last > j_lastOut) {
+				j_last = j_lastOut;
+			}
 		}
 
-		/* The two bounds are independent, so a row can be in the tiled row band
-		 * while no whole column tile exists at all -- and again that is the common
-		 * case, since a kernel or an input narrower than the tile produces
-		 * neither. The column test has to be made first, and the per-output path
-		 * has to cover a whole row whenever it fails: the two ranges bracketing
-		 * the column tiles only partition the row between them when there are
-		 * tiles to put between them. */
 		int col_tiled = (s == 1) && j_first <= j_last;
 
 		for (zend_long ii = 0; ii < om; ++ii) {
 			if (EXPECTED(col_tiled && ii >= i_first && ii <= i_last)) {
-				/* The image row the tile kernel starts from: the first image row
-				 * the kernel's topmost tap reads. It walks the rows downward,
-				 * because kernel row k reads image row (ii + p - k) and the
-				 * reversed kernel leaves the row index alone. */
-				const double * restrict img = va + (ii + p) * na_;
+				const double * restrict img = va + (ii - p + c0) * na_;
 
 				tensor_conv_2d_range(ii, 0, j_first, s,
-					ma_, na_, mb_, nb_, p, q, on, nout, vc, va, vbr);
+					ma_, na_, mb_, nb_, p, on, nout, vc, va, vbr);
 
 				for (zend_long jj = j_first; jj <= j_last; jj += TENSOR_CONV_TILE) {
 					tensor_conv_2d_tile_route(vc + ii * on + jj, img, vbr, na_,
-						jj + q - (nb_ - 1), mb_, nb_);
+						jj - p + c1 - (nb_ - 1), mb_, nb_);
 				}
 
 				tensor_conv_2d_range(ii, j_last + TENSOR_CONV_TILE, on, s,
-					ma_, na_, mb_, nb_, p, q, on, nout, vc, va, vbr);
+					ma_, na_, mb_, nb_, p, on, nout, vc, va, vbr);
 			} else {
 				tensor_conv_2d_range(ii, 0, on, s,
-					ma_, na_, mb_, nb_, p, q, on, nout, vc, va, vbr);
+					ma_, na_, mb_, nb_, p, on, nout, vc, va, vbr);
 			}
 		}
 

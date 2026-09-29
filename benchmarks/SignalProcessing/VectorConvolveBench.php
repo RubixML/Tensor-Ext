@@ -52,4 +52,20 @@ class VectorConvolveBench
     {
         $this->a->convolve($this->kernel, 2);
     }
+
+    /**
+     * Padding the input by half the kernel restores the "same" output length,
+     * so this is the shape the old default produced. Benchmarked separately
+     * because every output now also carries the padding offset, and a change
+     * that only speeds the unpadded case up should not be reported as speeding
+     * this one up.
+     *
+     * @Subject
+     * @Iterations(5)
+     * @OutputTimeUnit("milliseconds", precision=3)
+     */
+    public function convolvePadded() : void
+    {
+        $this->a->convolve($this->kernel, 1, 50);
+    }
 }

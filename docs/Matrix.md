@@ -239,14 +239,15 @@ Compute the dot product of this matrix and a vector.
 - **Returns:** `ColumnVector` (product of `$this` and `$b` reshaped as a column matrix)
 - **Throws:** `Tensor\Exceptions\DimensionalityMismatch` if `$this->n !== $b->size()`
 
-### `convolve(Matrix $b, int $stride = 1) : Matrix`
+### `convolve(Matrix $b, int $stride = 1, int $padding = 0) : Matrix`
 
-Return the 2D convolution of this matrix and a kernel matrix with the given stride, using the "same" method for zero padding.
+Return the 2D convolution of this matrix and a kernel matrix with the given
+stride, over an input zero-padded by `$padding` samples on all four sides.
 
-- **Parameters:** `$b` — the kernel matrix, `$stride` — the stride (default `1`)
-- **Returns:** `Matrix` of shape `ceil(m / $stride)` x `ceil(n / $stride)`, i.e. the "same" shape as `$this`, sub-sampled every `$stride` elements
-- **Alignment:** each output sample is anchored on the kernel's centre sample. For odd-sized kernels that is the middle element; for even-sized kernels the second element is used, so results agree with `numpy` and `scipy`'s `mode='same'`
-- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$b` is larger than this matrix or `$stride < 1`
+- **Parameters:** `$b` — the kernel matrix, `$stride` — the stride (default `1`), `$padding` — the number of zeros added on each side (default `0`)
+- **Returns:** `Matrix` of shape `floor((m + 2 * $padding - mB) / $stride) + 1` x `floor((n + 2 * $padding - nB) / $stride) + 1`, the shape `torch.nn.functional.conv2d()` reports for the same arguments. A padding of `0` gives the "valid" convolution (the leading `mB - 1` x `nB - 1` crop of the "same" one).
+- **Alignment:** each output sample is anchored on the kernel's centre sample. For odd-sized kernels that is the middle element; for even-sized kernels the second element is used.
+- **Throws:** `Tensor\Exceptions\InvalidArgumentException` if `$b` is larger than this matrix plus the padding, if `$stride < 1`, or if `$padding < 0`
 
 ### `ref() : REF`
 
