@@ -106,7 +106,7 @@ PHP_METHOD(Tensor_Reductions_Ref, reduce)
 	zephir_check_call_status();
 	ZEPHIR_CALL_METHOD(&_7, a, "n", NULL, 0);
 	zephir_check_call_status();
-	ZEPHIR_CALL_CE_STATIC(&b, tensor_matrix_ce, "fromBuffer", NULL, 0, &_5, &_6, &_7);
+	ZEPHIR_CALL_CE_STATIC(&b, tensor_matrix_ce, "frombuffer", NULL, 0, &_5, &_6, &_7);
 	zephir_check_call_status();
 	zephir_memory_observe(&_8);
 	zephir_array_fetch_long(&_8, &ref, 1, PH_NOISY, "tensor/reductions/ref.zep", 52);

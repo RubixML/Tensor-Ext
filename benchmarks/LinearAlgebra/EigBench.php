@@ -16,7 +16,7 @@ class EigBench
 
     public function setUpGeneral() : void
     {
-        $this->a = Matrix::uniform(512, 1536);
+        $this->a = Matrix::uniform(1024, 1024);
     }
 
     /**

@@ -602,9 +602,9 @@ PHP_METHOD(Tensor_Vector, linspace)
 {
 	zval a;
 	zephir_method_globals *ZEPHIR_METHOD_GLOBALS_PTR = NULL;
-	zephir_fcall_cache_entry *_8 = NULL;
+	zephir_fcall_cache_entry *_9 = NULL;
 	zend_long n, ZEPHIR_LAST_CALL_STATUS, k;
-	zval *min_param = NULL, *max_param = NULL, *n_param = NULL, _0$$4, _1$$4, _2$$4, _3$$4, _4, _5, _6, _7$$5, _9$$5;
+	zval *min_param = NULL, *max_param = NULL, *n_param = NULL, _0$$4, _1$$4, _2$$4, _3$$4, _4, _5, _6, _7, _8$$5, _10$$5;
 	double min, max, interval;
 
 	ZVAL_UNDEF(&_0$$4);
@@ -614,8 +614,9 @@ PHP_METHOD(Tensor_Vector, linspace)
 	ZVAL_UNDEF(&_4);
 	ZVAL_UNDEF(&_5);
 	ZVAL_UNDEF(&_6);
-	ZVAL_UNDEF(&_7$$5);
-	ZVAL_UNDEF(&_9$$5);
+	ZVAL_UNDEF(&_7);
+	ZVAL_UNDEF(&_8$$5);
+	ZVAL_UNDEF(&_10$$5);
 	ZVAL_UNDEF(&a);
 	ZEND_PARSE_PARAMETERS_START(3, 3)
 		Z_PARAM_ZVAL(min_param)
@@ -649,27 +650,29 @@ PHP_METHOD(Tensor_Vector, linspace)
 	ZVAL_DOUBLE(&_4, (max - min));
 	ZEPHIR_CALL_FUNCTION(&_5, "abs", NULL, 7, &_4);
 	zephir_check_call_status();
-	interval =  (zephir_safe_div_zval_long(&_5, k));
+	ZEPHIR_INIT_VAR(&_6);
+	zephir_div_zval_long(&_6, &_5, k);
+	interval = zephir_get_numberval(&_6);
 	ZEPHIR_INIT_VAR(&a);
 	zephir_create_array(&a, 1, 0);
-	ZEPHIR_INIT_VAR(&_6);
-	ZVAL_DOUBLE(&_6, min);
-	zephir_array_fast_append(&a, &_6);
+	ZEPHIR_INIT_VAR(&_7);
+	ZVAL_DOUBLE(&_7, min);
+	zephir_array_fast_append(&a, &_7);
 	while (1) {
 		if (!(zephir_fast_count_int(&a) < k)) {
 			break;
 		}
 		ZEPHIR_MAKE_REF(&a);
-		ZEPHIR_CALL_FUNCTION(&_7$$5, "end", &_8, 8, &a);
+		ZEPHIR_CALL_FUNCTION(&_8$$5, "end", &_9, 8, &a);
 		ZEPHIR_UNREF(&a);
 		zephir_check_call_status();
-		ZEPHIR_INIT_NVAR(&_9$$5);
-		ZVAL_DOUBLE(&_9$$5, (zephir_get_numberval(&_7$$5) + interval));
-		zephir_array_append(&a, &_9$$5, PH_SEPARATE, "tensor/vector.zep", 244);
+		ZEPHIR_INIT_NVAR(&_10$$5);
+		ZVAL_DOUBLE(&_10$$5, (zephir_get_numberval(&_8$$5) + interval));
+		zephir_array_append(&a, &_10$$5, PH_SEPARATE, "tensor/vector.zep", 244);
 	}
-	ZEPHIR_INIT_NVAR(&_6);
-	ZVAL_DOUBLE(&_6, max);
-	zephir_array_append(&a, &_6, PH_SEPARATE, "tensor/vector.zep", 247);
+	ZEPHIR_INIT_NVAR(&_7);
+	ZVAL_DOUBLE(&_7, max);
+	zephir_array_append(&a, &_7, PH_SEPARATE, "tensor/vector.zep", 247);
 	ZVAL_BOOL(&_4, 0);
 	ZEPHIR_RETURN_CALL_SELF("fromArray", NULL, 0, &a, &_4);
 	zephir_check_call_status();
@@ -690,7 +693,7 @@ PHP_METHOD(Tensor_Vector, fromBuffer)
 
 	ZVAL_UNDEF(&a_sub);
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\tensorbuffer")))
+		Z_PARAM_OBJECT_OF_CLASS(a, tensor_tensorbuffer_ce)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
@@ -731,7 +734,7 @@ PHP_METHOD(Tensor_Vector, __construct)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\tensorbuffer")))
+		Z_PARAM_OBJECT_OF_CLASS(a, tensor_tensorbuffer_ce)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
