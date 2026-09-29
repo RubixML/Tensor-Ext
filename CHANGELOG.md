@@ -17,6 +17,12 @@
     - Add `Eigen::eigenvaluesImaginary()` exposes imaginary part of each eigenvalue
     - `Matrix::eig()` no longer discards imaginary part of complex eigenvalue pairs
     - Convolutions now use tiled kernels with FMA and vectorization
+    
+- 3.1.2
+    - Fix extension name
+
+- 3.1.1
+    - Just triggering the first Packagist release
 
 - 3.1.0
 
