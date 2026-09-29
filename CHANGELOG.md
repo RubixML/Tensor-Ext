@@ -1,5 +1,8 @@
 # Change Log
 
+- 3.1.2
+    - Fix extension name
+
 - 3.1.1
     - Just triggering the first Packagist release
 

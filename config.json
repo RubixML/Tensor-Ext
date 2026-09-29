@@ -1,10 +1,10 @@
 {
     "namespace": "tensor",
     "name": "tensor",
-    "extension-name": "tensor_ext",
+    "extension-name": "tensor",
     "description": "Scientific computing for the PHP language.",
     "author": "The Rubix ML Community",
-    "version": "3.1.1",
+    "version": "3.1.2",
     "verbose": true,
     "extra-cflags": "-O3",
     "extra-libs": "-lopenblas -llapacke -lgfortran",
