@@ -1656,10 +1656,7 @@ class Matrix implements Tensor
             let mean = this->mean();
         }
 
-        return this->subtractColumnVector(mean)
-            ->square()
-            ->sum()
-            ->divideScalar(this->n);
+        return this->subtractColumnVector(mean)->square()->mean();
     }
 
     /**

@@ -1630,9 +1630,6 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    /* The composed implementation this replaces reached both of these failures
-     * by way of the row reduction and the column broadcast respectively, so the
-     * exception types and messages are reproduced exactly. */
     if (UNEXPECTED(ma < 1)) {
         zephir_throw_exception_string(spl_ce_InvalidArgumentException,
             SL("Number of groups must be greater than 0."));
@@ -1671,16 +1668,8 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
 
     double * vc = zephir_buffer_doubles(&c);
 
-    /* B'B is symmetric, so dsyrk performs half the multiplies a dgemm would and
-     * the 1/n folds into the scale factor, leaving no separate division pass.
-     * B is already row-major and N x K as dsyrk wants it, and only the upper
-     * triangle of the output is written. */
-    cblas_dsyrk(CblasRowMajor, CblasUpper, CblasNoTrans, (blasint) ma, (blasint) na,
-        1.0 / (double) na, vb, (blasint) na, 0.0, vc, (blasint) ma);
+    cblas_dsyrk(CblasRowMajor, CblasUpper, CblasNoTrans, (blasint) ma, (blasint) na, 1.0 / (double) na, vb, (blasint) na, 0.0, vc, (blasint) ma);
 
-    /* Copy the untouched triangle across so the whole buffer is populated. Which
-     * triangle dsyrk filled is immaterial: the product is symmetric, so either
-     * half already holds a full set of pairwise covariances. */
     for (i = 0; i < ma; ++i) {
         for (j = i + 1; j < ma; ++j) {
             vc[j * ma + i] = vc[i * ma + j];
