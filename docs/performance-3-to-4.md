@@ -24,7 +24,8 @@ Some operations were benchmarked on fewer than three sizes. Where an operation w
 | Vector Product | 2.76 ms | 0.38 ms | 7.3x |
 | Conv 1d | 25.58 / 14.96 ms | 2.93 / 5.52 ms | 8.7x / 2.7x |
 | Conv 2d | 30.87 / 10.76 ms | 5.77 / 3.5 ms | 5.4x / 3.1x |
-| Matrix Flatten | 19.63 / 310.58 / 1241.25 ms | 0.005 / 0.007 / 0.005 ms | 3926x / 44369x / 248250x |
+| Matrix Transpose | 0.016/0.278/1.284 s | 0.009/0.146/0.635 s | 1.7x / 1.9x / 2.0x |
+| Matrix Flatten | 19.63 / 310.58 / 1241.25 ms | 0.005 / 0.007 / 0.005 ms | 3,926x / 44,369x / 248,250x |
 | Matrix Abs | 25.37 / 388.31 / 1560.48 ms | 5.49 / 60.91 / 273.71 ms | 4.6x / 6.4x / 5.7x |
 | Matrix sqrt | 31.3 / 479.84 / 1947.15 ms | 5.63 / 61.91 / 283.25 ms | 5.6x / 7.8x / 6.9x |
 | Matrix Exp | 28.66 / 440.60 / 1765.33 ms | 13.2 / 116.51 / 536.88 ms | 2.2x / 3.8x / 3.3x |
