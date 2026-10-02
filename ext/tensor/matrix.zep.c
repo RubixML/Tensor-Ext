@@ -414,14 +414,13 @@ PHP_METHOD(Tensor_Matrix, fill)
 	ZVAL_UNDEF(&_12);
 	ZVAL_UNDEF(&_13);
 	ZEND_PARSE_PARAMETERS_START(3, 3)
-		Z_PARAM_ZVAL(value_param)
+		Z_PARAM_DOUBLE(value)
 		Z_PARAM_LONG(m)
 		Z_PARAM_LONG(n)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 3, 0, &value_param, &m_param, &n_param);
-	value = zephir_get_doubleval(value_param);
 	if (UNEXPECTED(m < 1)) {
 		ZEPHIR_INIT_VAR(&_0$$3);
 		object_init_ex(&_0$$3, tensor_exceptions_invalidargumentexception_ce);
@@ -1741,7 +1740,7 @@ PHP_METHOD(Tensor_Matrix, reduce)
 	ZEND_PARSE_PARAMETERS_START(1, 2)
 		Z_PARAM_ZVAL(callback)
 		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL(initial_param)
+		Z_PARAM_DOUBLE(initial)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
@@ -1749,8 +1748,7 @@ PHP_METHOD(Tensor_Matrix, reduce)
 	if (!initial_param) {
 		initial = 0.0;
 	} else {
-		initial = zephir_get_doubleval(initial_param);
-	}
+		}
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZEPHIR_CALL_METHOD(&_1, &_0, "toArray", NULL, 0);
 	zephir_check_call_status();
@@ -3797,7 +3795,7 @@ PHP_METHOD(Tensor_Matrix, log)
 
 	ZEND_PARSE_PARAMETERS_START(0, 1)
 		Z_PARAM_OPTIONAL
-		Z_PARAM_ZVAL(base_param)
+		Z_PARAM_DOUBLE(base)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
@@ -3805,8 +3803,7 @@ PHP_METHOD(Tensor_Matrix, log)
 	if (!base_param) {
 		base = 2.7182818284590452354;
 	} else {
-		base = zephir_get_doubleval(base_param);
-	}
+		}
 	if (UNEXPECTED(base <= 0.0)) {
 		ZEPHIR_INIT_VAR(&_0$$3);
 		object_init_ex(&_0$$3, tensor_exceptions_invalidargumentexception_ce);
@@ -4654,12 +4651,11 @@ PHP_METHOD(Tensor_Matrix, quantile)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(q_param)
+		Z_PARAM_DOUBLE(q)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &q_param);
-	q = zephir_get_doubleval(q_param);
 	ZVAL_DOUBLE(&_0, q);
 	ZEPHIR_CALL_FUNCTION(&_1, "is_finite", NULL, 12, &_0);
 	zephir_check_call_status();
@@ -5169,14 +5165,12 @@ PHP_METHOD(Tensor_Matrix, clip)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(2, 2)
-		Z_PARAM_ZVAL(min_param)
-		Z_PARAM_ZVAL(max_param)
+		Z_PARAM_DOUBLE(min)
+		Z_PARAM_DOUBLE(max)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 2, 0, &min_param, &max_param);
-	min = zephir_get_doubleval(min_param);
-	max = zephir_get_doubleval(max_param);
 	if (UNEXPECTED(min > max)) {
 		ZEPHIR_INIT_VAR(&_0$$3);
 		object_init_ex(&_0$$3, tensor_exceptions_invalidargumentexception_ce);
@@ -5234,12 +5228,11 @@ PHP_METHOD(Tensor_Matrix, clipLower)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(min_param)
+		Z_PARAM_DOUBLE(min)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &min_param);
-	min = zephir_get_doubleval(min_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, min);
@@ -5285,12 +5278,11 @@ PHP_METHOD(Tensor_Matrix, clipUpper)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(max_param)
+		Z_PARAM_DOUBLE(max)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &max_param);
-	max = zephir_get_doubleval(max_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, max);
@@ -8923,12 +8915,11 @@ PHP_METHOD(Tensor_Matrix, multiplyScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -8974,12 +8965,11 @@ PHP_METHOD(Tensor_Matrix, divideScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9025,12 +9015,11 @@ PHP_METHOD(Tensor_Matrix, addScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9076,12 +9065,11 @@ PHP_METHOD(Tensor_Matrix, subtractScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9127,12 +9115,11 @@ PHP_METHOD(Tensor_Matrix, powScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9178,12 +9165,11 @@ PHP_METHOD(Tensor_Matrix, modScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9229,12 +9215,11 @@ PHP_METHOD(Tensor_Matrix, equalScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9280,12 +9265,11 @@ PHP_METHOD(Tensor_Matrix, notEqualScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9331,12 +9315,11 @@ PHP_METHOD(Tensor_Matrix, greaterScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9383,12 +9366,11 @@ PHP_METHOD(Tensor_Matrix, greaterEqualScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9434,12 +9416,11 @@ PHP_METHOD(Tensor_Matrix, lessScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
@@ -9486,12 +9467,11 @@ PHP_METHOD(Tensor_Matrix, lessEqualScalar)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_ZVAL(b_param)
+		Z_PARAM_DOUBLE(b)
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
 	zephir_fetch_params(1, 1, 0, &b_param);
-	b = zephir_get_doubleval(b_param);
 	ZEPHIR_INIT_VAR(&buffer);
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 15, PH_NOISY_CC | PH_READONLY);
 	ZVAL_DOUBLE(&_1, b);
