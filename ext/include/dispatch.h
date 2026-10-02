@@ -69,10 +69,6 @@ typedef void (*tensor_convolve_2d_fn)(zval * return_value, zval * a, zval * b, z
 #	define TENSOR_X86_DISPATCH 1
 #	define TENSOR_TARGET_AVX __attribute__((target("avx")))
 #	define TENSOR_TARGET_AVX512 __attribute__((target("avx512f")))
-/* The FMA routes are separate from the AVX and AVX-512 ones above, and neither
- * implies the other: a CPU can have 256-bit AVX and no FMA3 (Sandy Bridge, Ivy
- * Bridge), and `target("avx512f")` on its own leaves GCC emitting a packed
- * multiply and add rather than a fused one. */
 #	define TENSOR_TARGET_FMA __attribute__((target("avx,fma")))
 #	define TENSOR_TARGET_AVX512_FMA __attribute__((target("avx512f,fma")))
 #else

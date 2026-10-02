@@ -15,7 +15,7 @@
 
 /* Values wrapped up by the kernel Buffer used in the unary operations below.
  * Returns a reference to a newly created `Tensor\TensorBuffer` holding the
- * mapped doubles.  Each operation expands into its own dedicated loop so the
+ * mapped doubles. Each operation expands into its own dedicated loop so the
  * optimizer can vectorize the elementwise mapping instead of being blocked by
  * an indirect call.
  *
@@ -24,7 +24,7 @@
  * compiled three times, once at the extension's baseline ISA and once each
  * under TENSOR_TARGET_AVX and TENSOR_TARGET_AVX512 so the loop widens from two
  * doubles per vector to four or eight, with a route pointer deciding which one
- * runs.  The body is a macro rather than a shared helper so that the baseline
+ * runs. The body is a macro rather than a shared helper so that the baseline
  * and the AVX and AVX-512 copies are the same text -- there is no second
  * definition that could drift.
  *
@@ -95,6 +95,10 @@ TENSOR_UNARY_DISPATCH(deg2rad, (va[i] / 180.0) * M_PI)
 
 #undef TENSOR_UNARY_DISPATCH
 #undef TENSOR_UNARY_BODY
+
+/**
+ * These unary operations are not vectorized for one reason or another.
+ */
 
 #define TENSOR_UNARY(name, expr)                                                             \
 	void tensor_##name(zval * return_value, zval * a)                                    \
@@ -314,6 +318,9 @@ static double tensor_math_round(double value, int places)
 	return tmp_value;
 }
 
+/**
+ * PHP-compatible implementation of rounding to a specified number of decimal places.
+ */
 void tensor_round(zval * return_value, zval * a, zval * precision)
 {
 	zend_long i;
