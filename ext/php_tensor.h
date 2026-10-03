@@ -14,7 +14,7 @@
 #define PHP_TENSOR_VERSION     "4.0.0"
 #define PHP_TENSOR_EXTNAME     "tensor"
 #define PHP_TENSOR_AUTHOR      "The Rubix ML Community"
-#define PHP_TENSOR_ZEPVERSION  "1.6.0-$Id$"
+#define PHP_TENSOR_ZEPVERSION  "1.6.1-$Id$"
 #define PHP_TENSOR_DESCRIPTION "Scientific computing for the PHP language."
 
 
