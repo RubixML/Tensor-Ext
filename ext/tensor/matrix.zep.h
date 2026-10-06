@@ -76,6 +76,7 @@ PHP_METHOD(Tensor_Matrix, expm1);
 PHP_METHOD(Tensor_Matrix, log);
 PHP_METHOD(Tensor_Matrix, log1p);
 PHP_METHOD(Tensor_Matrix, sigmoid);
+PHP_METHOD(Tensor_Matrix, softplus);
 PHP_METHOD(Tensor_Matrix, sin);
 PHP_METHOD(Tensor_Matrix, asin);
 PHP_METHOD(Tensor_Matrix, cos);
@@ -433,6 +434,9 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_log1p, 0, 0, Tensor
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_sigmoid, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_softplus, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_sin, 0, 0, Tensor\\Matrix, 0)
@@ -848,6 +852,7 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, log, arginfo_tensor_matrix_log, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, log1p, arginfo_tensor_matrix_log1p, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, sigmoid, arginfo_tensor_matrix_sigmoid, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, softplus, arginfo_tensor_matrix_softplus, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, sin, arginfo_tensor_matrix_sin, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, asin, arginfo_tensor_matrix_asin, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, cos, arginfo_tensor_matrix_cos, ZEND_ACC_PUBLIC)

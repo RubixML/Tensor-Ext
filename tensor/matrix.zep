@@ -1428,7 +1428,17 @@ class Matrix implements Tensor
     {
         return new self(tensor_sigmoid(this->a), this->m, this->n);
     }
- 
+
+    /**
+     * Return the element-wise softplus i.e. log(1 + exp(x)).
+     *
+     * @return self
+     */
+    public function softplus() -> <Matrix>
+    {
+        return new self(tensor_softplus(this->a), this->m, this->n);
+    }
+
     /**
      * Return the sine of the matrix.
      *

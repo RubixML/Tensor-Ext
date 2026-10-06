@@ -59,6 +59,7 @@ PHP_METHOD(Tensor_Vector, expm1);
 PHP_METHOD(Tensor_Vector, log);
 PHP_METHOD(Tensor_Vector, log1p);
 PHP_METHOD(Tensor_Vector, sigmoid);
+PHP_METHOD(Tensor_Vector, softplus);
 PHP_METHOD(Tensor_Vector, sin);
 PHP_METHOD(Tensor_Vector, asin);
 PHP_METHOD(Tensor_Vector, cos);
@@ -343,6 +344,9 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_log1p, 0, 0, Tensor
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_sigmoid, 0, 0, Tensor\\Vector, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_softplus, 0, 0, Tensor\\Vector, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_sin, 0, 0, Tensor\\Vector, 0)
@@ -669,6 +673,7 @@ PHP_ME(Tensor_Vector, transpose, arginfo_tensor_vector_transpose, ZEND_ACC_PUBLI
 	PHP_ME(Tensor_Vector, log, arginfo_tensor_vector_log, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, log1p, arginfo_tensor_vector_log1p, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, sigmoid, arginfo_tensor_vector_sigmoid, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, softplus, arginfo_tensor_vector_softplus, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, sin, arginfo_tensor_vector_sin, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, asin, arginfo_tensor_vector_asin, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, cos, arginfo_tensor_vector_cos, ZEND_ACC_PUBLIC)

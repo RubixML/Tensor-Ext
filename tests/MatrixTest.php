@@ -3656,6 +3656,69 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function softplus() : void
+    {
+        $a = Matrix::fromArray([
+            [13.0, 1.0, -13.0, 0.5],
+            [11.0, -1.0, -11.0, -0.5],
+            [9.0, 0.0, -9.0, 2.5],
+        ]);
+
+        $b = $a->softplus();
+
+        $expected = Matrix::fromArray([
+            [13.000002260327, 1.3132616875182, 2.2603268524372e-6, 0.97407698418011],
+            [11.000016701561, 0.31326168751822, 1.6701561318304e-5, 0.47407698418011],
+            [9.0001234021897, 0.69314718055995, 0.00012340218972334, 2.5788897342925],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large positive input must not overflow the exponential that softplus
+     * evaluates and must saturate to x, and a large negative one to 0.
+     *
+     * @test
+     */
+    public function softplusSaturates() : void
+    {
+        $a = Matrix::fromArray([
+            [-800.0, 800.0, -1000.0],
+            [-745.0, 745.0, 0.0],
+        ]);
+
+        $b = $a->softplus()->asArray();
+
+        $this->assertLessThan(1e-300, $b[0][0]);
+        $this->assertSame(800.0, $b[0][1]);
+        $this->assertLessThan(1e-300, $b[0][2]);
+        $this->assertLessThan(1e-300, $b[1][0]);
+        $this->assertSame(745.0, $b[1][1]);
+        $this->assertEqualsWithDelta(log(2.0), $b[1][2], self::MAX_DELTA);
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function softplusMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(8.0)->subtract(4.0);
+
+        $e = $a->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add(1.0)->log()->asArray(),
+            $a->softplus()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
     public function tanh() : void
     {
         $a = Matrix::fromArray([

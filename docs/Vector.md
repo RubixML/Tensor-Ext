@@ -308,6 +308,7 @@ See [Unary](interfaces/unary.md). Each method returns a new `Vector`.
 - `log(float $base = M_E) : self` — log to the given base of each element
 - `log1p() : self` — log of 1 plus each element
 - `sigmoid() : self` — element-wise logistic function, `1 / (1 + exp(-x))`
+- `softplus() : self` — element-wise softplus, `log(1 + exp(x))`
 - `round(int $precision = 0) : self` — round the elements to a given decimal place (throws `InvalidArgumentException` if `$precision < 0`)
 - `floor() : self` — round down to the nearest integer
 - `ceil() : self` — round up to the nearest integer

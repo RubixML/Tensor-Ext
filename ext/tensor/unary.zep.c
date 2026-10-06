@@ -71,6 +71,12 @@ ZEPHIR_DOC_METHOD(Tensor_Unary, log1p);
  */
 ZEPHIR_DOC_METHOD(Tensor_Unary, sigmoid);
 /**
+ * Return the element-wise softplus i.e. log(1 + exp(x)).
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Unary, softplus);
+/**
  * Round the elements in the tensor to a given decimal place.
  *
  * @param int precision

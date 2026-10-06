@@ -1012,6 +1012,16 @@ class Vector implements Tensor
     }
 
     /**
+     * Return the element-wise softplus i.e. log(1 + exp(x)).
+     *
+     * @return self
+     */
+    public function softplus() -> <Vector>
+    {
+        return new static(tensor_softplus(this->a));
+    }
+
+    /**
      * Return the sine of this vector.
      *
      * @return self

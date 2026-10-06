@@ -146,6 +146,7 @@ class VectorTest extends TestCase
             'round',
             'sigmoid',
             'sign',
+            'softplus',
             'sqrt',
             'square',
         ], $methods);
@@ -2110,6 +2111,59 @@ class VectorTest extends TestCase
         $this->assertEqualsWithDelta(
             $e->divide($e->add(1.0))->asArray(),
             $a->sigmoid()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function softplus() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = $a->softplus();
+
+        $expected = Vector::fromArray([
+            4.0181499279178, 6.5015023101598, 2.953562776218,
+            20.000000002061, 2.6716446919677, 11.900006790382,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large positive input must not overflow the exponential that softplus
+     * evaluates and must saturate to x, and a large negative one to 0.
+     *
+     * @test
+     */
+    public function softplusSaturates() : void
+    {
+        $a = Vector::fromArray([-800.0, 800.0, 0.0, -1000.0]);
+
+        $b = $a->softplus()->asArray();
+
+        $this->assertSame(0.0, $b[0]);
+        $this->assertSame(800.0, $b[1]);
+        $this->assertEqualsWithDelta(log(2.0), $b[2], self::MAX_DELTA);
+        $this->assertSame(0.0, $b[3]);
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function softplusMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(8.0)->subtract(4.0);
+
+        $e = $a->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add(1.0)->log()->asArray(),
+            $a->softplus()->asArray(),
             self::MAX_DELTA
         );
     }

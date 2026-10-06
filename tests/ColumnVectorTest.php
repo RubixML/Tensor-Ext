@@ -441,6 +441,17 @@ class ColumnVectorTest extends TestCase
     /**
      * @test
      */
+    public function softplusReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->softplus();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([1.3132616875182, 0.31326168751822, 0.69314718055995], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
     public function tanhReturnsColumnVector() : void
     {
         $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->tanh();
