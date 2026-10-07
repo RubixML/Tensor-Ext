@@ -221,6 +221,10 @@ class Vector implements Tensor
                 . " when the end is greater than the start.");
         }
 
+if unlikely !is_finite(start) || !is_finite(end) || !is_finite(interval) {
+            throw new InvalidArgumentException("Start, end, and interval must be finite.");
+        }
+
         if unlikely start != end && abs(end - start) < abs(interval) {
             throw new InvalidArgumentException("Interval must be smaller"
                 . " than the range spanned by the start and end.");
