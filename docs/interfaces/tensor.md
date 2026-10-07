@@ -20,10 +20,10 @@ interface Tensor extends ArrayLike, Arithmetic, Comparable,
 | [ArrayLike](arraylike.md) | `shape`, `shapeString`, `size`, `map`, `reduce`, `asArray` |
 | [Arithmetic](arithmetic.md) | `multiply`, `divide`, `add`, `subtract`, `pow`, `mod` |
 | [Comparable](comparable.md) | `equal`, `notEqual`, `greater`, `greaterEqual`, `less`, `lessEqual` |
-| [Unary](unary.md) | `abs`, `square`, `sqrt`, `rsqrt`, `exp`, `expm1`, `log`, `log1p`, `sigmoid`, `softplus`, `round`, `floor`, `ceil`, `sign`, `negate`, `clip`, `clipLower`, `clipUpper` |
+| [Unary](unary.md) | `abs`, `square`, `sqrt`, `rsqrt`, `exp`, `expm1`, `log`, `log1p`, `round`, `floor`, `ceil`, `sign`, `negate`, `clip`, `clipLower`, `clipUpper` |
 | [Trigonometric](trigonometric.md) | `sin`, `asin`, `cos`, `acos`, `tan`, `atan`, `tanh`, `sinh`, `cosh`, `rad2deg`, `deg2rad` |
 | [Reductions](reductions.md) | `sum`, `product`, `min`, `max`, `argmin`, `argmax`, `mean`, `variance`, `median`, `quantile` |
-| [Special](special.md) | `softmax`, `erf` |
+| [Special](special.md) | `sigmoid`, `softplus`, `softmax`, `erf` |
 
 Every group is homogeneous in what it does to the tensor's shape: `Arithmetic`,
 `Comparable`, `Unary`, and `Trigonometric` are element-wise and preserve it,
