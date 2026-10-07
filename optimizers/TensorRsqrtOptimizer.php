@@ -26,7 +26,7 @@ class TensorRsqrtOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 1) {
             throw new CompilerException(
-                'Tensor rsqrt accepts exactly 1 argument, ' . count($expression['parameters']) . 'given.',
+                'Tensor rsqrt accepts exactly 1 argument, ' . count($expression['parameters']) . ' given.',
                 $expression
             );
         }
