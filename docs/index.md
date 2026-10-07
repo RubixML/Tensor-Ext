@@ -55,7 +55,7 @@ Tensor \
 | [Unary](interfaces/unary.md) | Element-wise unary functions, including clipping. |
 | [Trigonometric](interfaces/trigonometric.md) | Element-wise trigonometric functions. |
 | [Reductions](interfaces/reductions.md) | Aggregate reduction operations, including the statistical summaries. |
-| [Special](interfaces/special.md) | Operations that fit no other group, such as `softmax` and the error-function`erf`. |
+| [Special](interfaces/special.md) | Operations that fit no other group, such as `softmax` and the error-function `erf`. |
 
 ## Decompositions
 
