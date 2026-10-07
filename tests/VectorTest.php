@@ -144,9 +144,7 @@ class VectorTest extends TestCase
             'log1p',
             'negate',
             'round',
-            'sigmoid',
             'sign',
-            'softplus',
             'sqrt',
             'square',
         ], $methods);
@@ -2415,39 +2413,6 @@ class VectorTest extends TestCase
         $a = Vector::fromArray([100.0, -100.0]);
 
         $this->assertSame([1.0, -1.0], $a->erf()->asArray());
-    }
-
-    /**
-     * @test
-     */
-    public function cerf() : void
-    {
-        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0]);
-
-        $b = $a->cerf();
-
-        $expected = Vector::fromArray([
-            1.0, 0.6778917379565147, 0.05786714438636991,
-            1.184166495500776, 0.3734350706420337, 0.0365456020727383,
-        ]);
-
-        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
-    }
-
-    /**
-     * The scaled form stays finite for large inputs where the unscaled
-     * erfc would underflow.
-     *
-     * @test
-     */
-    public function cerfStaysFinite() : void
-    {
-        $a = Vector::fromArray([50.0, -50.0]);
-
-        $b = $a->cerf()->asArray();
-
-        $this->assertTrue(is_finite($b[0]));
-        $this->assertTrue(is_finite($b[1]));
     }
 
     /**

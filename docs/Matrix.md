@@ -469,11 +469,10 @@ See [Reductions](interfaces/reductions.md). For a `Matrix`, row-wise reductions 
 
 ## Special
 
-See [Special](interfaces/special.md). `softmax()` preserves the shape of the matrix; `erf()` and `cerf()` are element-wise.
+See [Special](interfaces/special.md). `softmax()` preserves the shape of the matrix; `erf()` is element-wise.
 
 - `softmax() : self` — exponentials normalized so each **row** sums to `1.0`; transpose on either side to normalize each column
 - `erf() : self` — element-wise Gaussian error function
-- `cerf() : self` — element-wise scaled complementary error function, `exp(-x^2) * erfc(-x)`
 
 ## Array Access
 

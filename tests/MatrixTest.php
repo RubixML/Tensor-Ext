@@ -4409,44 +4409,6 @@ class MatrixTest extends TestCase
     }
 
     /**
-     * @test
-     */
-    public function cerf() : void
-    {
-        $a = Matrix::fromArray([
-            [0.0, 1.0, -1.0],
-            [0.5, -0.5, 2.0],
-        ]);
-
-        $b = $a->cerf();
-
-        $expected = Matrix::fromArray([
-            [1.0, 0.6778917379565147, 0.05786714438636991],
-            [1.184166495500776, 0.3734350706420337, 0.0365456020727383],
-        ]);
-
-        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
-    }
-
-    /**
-     * The scaled form stays finite for large inputs where the unscaled
-     * erfc would underflow.
-     *
-     * @test
-     */
-    public function cerfStaysFinite() : void
-    {
-        $a = Matrix::fromArray([
-            [50.0, -50.0],
-        ]);
-
-        $b = $a->cerf()->asArray()[0];
-
-        $this->assertTrue(is_finite($b[0]));
-        $this->assertTrue(is_finite($b[1]));
-    }
-
-    /**
      * A single row is one group, so it normalizes to one across its width.
      *
      * @test

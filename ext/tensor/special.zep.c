@@ -20,6 +20,18 @@ ZEPHIR_INIT_CLASS(Tensor_Special)
 }
 
 /**
+ * Return the element-wise logistic function i.e. 1 / (1 + exp(-x)).
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Special, sigmoid);
+/**
+ * Return the element-wise softplus i.e. log(1 + exp(x)).
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Special, softplus);
+/**
  * Return the softmax of the tensor i.e. each row normalized to sum to 1.
  *
  * @return mixed
@@ -31,10 +43,3 @@ ZEPHIR_DOC_METHOD(Tensor_Special, softmax);
  * @return mixed
  */
 ZEPHIR_DOC_METHOD(Tensor_Special, erf);
-/**
- * Return the element-wise scaled complementary error function,
- * i.e. exp(-x^2) * erfc(-x).
- *
- * @return mixed
- */
-ZEPHIR_DOC_METHOD(Tensor_Special, cerf);

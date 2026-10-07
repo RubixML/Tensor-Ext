@@ -1303,17 +1303,6 @@ class Vector implements Tensor
     }
 
     /**
-     * Return the element-wise scaled complementary error function,
-     * i.e. exp(-x^2) * erfc(-x).
-     *
-     * @return self
-     */
-    public function cerf() -> <Vector>
-    {
-        return new static(tensor_cerf(this->a));
-    }
-
-    /**
      * Return the variance of the vector.
      *
      * @param mixed mean

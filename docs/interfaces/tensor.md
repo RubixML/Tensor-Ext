@@ -23,12 +23,12 @@ interface Tensor extends ArrayLike, Arithmetic, Comparable,
 | [Unary](unary.md) | `abs`, `square`, `sqrt`, `exp`, `expm1`, `log`, `log1p`, `sigmoid`, `softplus`, `round`, `floor`, `ceil`, `sign`, `negate`, `clip`, `clipLower`, `clipUpper` |
 | [Trigonometric](trigonometric.md) | `sin`, `asin`, `cos`, `acos`, `tan`, `atan`, `tanh`, `sinh`, `cosh`, `rad2deg`, `deg2rad` |
 | [Reductions](reductions.md) | `sum`, `product`, `min`, `max`, `argmin`, `argmax`, `mean`, `variance`, `median`, `quantile` |
-| [Special](special.md) | `softmax`, `erf`, `cerf` |
+| [Special](special.md) | `softmax`, `erf` |
 
 Every group is homogeneous in what it does to the tensor's shape: `Arithmetic`,
 `Comparable`, `Unary`, and `Trigonometric` are element-wise and preserve it,
 `Reductions` collapse it, and `ArrayLike` is about access rather than arithmetic.
-`Special` is the escape hatch for operations that fit no other group, such as shape-preserving cross-axis operations like `softmax()` and the element-wise error-function family `erf()` / `cerf()`.
+`Special` is the escape hatch for operations that fit no other group, such as shape-preserving cross-axis operations like `softmax()` and the element-wise error-function family `erf()`.
 
 Additionally, because `ArrayLike` extends `ArrayAccess`, `IteratorAggregate`, and `Countable`, every tensor is array-accessible, iterable, and countable.
 

@@ -16,7 +16,6 @@ void tensor_tanh(zval * return_value, zval * a);
 void tensor_sinh(zval * return_value, zval * a);
 void tensor_cosh(zval * return_value, zval * a);
 void tensor_erf(zval * return_value, zval * a);
-void tensor_cerf(zval * return_value, zval * a);
 void tensor_sin(zval * return_value, zval * a);
 void tensor_asin(zval * return_value, zval * a);
 void tensor_cos(zval * return_value, zval * a);

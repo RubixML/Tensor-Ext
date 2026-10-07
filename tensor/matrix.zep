@@ -1672,17 +1672,6 @@ class Matrix implements Tensor
     }
 
     /**
-     * Return the element-wise scaled complementary error function,
-     * i.e. exp(-x^2) * erfc(-x).
-     *
-     * @return self
-     */
-    public function cerf() -> <Matrix>
-    {
-        return new self(tensor_cerf(this->a), this->m, this->n);
-    }
-
-    /**
      * Compute the row variance of the matrix.
      *
      * @param \Tensor\ColumnVector|null mean

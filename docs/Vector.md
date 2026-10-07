@@ -351,11 +351,10 @@ See [Reductions](interfaces/reductions.md). For a `Vector` these return scalar `
 
 ## Special
 
-See [Special](interfaces/special.md). `softmax()` preserves the shape of the vector; `erf()` and `cerf()` are element-wise.
+See [Special](interfaces/special.md). `softmax()` preserves the shape of the vector; `erf()` is element-wise.
 
 - `softmax() : self` — the exponentials of the vector normalized so they sum to `1.0`
 - `erf() : self` — element-wise Gaussian error function
-- `cerf() : self` — element-wise scaled complementary error function, `exp(-x^2) * erfc(-x)`
 
 ## Array Access
 
