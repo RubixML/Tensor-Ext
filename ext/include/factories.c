@@ -178,3 +178,96 @@ void tensor_random_gaussian(zval * return_value, zval * n)
 
 	zval_ptr_dtor(&c);
 }
+
+/**
+ * Create a tensor with `n` evenly spaced values between `min` and `max`,
+ * inclusive of both endpoints. Values are accumulated from `min` toward
+ * `max`, with the final element forced to `max` to guarantee exact endpoint.
+ * The caller is responsible for rejecting n < 2 or min > max.
+ */
+void tensor_linspace(zval * return_value, zval * min, zval * max, zval * n)
+{
+	zend_long length = zephir_get_intval(n);
+	double lo = zephir_get_doubleval(min);
+	double hi = zephir_get_doubleval(max);
+	zval c;
+
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, length, &c) == FAILURE)) {
+		return;
+	}
+
+	double * vc = zephir_buffer_doubles(&c);
+
+	double step = fabs(hi - lo) / (double) (length - 1);
+
+	zend_long i;
+
+	vc[0] = lo;
+
+	for (i = 1; i < length - 1; ++i) {
+		vc[i] = vc[i - 1] + step;
+	}
+
+	vc[length - 1] = hi;
+
+	zval_ptr_dtor(&c);
+}
+
+/**
+ * Create a tensor mirroring PHP's `range($start, $end, $step)` semantics:
+ * values are `start + i*step` (or `start - i*|step|` for decreasing range),
+ * generated until the value crosses `end`. The caller must reject a zero step,
+ * a step with the wrong sign for the direction of traversal, and a step
+ * whose magnitude exceeds the span. Equal start/end yields a single-element
+ * tensor holding that value.
+ */
+void tensor_range(zval * return_value, zval * start, zval * end, zval * interval)
+{
+	double s = zephir_get_doubleval(start);
+	double e = zephir_get_doubleval(end);
+	double st = fabs(zephir_get_doubleval(interval));
+
+	zval c;
+
+	if (s == e) {
+		if (UNEXPECTED(tensor_tensorbuffer_create(return_value, 1, &c) == FAILURE)) {
+			return;
+		}
+
+		double * vc = zephir_buffer_doubles(&c);
+
+		vc[0] = s;
+
+		zval_ptr_dtor(&c);
+
+		return;
+	}
+
+	int increasing = e > s;
+	double sign = increasing ? 1.0 : -1.0;
+
+	zend_long count = 0;
+	zend_long i;
+
+	for (i = 0; ; ++i) {
+		double el = s + ((double) i) * st * sign;
+
+		if ((increasing && el > e) || (!increasing && el < e)) {
+			break;
+		}
+
+		++count;
+	}
+
+	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, count, &c) == FAILURE)) {
+		return;
+	}
+
+	double * vc = zephir_buffer_doubles(&c);
+
+	for (i = 0; i < count; ++i) {
+		vc[i] = s + ((double) i) * st * sign;
+	}
+
+	zval_ptr_dtor(&c);
+}

@@ -42,4 +42,22 @@ void tensor_random_uniform_pm1(zval * return_value, zval * n);
  */
 void tensor_random_gaussian(zval * return_value, zval * n);
 
+/**
+ * Allocate a fresh `Tensor\TensorBuffer` of `n` elements holding the evenly
+ * spaced values between `min` and `max` (inclusive of both endpoints). Values
+ * are accumulated from `min` toward `max`, with the final element forced to
+ * `max`. The caller must reject `n < 2` and `min > max`.
+ */
+void tensor_linspace(zval * return_value, zval * min, zval * max, zval * n);
+
+/**
+ * Allocate a fresh `Tensor\TensorBuffer` mirroring PHP's
+ * `range($start, $end, $interval)`: values are `start ± i*|interval|`,
+ * generated until the value crosses `end`. Equal start/end yields a
+ * single-element buffer. The caller must reject a zero interval, an interval
+ * whose sign disagrees with the traversal direction (for increasing ranges),
+ * and an interval whose magnitude exceeds the span.
+ */
+void tensor_range(zval * return_value, zval * start, zval * end, zval * interval);
+
 #endif
