@@ -16,6 +16,21 @@ interface Special
 
 ## Methods
 
+### `sigmoid() : mixed`
+
+Return the element-wise logistic function, `1 / (1 + exp(-x))`.
+
+A large negative input saturates to exactly `0.0` and a large positive one to
+exactly `1.0`, so the result never overflows to an infinity.
+
+### `softplus() : mixed`
+
+Return the element-wise softplus, `log(1 + exp(x))`.
+
+The computation is numerically stable: for a large positive input it reduces to
+`x + log1p(0) == x` and for a large negative input to `log1p(0) == 0.0`, so the
+result never overflows to an infinity.
+
 ### `softmax() : mixed`
 
 Return the softmax of the tensor, i.e. the exponentials of its elements

@@ -425,8 +425,6 @@ See [Unary](interfaces/unary.md). Each method returns a new `Matrix`.
 - `expm1() : self` — exponential of each element minus 1
 - `log(float $base = M_E) : self` — logarithm of the matrix in the specified base
 - `log1p() : self` — log of 1 plus each element
-- `sigmoid() : self` — element-wise logistic function, `1 / (1 + exp(-x))`
-- `softplus() : self` — element-wise softplus, `log(1 + exp(x))`
 - `round(int $precision = 0) : self` — round the elements to a given decimal place (throws `InvalidArgumentException` if `$precision < 0`)
 - `floor() : self` — round down to the nearest integer
 - `ceil() : self` — round up to the nearest integer
@@ -472,6 +470,8 @@ See [Reductions](interfaces/reductions.md). For a `Matrix`, row-wise reductions 
 
 See [Special](interfaces/special.md). `softmax()` preserves the shape of the matrix; `erf()` is element-wise.
 
+- `sigmoid() : self` — element-wise logistic function, `1 / (1 + exp(-x))`
+- `softplus() : self` — element-wise softplus, `log(1 + exp(x))`
 - `softmax() : self` — exponentials normalized so each **row** sums to `1.0`; transpose on either side to normalize each column
 - `erf() : self` — element-wise Gaussian error function
 
