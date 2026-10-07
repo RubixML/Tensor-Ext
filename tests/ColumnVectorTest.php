@@ -441,12 +441,67 @@ class ColumnVectorTest extends TestCase
     /**
      * @test
      */
+    public function softplusReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->softplus();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([1.3132616875182, 0.31326168751822, 0.69314718055995], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
     public function tanhReturnsColumnVector() : void
     {
         $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->tanh();
 
         $this->assertInstanceOf(ColumnVector::class, $b);
         $this->assertEqualsWithDelta([0.76159415595576485, -0.76159415595576485, 0.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function sinhReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->sinh();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([1.1752011936438014, -1.1752011936438014, 0.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function coshReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->cosh();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([1.5430806348152437, 1.5430806348152437, 1.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function erfReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->erf();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([0.8427007929497148, -0.8427007929497148, 0.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function rsqrtReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([4.0, 9.0, 0.25])->rsqrt();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([0.5, 0.3333333333333333, 2.0], $b->asArray(), 1e-8);
     }
 
     /**

@@ -26,6 +26,10 @@ Square the tensor.
 
 Return the square root of the tensor.
 
+### `rsqrt() : mixed`
+
+Return the reciprocal square root of the tensor.
+
 ### `reciprocal() : mixed`
 
 Return the element-wise reciprocal of the tensor.
@@ -48,13 +52,6 @@ Return the logarithm of the tensor in a specified base.
 ### `log1p() : mixed`
 
 Return the log of 1 plus the tensor, i.e. a transform.
-
-### `sigmoid() : mixed`
-
-Return the element-wise logistic function, `1 / (1 + exp(-x))`.
-
-A large negative input saturates to exactly `0.0` and a large positive one to
-exactly `1.0`, so the result never overflows to an infinity.
 
 ### `round(int $precision = 0) : self`
 

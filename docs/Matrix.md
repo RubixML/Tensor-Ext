@@ -419,12 +419,12 @@ See [Unary](interfaces/unary.md). Each method returns a new `Matrix`.
 - `abs() : self` — absolute value of each element
 - `square() : self` — square of the matrix element-wise
 - `sqrt() : self` — square root of the matrix
+- `rsqrt() : self` — reciprocal square root of the matrix
 - `reciprocal() : self` — element-wise reciprocal of the matrix
 - `exp() : self` — exponential of the matrix
 - `expm1() : self` — exponential of each element minus 1
 - `log(float $base = M_E) : self` — logarithm of the matrix in the specified base
 - `log1p() : self` — log of 1 plus each element
-- `sigmoid() : self` — element-wise logistic function, `1 / (1 + exp(-x))`
 - `round(int $precision = 0) : self` — round the elements to a given decimal place (throws `InvalidArgumentException` if `$precision < 0`)
 - `floor() : self` — round down to the nearest integer
 - `ceil() : self` — round up to the nearest integer
@@ -445,6 +445,8 @@ See [Trigonometric](interfaces/trigonometric.md). Each method returns a new `Mat
 - `tan()` — tangent of the matrix
 - `atan()` — arc tangent of the matrix
 - `tanh() : self` — element-wise hyperbolic tangent
+- `sinh() : self` — element-wise hyperbolic sine
+- `cosh() : self` — element-wise hyperbolic cosine
 - `rad2deg()` — convert angles from radians to degrees
 - `deg2rad()` — convert angles from degrees to radians
 
@@ -466,9 +468,12 @@ See [Reductions](interfaces/reductions.md). For a `Matrix`, row-wise reductions 
 
 ## Special
 
-See [Special](interfaces/special.md). These preserve the shape of the matrix without being element-wise.
+See [Special](interfaces/special.md). `softmax()` preserves the shape of the matrix; `erf()` is element-wise.
 
+- `sigmoid() : self` — element-wise logistic function, `1 / (1 + exp(-x))`
+- `softplus() : self` — element-wise softplus, `log(1 + exp(x))`
 - `softmax() : self` — exponentials normalized so each **row** sums to `1.0`; transpose on either side to normalize each column
+- `erf() : self` — element-wise Gaussian error function
 
 ## Array Access
 

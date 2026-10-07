@@ -959,6 +959,16 @@ if unlikely !is_finite(start) || !is_finite(end) || !is_finite(interval) {
     }
 
     /**
+     * Return the reciprocal square root of the vector.
+     *
+     * @return self
+     */
+    public function rsqrt() -> <Vector>
+    {
+        return new static(tensor_rsqrt(this->a));
+    }
+
+    /**
      * Exponentiate each element in the vector.
      *
      * @return self
@@ -1016,6 +1026,16 @@ if unlikely !is_finite(start) || !is_finite(end) || !is_finite(interval) {
     public function sigmoid() -> <Vector>
     {
         return new static(tensor_sigmoid(this->a));
+    }
+
+    /**
+     * Return the element-wise softplus i.e. log(1 + exp(x)).
+     *
+     * @return self
+     */
+    public function softplus() -> <Vector>
+    {
+        return new static(tensor_softplus(this->a));
     }
 
     /**
@@ -1086,6 +1106,26 @@ if unlikely !is_finite(start) || !is_finite(end) || !is_finite(interval) {
     public function tanh() -> <Vector>
     {
         return new static(tensor_tanh(this->a));
+    }
+
+    /**
+     * Return the element-wise hyperbolic sine of the vector.
+     *
+     * @return self
+     */
+    public function sinh() -> <Vector>
+    {
+        return new static(tensor_sinh(this->a));
+    }
+
+    /**
+     * Return the element-wise hyperbolic cosine of the vector.
+     *
+     * @return self
+     */
+    public function cosh() -> <Vector>
+    {
+        return new static(tensor_cosh(this->a));
     }
 
     /**
@@ -1267,6 +1307,16 @@ if unlikely !is_finite(start) || !is_finite(end) || !is_finite(interval) {
     public function softmax() -> <Vector>
     {
         return new static(tensor_softmax(this->a, this->n));
+    }
+
+    /**
+     * Return the element-wise Gaussian error function.
+     *
+     * @return self
+     */
+    public function erf() -> <Vector>
+    {
+        return new static(tensor_erf(this->a));
     }
 
     /**
