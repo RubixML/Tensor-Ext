@@ -495,6 +495,147 @@ class VectorTest extends TestCase
 
     /**
      * @test
+     */
+    public function linspaceEndpoints() : void
+    {
+        $vector = Vector::linspace(0.0, 10.0, 11);
+
+        $expected = Vector::fromArray([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]);
+
+        $this->assertEquals($expected->asArray(), $vector->asArray());
+        $this->assertSame(11, count($vector->asArray()));
+        $this->assertSame(0.0, $vector->asArray()[0]);
+        $this->assertSame(10.0, $vector->asArray()[10]);
+    }
+
+    /**
+     * @test
+     */
+    public function rangeDescending() : void
+    {
+        $vector = Vector::range(5.0, 1.0, 2.0);
+
+        $expected = Vector::fromArray([5.0, 3.0, 1.0]);
+
+        $this->assertEquals($expected->asArray(), $vector->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function rangeDescendingNegativeStep() : void
+    {
+        $vector = Vector::range(5.0, 1.0, -1.0);
+
+        $expected = Vector::fromArray([5.0, 4.0, 3.0, 2.0, 1.0]);
+
+        $this->assertEquals($expected->asArray(), $vector->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function rangeEqualEndpoints() : void
+    {
+        $vector = Vector::range(3.5, 3.5, 2.0);
+
+        $expected = Vector::fromArray([3.5]);
+
+        $this->assertEquals($expected->asArray(), $vector->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function rangeFloatStep() : void
+    {
+        $vector = Vector::range(0.0, 1.0, 0.25);
+
+        $expected = Vector::fromArray(array_map('floatval', array_values(range(0.0, 1.0, 0.25))));
+
+        $this->assertEquals($expected->asArray(), $vector->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function rangeNegativeIntervalOnIncreasingThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Vector::range(1.0, 5.0, -1.0);
+    }
+
+    /**
+     * @test
+     */
+    public function rangeZeroIntervalThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Vector::range(1.0, 5.0, 0.0);
+    }
+
+    /**
+     * @test
+     */
+    public function rangeIntervalSpansMoreThanTheRangeThrows() : void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Vector::range(1.0, 5.0, 10.0);
+    }
+
+    /**
+     * @test
+     */
+    public function rangeMatchesPhpRangeAcrossGrid() : void
+    {
+        $starts = [0.0, 1.0, 5.0, -5.0, 10.0, 2.5];
+        $ends = [1.0, 5.0, 12.0, 0.0, 10.0, 1.0];
+        $steps = [1.0, 0.5, 2.0, 2.5, 0.3, 0.1];
+
+        foreach ($starts as $start) {
+            foreach ($ends as $end) {
+                foreach ($steps as $step) {
+                    if ($start > $end && $step < 0.0) {
+                        continue;
+                    }
+
+                    if ($start < $end && $step < 0.0) {
+                        continue;
+                    }
+
+                    if ($start == $end) {
+                        continue;
+                    }
+
+                    if (abs($end - $start) < abs($step)) {
+                        continue;
+                    }
+
+                    $expected = array_map('floatval', array_values(range($start, $end, $step)));
+                    $actual = Vector::range($start, $end, $step)->asArray();
+
+                    $this->assertSame(
+                        $expected,
+                        $actual,
+                        sprintf(
+                            'range(%s, %s, %s) mismatch: %s !== %s',
+                            $start,
+                            $end,
+                            $step,
+                            json_encode($actual),
+                            json_encode($expected)
+                        )
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * @test
      * @dataProvider shapeProvider
      *
      * @param Vector $vector

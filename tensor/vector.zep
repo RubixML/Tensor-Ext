@@ -207,11 +207,30 @@ class Vector implements Tensor
      * @param float start
      * @param float end
      * @param float interval
+     * @throws \Tensor\Exceptions\InvalidArgumentException
      * @return self
      */
     public static function range(const float start, const float end, const float interval = 1.0) -> <Vector>
     {
-        return static::fromArray(range(start, end, interval), false);
+        if unlikely interval == 0.0 {
+            throw new InvalidArgumentException("Interval cannot be zero.");
+        }
+
+        if unlikely end > start && interval < 0.0 {
+            throw new InvalidArgumentException("Interval must be positive"
+                . " when the end is greater than the start.");
+        }
+
+if unlikely !is_finite(start) || !is_finite(end) || !is_finite(interval) {
+            throw new InvalidArgumentException("Start, end, and interval must be finite.");
+        }
+
+        if unlikely start != end && abs(end - start) < abs(interval) {
+            throw new InvalidArgumentException("Interval must be smaller"
+                . " than the range spanned by the start and end.");
+        }
+
+        return new static(tensor_range(start, end, interval));
     }
 
     /**
@@ -234,19 +253,7 @@ class Vector implements Tensor
                 . " must be greater than 1, " . strval(n) . " given.");
         }
 
-        int k = n - 1;
-
-        float interval = abs(max - min) / k;
-
-        array a = [min];
-
-        while count(a) < k {
-            let a[] = end(a) + interval;
-        }
-
-        let a[] = max;
-
-        return self::fromArray(a, false);
+        return new static(tensor_linspace(min, max, n));
     }
 
     /**
