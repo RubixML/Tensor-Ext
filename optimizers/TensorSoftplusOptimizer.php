@@ -26,7 +26,7 @@ class TensorSoftplusOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 1) {
             throw new CompilerException(
-                'Tensor softplus accepts exactly 1 argument, ' . count($expression['parameters']) . 'given.',
+                'Tensor softplus accepts exactly 1 argument, ' . count($expression['parameters']) . ' given.',
                 $expression
             );
         }
