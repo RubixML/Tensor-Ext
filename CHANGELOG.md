@@ -1,5 +1,8 @@
 # Change Log
 
+- 4.0.1
+    - Optimize Vector `range()` and `linspace()` factories
+
 - 4.0.0
     - Data are now backed by a contiguous C buffer instead of PHP array
     - Added `fromArray()` factory method to build from PHP array
