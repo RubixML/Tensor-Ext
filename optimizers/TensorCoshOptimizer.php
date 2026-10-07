@@ -26,7 +26,7 @@ class TensorCoshOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 1) {
             throw new CompilerException(
-                'Tensor cosh accepts exactly 1 argument, ' . count($expression['parameters']) . 'given.',
+                'Tensor cosh accepts exactly 1 argument, ' . count($expression['parameters']) . ' given.',
                 $expression
             );
         }

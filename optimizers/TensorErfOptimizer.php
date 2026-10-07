@@ -26,7 +26,7 @@ class TensorErfOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 1) {
             throw new CompilerException(
-                'Tensor erf accepts exactly 1 argument, ' . count($expression['parameters']) . 'given.',
+                'Tensor erf accepts exactly 1 argument, ' . count($expression['parameters']) . ' given.',
                 $expression
             );
         }
