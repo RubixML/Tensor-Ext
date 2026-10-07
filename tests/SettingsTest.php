@@ -118,6 +118,7 @@ class SettingsTest extends TestCase
             );
 
             $positive = array_values(array_filter($a, fn ($x) => $x > 0.0));
+
             if (!empty($positive)) {
                 $vpos = Vector::fromArray($positive);
                 $this->assertSame(
