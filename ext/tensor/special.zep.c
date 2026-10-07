@@ -25,3 +25,16 @@ ZEPHIR_INIT_CLASS(Tensor_Special)
  * @return mixed
  */
 ZEPHIR_DOC_METHOD(Tensor_Special, softmax);
+/**
+ * Return the element-wise Gaussian error function.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Special, erf);
+/**
+ * Return the element-wise scaled complementary error function,
+ * i.e. exp(-x^2) * erfc(-x).
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Special, cerf);

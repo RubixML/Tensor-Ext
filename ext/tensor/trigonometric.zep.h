@@ -24,6 +24,12 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_trigonometric_tanh, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_trigonometric_sinh, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_trigonometric_cosh, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_trigonometric_rad2deg, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
@@ -38,6 +44,8 @@ ZEPHIR_INIT_FUNCS(tensor_trigonometric_method_entry) {
 	PHP_ABSTRACT_ME(Tensor_Trigonometric, tan, arginfo_tensor_trigonometric_tan)
 	PHP_ABSTRACT_ME(Tensor_Trigonometric, atan, arginfo_tensor_trigonometric_atan)
 	PHP_ABSTRACT_ME(Tensor_Trigonometric, tanh, arginfo_tensor_trigonometric_tanh)
+	PHP_ABSTRACT_ME(Tensor_Trigonometric, sinh, arginfo_tensor_trigonometric_sinh)
+	PHP_ABSTRACT_ME(Tensor_Trigonometric, cosh, arginfo_tensor_trigonometric_cosh)
 	PHP_ABSTRACT_ME(Tensor_Trigonometric, rad2deg, arginfo_tensor_trigonometric_rad2deg)
 	PHP_ABSTRACT_ME(Tensor_Trigonometric, deg2rad, arginfo_tensor_trigonometric_deg2rad)
 	PHP_FE_END

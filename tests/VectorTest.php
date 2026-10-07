@@ -2218,6 +2218,76 @@ class VectorTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function sinh() : void
+    {
+        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0]);
+
+        $this->assertSame(0.0, $a->sinh()->asArray()[0]);
+
+        $this->assertEqualsWithDelta(
+            array_map('sinh', $a->asArray()),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp difference composition it replaces.
+     *
+     * @test
+     */
+    public function sinhMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->subtract($em)->multiply(0.5)->asArray(),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function cosh() : void
+    {
+        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0]);
+
+        $this->assertSame(1.0, $a->cosh()->asArray()[0]);
+
+        $this->assertEqualsWithDelta(
+            array_map('cosh', $a->asArray()),
+            $a->cosh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp sum composition it replaces.
+     *
+     * @test
+     */
+    public function coshMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add($em)->multiply(0.5)->asArray(),
+            $a->cosh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
      * A vector softmax normalizes the whole vector, as a single row, so the
      * result sums to one.
      *
@@ -2315,6 +2385,69 @@ class VectorTest extends TestCase
         $a->softmax();
 
         $this->assertSame($before, $a->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function erf() : void
+    {
+        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0, 10.0]);
+
+        $b = $a->erf();
+
+        $expected = Vector::fromArray([
+            0.0, 0.8427007929497148, -0.8427007929497148,
+            0.5204998778130465, -0.5204998778130465,
+            0.9953222650189527, 1.0,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large input saturates to exactly +/-1.0 rather than an infinity.
+     *
+     * @test
+     */
+    public function erfSaturates() : void
+    {
+        $a = Vector::fromArray([100.0, -100.0]);
+
+        $this->assertSame([1.0, -1.0], $a->erf()->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function cerf() : void
+    {
+        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0]);
+
+        $b = $a->cerf();
+
+        $expected = Vector::fromArray([
+            1.0, 0.6778917379565147, 0.05786714438636991,
+            1.184166495500776, 0.3734350706420337, 0.0365456020727383,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * The scaled form stays finite for large inputs where the unscaled
+     * erfc would underflow.
+     *
+     * @test
+     */
+    public function cerfStaysFinite() : void
+    {
+        $a = Vector::fromArray([50.0, -50.0]);
+
+        $b = $a->cerf()->asArray();
+
+        $this->assertTrue(is_finite($b[0]));
+        $this->assertTrue(is_finite($b[1]));
     }
 
     /**

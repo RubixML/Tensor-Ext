@@ -1092,6 +1092,26 @@ class Vector implements Tensor
     }
 
     /**
+     * Return the element-wise hyperbolic sine of the vector.
+     *
+     * @return self
+     */
+    public function sinh() -> <Vector>
+    {
+        return new static(tensor_sinh(this->a));
+    }
+
+    /**
+     * Return the element-wise hyperbolic cosine of the vector.
+     *
+     * @return self
+     */
+    public function cosh() -> <Vector>
+    {
+        return new static(tensor_cosh(this->a));
+    }
+
+    /**
      * Convert angles from radians to degrees.
      *
      * @return self
@@ -1270,6 +1290,27 @@ class Vector implements Tensor
     public function softmax() -> <Vector>
     {
         return new static(tensor_softmax(this->a, this->n));
+    }
+
+    /**
+     * Return the element-wise Gaussian error function.
+     *
+     * @return self
+     */
+    public function erf() -> <Vector>
+    {
+        return new static(tensor_erf(this->a));
+    }
+
+    /**
+     * Return the element-wise scaled complementary error function,
+     * i.e. exp(-x^2) * erfc(-x).
+     *
+     * @return self
+     */
+    public function cerf() -> <Vector>
+    {
+        return new static(tensor_cerf(this->a));
     }
 
     /**

@@ -329,6 +329,8 @@ See [Trigonometric](interfaces/trigonometric.md). Each method returns a new `Vec
 - `tan()` — tangent of the vector
 - `atan()` — arc tangent of the vector
 - `tanh() : self` — element-wise hyperbolic tangent
+- `sinh() : self` — element-wise hyperbolic sine
+- `cosh() : self` — element-wise hyperbolic cosine
 - `rad2deg()` — convert angles from radians to degrees
 - `deg2rad()` — convert angles from degrees to radians
 
@@ -349,9 +351,11 @@ See [Reductions](interfaces/reductions.md). For a `Vector` these return scalar `
 
 ## Special
 
-See [Special](interfaces/special.md). These preserve the shape of the vector without being element-wise.
+See [Special](interfaces/special.md). `softmax()` preserves the shape of the vector; `erf()` and `cerf()` are element-wise.
 
 - `softmax() : self` — the exponentials of the vector normalized so they sum to `1.0`
+- `erf() : self` — element-wise Gaussian error function
+- `cerf() : self` — element-wise scaled complementary error function, `exp(-x^2) * erfc(-x)`
 
 ## Array Access
 

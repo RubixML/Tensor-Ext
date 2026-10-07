@@ -142,6 +142,10 @@ TENSOR_UNARY(acos, acos(va[i]))
 TENSOR_UNARY(tan, tan(va[i]))
 TENSOR_UNARY(atan, atan(va[i]))
 TENSOR_UNARY(tanh, tanh(va[i]))
+TENSOR_UNARY(sinh, sinh(va[i]))
+TENSOR_UNARY(cosh, cosh(va[i]))
+TENSOR_UNARY(erf, erf(va[i]))
+TENSOR_UNARY(cerf, exp(-va[i] * va[i]) * erfc(-va[i]))
 
 #undef TENSOR_UNARY
 

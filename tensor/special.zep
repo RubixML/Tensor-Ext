@@ -8,4 +8,19 @@ interface Special
       * @return mixed
       */
      public function softmax();
+
+     /**
+      * Return the element-wise Gaussian error function.
+      *
+      * @return mixed
+      */
+     public function erf();
+
+     /**
+      * Return the element-wise scaled complementary error function,
+      * i.e. exp(-x^2) * erfc(-x).
+      *
+      * @return mixed
+      */
+     public function cerf();
 }

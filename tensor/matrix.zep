@@ -1508,6 +1508,26 @@ class Matrix implements Tensor
     {
         return new self(tensor_tanh(this->a), this->m, this->n);
     }
+
+    /**
+     * Return the element-wise hyperbolic sine of the matrix.
+     *
+     * @return self
+     */
+    public function sinh() -> <Matrix>
+    {
+        return new self(tensor_sinh(this->a), this->m, this->n);
+    }
+
+    /**
+     * Return the element-wise hyperbolic cosine of the matrix.
+     *
+     * @return self
+     */
+    public function cosh() -> <Matrix>
+    {
+        return new self(tensor_cosh(this->a), this->m, this->n);
+    }
  
     /**
      * Convert angles from radians to degrees.
@@ -1639,6 +1659,27 @@ class Matrix implements Tensor
     public function softmax() -> <Matrix>
     {
         return new self(tensor_softmax(this->a, this->n), this->m, this->n);
+    }
+
+    /**
+     * Return the element-wise Gaussian error function.
+     *
+     * @return self
+     */
+    public function erf() -> <Matrix>
+    {
+        return new self(tensor_erf(this->a), this->m, this->n);
+    }
+
+    /**
+     * Return the element-wise scaled complementary error function,
+     * i.e. exp(-x^2) * erfc(-x).
+     *
+     * @return self
+     */
+    public function cerf() -> <Matrix>
+    {
+        return new self(tensor_cerf(this->a), this->m, this->n);
     }
 
     /**

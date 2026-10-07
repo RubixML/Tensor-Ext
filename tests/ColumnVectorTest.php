@@ -463,6 +463,50 @@ class ColumnVectorTest extends TestCase
     /**
      * @test
      */
+    public function sinhReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->sinh();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([1.1752011936438014, -1.1752011936438014, 0.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function coshReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->cosh();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([1.5430806348152437, 1.5430806348152437, 1.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function erfReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->erf();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([0.8427007929497148, -0.8427007929497148, 0.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
+    public function cerfReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([1.0, -1.0, 0.0])->cerf();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([0.6778917379565147, 0.05786714438636991, 1.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
     public function sizes() : void
     {
         $a = ColumnVector::fromArray([1.0, 2.0, 3.0]);

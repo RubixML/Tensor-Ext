@@ -84,6 +84,8 @@ PHP_METHOD(Tensor_Matrix, acos);
 PHP_METHOD(Tensor_Matrix, tan);
 PHP_METHOD(Tensor_Matrix, atan);
 PHP_METHOD(Tensor_Matrix, tanh);
+PHP_METHOD(Tensor_Matrix, sinh);
+PHP_METHOD(Tensor_Matrix, cosh);
 PHP_METHOD(Tensor_Matrix, rad2deg);
 PHP_METHOD(Tensor_Matrix, deg2rad);
 PHP_METHOD(Tensor_Matrix, sum);
@@ -96,6 +98,8 @@ PHP_METHOD(Tensor_Matrix, mean);
 PHP_METHOD(Tensor_Matrix, median);
 PHP_METHOD(Tensor_Matrix, quantile);
 PHP_METHOD(Tensor_Matrix, softmax);
+PHP_METHOD(Tensor_Matrix, erf);
+PHP_METHOD(Tensor_Matrix, cerf);
 PHP_METHOD(Tensor_Matrix, variance);
 PHP_METHOD(Tensor_Matrix, covariance);
 PHP_METHOD(Tensor_Matrix, round);
@@ -460,6 +464,12 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_tanh, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_sinh, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_cosh, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_rad2deg, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
@@ -495,6 +505,12 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_quantile, 0, 1, Ten
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_softmax, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_erf, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_cerf, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_variance, 0, 0, Tensor\\ColumnVector, 0)
@@ -860,6 +876,8 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, tan, arginfo_tensor_matrix_tan, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, atan, arginfo_tensor_matrix_atan, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, tanh, arginfo_tensor_matrix_tanh, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, sinh, arginfo_tensor_matrix_sinh, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, cosh, arginfo_tensor_matrix_cosh, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, rad2deg, arginfo_tensor_matrix_rad2deg, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, deg2rad, arginfo_tensor_matrix_deg2rad, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, sum, arginfo_tensor_matrix_sum, ZEND_ACC_PUBLIC)
@@ -872,6 +890,8 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, median, arginfo_tensor_matrix_median, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, quantile, arginfo_tensor_matrix_quantile, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, softmax, arginfo_tensor_matrix_softmax, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, erf, arginfo_tensor_matrix_erf, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, cerf, arginfo_tensor_matrix_cerf, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, variance, arginfo_tensor_matrix_variance, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, covariance, arginfo_tensor_matrix_covariance, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, round, arginfo_tensor_matrix_round, ZEND_ACC_PUBLIC)

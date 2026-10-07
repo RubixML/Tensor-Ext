@@ -3782,6 +3782,88 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function sinh() : void
+    {
+        $a = Matrix::fromArray([
+            [0.0, 1.0, -1.0],
+            [0.5, -0.5, 2.0],
+        ]);
+
+        $this->assertSame(0.0, $a->sinh()->asArray()[0][0]);
+
+        $this->assertEqualsWithDelta(
+            array_map(
+                static fn (array $row) : array => array_map('sinh', $row),
+                $a->asArray()
+            ),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp difference composition it replaces.
+     *
+     * @test
+     */
+    public function sinhMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->subtract($em)->multiply(0.5)->asArray(),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function cosh() : void
+    {
+        $a = Matrix::fromArray([
+            [0.0, 1.0, -1.0],
+            [0.5, -0.5, 2.0],
+        ]);
+
+        $this->assertSame(1.0, $a->cosh()->asArray()[0][0]);
+
+        $this->assertEqualsWithDelta(
+            array_map(
+                static fn (array $row) : array => array_map('cosh', $row),
+                $a->asArray()
+            ),
+            $a->cosh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp sum composition it replaces.
+     *
+     * @test
+     */
+    public function coshMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add($em)->multiply(0.5)->asArray(),
+            $a->cosh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
     public function sin() : void
     {
         $a = Matrix::fromArray([
@@ -4290,6 +4372,78 @@ class MatrixTest extends TestCase
         $a->softmax();
 
         $this->assertSame($before, $a->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function erf() : void
+    {
+        $a = Matrix::fromArray([
+            [0.0, 1.0, -1.0],
+            [0.5, -0.5, 2.0],
+        ]);
+
+        $b = $a->erf();
+
+        $expected = Matrix::fromArray([
+            [0.0, 0.8427007929497148, -0.8427007929497148],
+            [0.5204998778130465, -0.5204998778130465, 0.9953222650189527],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large input saturates to exactly +/-1.0 rather than an infinity.
+     *
+     * @test
+     */
+    public function erfSaturates() : void
+    {
+        $a = Matrix::fromArray([
+            [100.0, -100.0],
+        ]);
+
+        $this->assertSame([1.0, -1.0], $a->erf()->asArray()[0]);
+    }
+
+    /**
+     * @test
+     */
+    public function cerf() : void
+    {
+        $a = Matrix::fromArray([
+            [0.0, 1.0, -1.0],
+            [0.5, -0.5, 2.0],
+        ]);
+
+        $b = $a->cerf();
+
+        $expected = Matrix::fromArray([
+            [1.0, 0.6778917379565147, 0.05786714438636991],
+            [1.184166495500776, 0.3734350706420337, 0.0365456020727383],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * The scaled form stays finite for large inputs where the unscaled
+     * erfc would underflow.
+     *
+     * @test
+     */
+    public function cerfStaysFinite() : void
+    {
+        $a = Matrix::fromArray([
+            [50.0, -50.0],
+        ]);
+
+        $b = $a->cerf()->asArray()[0];
+
+        $this->assertTrue(is_finite($b[0]));
+        $this->assertTrue(is_finite($b[1]));
     }
 
     /**
