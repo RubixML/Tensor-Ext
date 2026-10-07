@@ -56,6 +56,20 @@ interface Trigonometric
     public function tanh();
 
     /**
+     * Return the element-wise hyperbolic sine.
+     *
+     * @return mixed
+     */
+    public function sinh();
+
+    /**
+     * Return the element-wise hyperbolic cosine.
+     *
+     * @return mixed
+     */
+    public function cosh();
+
+    /**
      * Convert angles from radians to degrees.
      *
      * @return mixed

@@ -144,7 +144,7 @@ class VectorTest extends TestCase
             'log1p',
             'negate',
             'round',
-            'sigmoid',
+            'rsqrt',
             'sign',
             'sqrt',
             'square',
@@ -2176,6 +2176,23 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function rsqrt() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = $a->rsqrt();
+
+        $expected = Vector::fromArray([
+            0.5, 0.3922322702763681, 0.5872202195147035, 0.22360679774997896,
+            0.6201736729460422, 0.28988551782622424,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
     public function exp() : void
     {
         $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
@@ -2258,6 +2275,59 @@ class VectorTest extends TestCase
     /**
      * @test
      */
+    public function softplus() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = $a->softplus();
+
+        $expected = Vector::fromArray([
+            4.0181499279178, 6.5015023101598, 2.953562776218,
+            20.000000002061, 2.6716446919677, 11.900006790382,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large positive input must not overflow the exponential that softplus
+     * evaluates and must saturate to x, and a large negative one to 0.
+     *
+     * @test
+     */
+    public function softplusSaturates() : void
+    {
+        $a = Vector::fromArray([-800.0, 800.0, 0.0, -1000.0]);
+
+        $b = $a->softplus()->asArray();
+
+        $this->assertSame(0.0, $b[0]);
+        $this->assertSame(800.0, $b[1]);
+        $this->assertEqualsWithDelta(log(2.0), $b[2], self::MAX_DELTA);
+        $this->assertSame(0.0, $b[3]);
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function softplusMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(8.0)->subtract(4.0);
+
+        $e = $a->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add(1.0)->log()->asArray(),
+            $a->softplus()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
     public function tanh() : void
     {
         $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
@@ -2300,6 +2370,76 @@ class VectorTest extends TestCase
         $this->assertEqualsWithDelta(
             $e->subtract($em)->divide($e->add($em))->asArray(),
             $a->tanh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function sinh() : void
+    {
+        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0]);
+
+        $this->assertSame(0.0, $a->sinh()->asArray()[0]);
+
+        $this->assertEqualsWithDelta(
+            array_map('sinh', $a->asArray()),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp difference composition it replaces.
+     *
+     * @test
+     */
+    public function sinhMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->subtract($em)->multiply(0.5)->asArray(),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function cosh() : void
+    {
+        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0]);
+
+        $this->assertSame(1.0, $a->cosh()->asArray()[0]);
+
+        $this->assertEqualsWithDelta(
+            array_map('cosh', $a->asArray()),
+            $a->cosh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp sum composition it replaces.
+     *
+     * @test
+     */
+    public function coshMatchesComposition() : void
+    {
+        $a = Vector::rand(257)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add($em)->multiply(0.5)->asArray(),
+            $a->cosh()->asArray(),
             self::MAX_DELTA
         );
     }
@@ -2402,6 +2542,36 @@ class VectorTest extends TestCase
         $a->softmax();
 
         $this->assertSame($before, $a->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function erf() : void
+    {
+        $a = Vector::fromArray([0.0, 1.0, -1.0, 0.5, -0.5, 2.0, 10.0]);
+
+        $b = $a->erf();
+
+        $expected = Vector::fromArray([
+            0.0, 0.8427007929497148, -0.8427007929497148,
+            0.5204998778130465, -0.5204998778130465,
+            0.9953222650189527, 1.0,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large input saturates to exactly +/-1.0 rather than an infinity.
+     *
+     * @test
+     */
+    public function erfSaturates() : void
+    {
+        $a = Vector::fromArray([100.0, -100.0]);
+
+        $this->assertSame([1.0, -1.0], $a->erf()->asArray());
     }
 
     /**

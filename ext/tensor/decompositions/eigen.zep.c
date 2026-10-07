@@ -103,7 +103,7 @@ PHP_METHOD(Tensor_Decompositions_Eigen, decompose)
 	ZVAL_UNDEF(&_6$$5);
 	ZVAL_UNDEF(&_7$$5);
 	ZEND_PARSE_PARAMETERS_START(1, 2)
-		Z_PARAM_OBJECT_OF_CLASS(a, tensor_matrix_ce)
+		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
 		Z_PARAM_OPTIONAL
 		Z_PARAM_BOOL(symmetric)
 	ZEND_PARSE_PARAMETERS_END();
@@ -199,9 +199,9 @@ PHP_METHOD(Tensor_Decompositions_Eigen, __construct)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(3, 3)
-		Z_PARAM_OBJECT_OF_CLASS(eigenvalues, tensor_vector_ce)
-		Z_PARAM_OBJECT_OF_CLASS(eigenvectors, tensor_matrix_ce)
-		Z_PARAM_OBJECT_OF_CLASS(eigenvaluesImaginary, tensor_vector_ce)
+		Z_PARAM_OBJECT_OF_CLASS(eigenvalues, zephir_get_internal_ce(SL("tensor\\vector")))
+		Z_PARAM_OBJECT_OF_CLASS(eigenvectors, zephir_get_internal_ce(SL("tensor\\matrix")))
+		Z_PARAM_OBJECT_OF_CLASS(eigenvaluesImaginary, zephir_get_internal_ce(SL("tensor\\vector")))
 	ZEND_PARSE_PARAMETERS_END();
 	zephir_fetch_params_without_memory_grow(3, 0, &eigenvalues, &eigenvectors, &eigenvaluesImaginary);
 	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 6, eigenvalues);

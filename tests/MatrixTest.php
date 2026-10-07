@@ -3479,6 +3479,26 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function rsqrt() : void
+    {
+        $a = Matrix::fromArray([
+            [4.0, 9.0],
+            [16.0, 25.0],
+        ]);
+
+        $b = $a->rsqrt();
+
+        $expected = Matrix::fromArray([
+            [0.5, 0.3333333333333333],
+            [0.25, 0.2],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
     public function exp() : void
     {
         $a = Matrix::fromArray([
@@ -3656,6 +3676,69 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function softplus() : void
+    {
+        $a = Matrix::fromArray([
+            [13.0, 1.0, -13.0, 0.5],
+            [11.0, -1.0, -11.0, -0.5],
+            [9.0, 0.0, -9.0, 2.5],
+        ]);
+
+        $b = $a->softplus();
+
+        $expected = Matrix::fromArray([
+            [13.000002260327, 1.3132616875182, 2.2603268524372e-6, 0.97407698418011],
+            [11.000016701561, 0.31326168751822, 1.6701561318304e-5, 0.47407698418011],
+            [9.0001234021897, 0.69314718055995, 0.00012340218972334, 2.5788897342925],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large positive input must not overflow the exponential that softplus
+     * evaluates and must saturate to x, and a large negative one to 0.
+     *
+     * @test
+     */
+    public function softplusSaturates() : void
+    {
+        $a = Matrix::fromArray([
+            [-800.0, 800.0, -1000.0],
+            [-745.0, 745.0, 0.0],
+        ]);
+
+        $b = $a->softplus()->asArray();
+
+        $this->assertLessThan(1e-300, $b[0][0]);
+        $this->assertSame(800.0, $b[0][1]);
+        $this->assertLessThan(1e-300, $b[0][2]);
+        $this->assertLessThan(1e-300, $b[1][0]);
+        $this->assertSame(745.0, $b[1][1]);
+        $this->assertEqualsWithDelta(log(2.0), $b[1][2], self::MAX_DELTA);
+    }
+
+    /**
+     * The fused kernel must agree with the composition it replaces, elementwise.
+     *
+     * @test
+     */
+    public function softplusMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(8.0)->subtract(4.0);
+
+        $e = $a->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add(1.0)->log()->asArray(),
+            $a->softplus()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
     public function tanh() : void
     {
         $a = Matrix::fromArray([
@@ -3712,6 +3795,88 @@ class MatrixTest extends TestCase
                 ->divide($a->exp()->add($a->multiply(-1.0)->exp()))
                 ->asArray(),
             $a->tanh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function sinh() : void
+    {
+        $a = Matrix::fromArray([
+            [0.0, 1.0, -1.0],
+            [0.5, -0.5, 2.0],
+        ]);
+
+        $this->assertSame(0.0, $a->sinh()->asArray()[0][0]);
+
+        $this->assertEqualsWithDelta(
+            array_map(
+                static fn (array $row) : array => array_map('sinh', $row),
+                $a->asArray()
+            ),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp difference composition it replaces.
+     *
+     * @test
+     */
+    public function sinhMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->subtract($em)->multiply(0.5)->asArray(),
+            $a->sinh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function cosh() : void
+    {
+        $a = Matrix::fromArray([
+            [0.0, 1.0, -1.0],
+            [0.5, -0.5, 2.0],
+        ]);
+
+        $this->assertSame(1.0, $a->cosh()->asArray()[0][0]);
+
+        $this->assertEqualsWithDelta(
+            array_map(
+                static fn (array $row) : array => array_map('cosh', $row),
+                $a->asArray()
+            ),
+            $a->cosh()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * The kernel must agree with the exp sum composition it replaces.
+     *
+     * @test
+     */
+    public function coshMatchesComposition() : void
+    {
+        $a = Matrix::rand(17, 23)->multiply(0.5)->subtract(0.25);
+
+        $e = $a->exp();
+        $em = $a->multiply(-1.0)->exp();
+
+        $this->assertEqualsWithDelta(
+            $e->add($em)->multiply(0.5)->asArray(),
+            $a->cosh()->asArray(),
             self::MAX_DELTA
         );
     }
@@ -4227,6 +4392,40 @@ class MatrixTest extends TestCase
         $a->softmax();
 
         $this->assertSame($before, $a->asArray());
+    }
+
+    /**
+     * @test
+     */
+    public function erf() : void
+    {
+        $a = Matrix::fromArray([
+            [0.0, 1.0, -1.0],
+            [0.5, -0.5, 2.0],
+        ]);
+
+        $b = $a->erf();
+
+        $expected = Matrix::fromArray([
+            [0.0, 0.8427007929497148, -0.8427007929497148],
+            [0.5204998778130465, -0.5204998778130465, 0.9953222650189527],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * A large input saturates to exactly +/-1.0 rather than an infinity.
+     *
+     * @test
+     */
+    public function erfSaturates() : void
+    {
+        $a = Matrix::fromArray([
+            [100.0, -100.0],
+        ]);
+
+        $this->assertSame([1.0, -1.0], $a->erf()->asArray()[0]);
     }
 
     /**

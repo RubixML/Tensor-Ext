@@ -1,5 +1,10 @@
 # Change Log
 
+- 4.1.0
+    - Added `softplus()` and `erf()` special functions
+    - Added `sinh()` and `cosh()` trigonometric functions
+    - Added reciprocal square root `rsqrt()` function
+    
 - 4.0.1
     - Optimize Vector `range()` and `linspace()` factories
 

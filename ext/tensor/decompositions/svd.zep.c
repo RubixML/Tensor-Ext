@@ -85,7 +85,7 @@ PHP_METHOD(Tensor_Decompositions_Svd, decompose)
 	ZVAL_UNDEF(&_11);
 	ZVAL_UNDEF(&_4);
 	ZEND_PARSE_PARAMETERS_START(1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(a, tensor_matrix_ce)
+		Z_PARAM_OBJECT_OF_CLASS(a, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
 	ZEPHIR_METHOD_GLOBALS_PTR = pecalloc(1, sizeof(zephir_method_globals), 0);
 	zephir_memory_grow_stack(ZEPHIR_METHOD_GLOBALS_PTR, __func__);
@@ -158,9 +158,9 @@ PHP_METHOD(Tensor_Decompositions_Svd, __construct)
 	}
 
 	ZEND_PARSE_PARAMETERS_START(3, 3)
-		Z_PARAM_OBJECT_OF_CLASS(u, tensor_matrix_ce)
-		Z_PARAM_OBJECT_OF_CLASS(singularValues, tensor_vector_ce)
-		Z_PARAM_OBJECT_OF_CLASS(vT, tensor_matrix_ce)
+		Z_PARAM_OBJECT_OF_CLASS(u, zephir_get_internal_ce(SL("tensor\\matrix")))
+		Z_PARAM_OBJECT_OF_CLASS(singularValues, zephir_get_internal_ce(SL("tensor\\vector")))
+		Z_PARAM_OBJECT_OF_CLASS(vT, zephir_get_internal_ce(SL("tensor\\matrix")))
 	ZEND_PARSE_PARAMETERS_END();
 	zephir_fetch_params_without_memory_grow(3, 0, &u, &singularValues, &vT);
 	zephir_update_property_zval_cached(this_ptr, _zephir_prop_0, 12, u);

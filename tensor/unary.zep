@@ -26,6 +26,13 @@ interface Unary
     public function sqrt();
 
     /**
+     * Return the reciprocal square root of the tensor.
+     *
+     * @return mixed
+     */
+    public function rsqrt();
+
+    /**
      * Return the exponential of the tensor.
      *
      * @return mixed
@@ -53,13 +60,6 @@ interface Unary
      * @return mixed
      */
     public function log1p();
-
-    /**
-     * Return the element-wise logistic function i.e. 1 / (1 + exp(-x)).
-     *
-     * @return mixed
-     */
-    public function sigmoid();
 
     /**
      * Round the elements in the tensor to a given decimal place.

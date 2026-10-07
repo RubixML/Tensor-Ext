@@ -86,6 +86,7 @@
 
 TENSOR_UNARY_DISPATCH(abs, fabs(va[i]))
 TENSOR_UNARY_DISPATCH(sqrt, sqrt(va[i]))
+TENSOR_UNARY_DISPATCH(rsqrt, 1.0 / sqrt(va[i]))
 TENSOR_UNARY_DISPATCH(floor, floor(va[i]))
 TENSOR_UNARY_DISPATCH(ceil, ceil(va[i]))
 TENSOR_UNARY_DISPATCH(negate, -va[i])
@@ -134,6 +135,7 @@ TENSOR_UNARY(expm1, expm1(va[i]))
 TENSOR_UNARY(log, log(va[i]))
 TENSOR_UNARY(log1p, log1p(va[i]))
 TENSOR_UNARY(sigmoid, 1.0 / (1.0 + exp(-va[i])))
+TENSOR_UNARY(softplus, va[i] > 0.0 ? va[i] + log1p(exp(-va[i])) : log1p(exp(va[i])))
 TENSOR_UNARY(sin, sin(va[i]))
 TENSOR_UNARY(asin, asin(va[i]))
 TENSOR_UNARY(cos, cos(va[i]))
@@ -141,6 +143,9 @@ TENSOR_UNARY(acos, acos(va[i]))
 TENSOR_UNARY(tan, tan(va[i]))
 TENSOR_UNARY(atan, atan(va[i]))
 TENSOR_UNARY(tanh, tanh(va[i]))
+TENSOR_UNARY(sinh, sinh(va[i]))
+TENSOR_UNARY(cosh, cosh(va[i]))
+TENSOR_UNARY(erf, erf(va[i]))
 
 #undef TENSOR_UNARY
 
@@ -462,6 +467,7 @@ void tensor_unary_dispatch_sse_init(void)
 {
 	tensor_abs_route = tensor_abs_sse;
 	tensor_sqrt_route = tensor_sqrt_sse;
+	tensor_rsqrt_route = tensor_rsqrt_sse;
 	tensor_floor_route = tensor_floor_sse;
 	tensor_ceil_route = tensor_ceil_sse;
 	tensor_negate_route = tensor_negate_sse;
@@ -480,6 +486,7 @@ void tensor_unary_dispatch_avx_init(void)
 {
 	tensor_abs_route = tensor_abs_avx;
 	tensor_sqrt_route = tensor_sqrt_avx;
+	tensor_rsqrt_route = tensor_rsqrt_avx;
 	tensor_floor_route = tensor_floor_avx;
 	tensor_ceil_route = tensor_ceil_avx;
 	tensor_negate_route = tensor_negate_avx;
@@ -498,6 +505,7 @@ void tensor_unary_dispatch_avx512_init(void)
 {
 	tensor_abs_route = tensor_abs_avx512;
 	tensor_sqrt_route = tensor_sqrt_avx512;
+	tensor_rsqrt_route = tensor_rsqrt_avx512;
 	tensor_floor_route = tensor_floor_avx512;
 	tensor_ceil_route = tensor_ceil_avx512;
 	tensor_negate_route = tensor_negate_avx512;

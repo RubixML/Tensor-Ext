@@ -66,6 +66,18 @@ ZEPHIR_DOC_METHOD(Tensor_Trigonometric, atan);
  */
 ZEPHIR_DOC_METHOD(Tensor_Trigonometric, tanh);
 /**
+ * Return the element-wise hyperbolic sine.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Trigonometric, sinh);
+/**
+ * Return the element-wise hyperbolic cosine.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Trigonometric, cosh);
+/**
  * Convert angles from radians to degrees.
  *
  * @return mixed

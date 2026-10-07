@@ -1368,6 +1368,16 @@ class Matrix implements Tensor
     }
 
     /**
+     * Return the reciprocal square root of the matrix.
+     *
+     * @return self
+     */
+    public function rsqrt() -> <Matrix>
+    {
+        return new self(tensor_rsqrt(this->a), this->m, this->n);
+    }
+
+    /**
      * Return the exponential of the matrix.
      *
      * @return self
@@ -1428,7 +1438,17 @@ class Matrix implements Tensor
     {
         return new self(tensor_sigmoid(this->a), this->m, this->n);
     }
- 
+
+    /**
+     * Return the element-wise softplus i.e. log(1 + exp(x)).
+     *
+     * @return self
+     */
+    public function softplus() -> <Matrix>
+    {
+        return new self(tensor_softplus(this->a), this->m, this->n);
+    }
+
     /**
      * Return the sine of the matrix.
      *
@@ -1497,6 +1517,26 @@ class Matrix implements Tensor
     public function tanh() -> <Matrix>
     {
         return new self(tensor_tanh(this->a), this->m, this->n);
+    }
+
+    /**
+     * Return the element-wise hyperbolic sine of the matrix.
+     *
+     * @return self
+     */
+    public function sinh() -> <Matrix>
+    {
+        return new self(tensor_sinh(this->a), this->m, this->n);
+    }
+
+    /**
+     * Return the element-wise hyperbolic cosine of the matrix.
+     *
+     * @return self
+     */
+    public function cosh() -> <Matrix>
+    {
+        return new self(tensor_cosh(this->a), this->m, this->n);
     }
  
     /**
@@ -1629,6 +1669,16 @@ class Matrix implements Tensor
     public function softmax() -> <Matrix>
     {
         return new self(tensor_softmax(this->a, this->n), this->m, this->n);
+    }
+
+    /**
+     * Return the element-wise Gaussian error function.
+     *
+     * @return self
+     */
+    public function erf() -> <Matrix>
+    {
+        return new self(tensor_erf(this->a), this->m, this->n);
     }
 
     /**

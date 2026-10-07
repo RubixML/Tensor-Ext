@@ -40,6 +40,12 @@ ZEPHIR_DOC_METHOD(Tensor_Unary, square);
  */
 ZEPHIR_DOC_METHOD(Tensor_Unary, sqrt);
 /**
+ * Return the reciprocal square root of the tensor.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Unary, rsqrt);
+/**
  * Return the exponential of the tensor.
  *
  * @return mixed
@@ -64,12 +70,6 @@ ZEPHIR_DOC_METHOD(Tensor_Unary, log);
  * @return mixed
  */
 ZEPHIR_DOC_METHOD(Tensor_Unary, log1p);
-/**
- * Return the element-wise logistic function i.e. 1 / (1 + exp(-x)).
- *
- * @return mixed
- */
-ZEPHIR_DOC_METHOD(Tensor_Unary, sigmoid);
 /**
  * Round the elements in the tensor to a given decimal place.
  *
