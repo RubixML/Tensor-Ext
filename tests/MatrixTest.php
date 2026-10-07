@@ -3479,6 +3479,26 @@ class MatrixTest extends TestCase
     /**
      * @test
      */
+    public function rsqrt() : void
+    {
+        $a = Matrix::fromArray([
+            [4.0, 9.0],
+            [16.0, 25.0],
+        ]);
+
+        $b = $a->rsqrt();
+
+        $expected = Matrix::fromArray([
+            [0.5, 0.3333333333333333],
+            [0.25, 0.2],
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
     public function exp() : void
     {
         $a = Matrix::fromArray([

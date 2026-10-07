@@ -419,6 +419,7 @@ See [Unary](interfaces/unary.md). Each method returns a new `Matrix`.
 - `abs() : self` — absolute value of each element
 - `square() : self` — square of the matrix element-wise
 - `sqrt() : self` — square root of the matrix
+- `rsqrt() : self` — reciprocal square root of the matrix
 - `reciprocal() : self` — element-wise reciprocal of the matrix
 - `exp() : self` — exponential of the matrix
 - `expm1() : self` — exponential of each element minus 1

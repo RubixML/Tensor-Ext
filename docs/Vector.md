@@ -302,6 +302,7 @@ See [Unary](interfaces/unary.md). Each method returns a new `Vector`.
 - `abs() : self` — absolute value of the vector
 - `square() : self` — square the vector
 - `sqrt() : self` — square root of the vector
+- `rsqrt() : self` — reciprocal square root of the vector
 - `reciprocal() : self` — element-wise reciprocal of the vector
 - `exp() : self` — exponentiate each element
 - `expm1() : self` — exponential of each element minus 1

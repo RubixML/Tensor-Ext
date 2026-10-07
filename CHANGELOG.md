@@ -3,6 +3,7 @@
 - 4.1.0
     - Added `softplus()` and `erf()` special functions
     - Added `sinh()` and `cosh()` trigonometric functions
+    - Added reciprocal square root `rsqrt()` function
 
 - 4.0.0
     - Data are now backed by a contiguous C buffer instead of PHP array

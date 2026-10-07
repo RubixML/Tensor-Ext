@@ -952,6 +952,16 @@ class Vector implements Tensor
     }
 
     /**
+     * Return the reciprocal square root of the vector.
+     *
+     * @return self
+     */
+    public function rsqrt() -> <Vector>
+    {
+        return new static(tensor_rsqrt(this->a));
+    }
+
+    /**
      * Exponentiate each element in the vector.
      *
      * @return self

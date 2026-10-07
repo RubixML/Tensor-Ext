@@ -144,6 +144,7 @@ class VectorTest extends TestCase
             'log1p',
             'negate',
             'round',
+            'rsqrt',
             'sign',
             'sqrt',
             'square',
@@ -2026,6 +2027,23 @@ class VectorTest extends TestCase
         $expected = Vector::fromArray([
             2.0, 2.5495097567963922, 1.70293863659264, 4.47213595499958,
             1.61245154965971, 3.449637662132068,
+        ]);
+
+        $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);
+    }
+
+    /**
+     * @test
+     */
+    public function rsqrt() : void
+    {
+        $a = Vector::fromArray([4.0, 6.5, 2.9, 20.0, 2.6, 11.9]);
+
+        $b = $a->rsqrt();
+
+        $expected = Vector::fromArray([
+            0.5, 0.3922322702763681, 0.5872202195147035, 0.22360679774997896,
+            0.6201736729460422, 0.28988551782622424,
         ]);
 
         $this->assertEqualsWithDelta($expected->asArray(), $b->asArray(), self::MAX_DELTA);

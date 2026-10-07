@@ -116,6 +116,16 @@ class SettingsTest extends TestCase
                 $va->negate()->asArray(),
                 "negate failed for length {$n}"
             );
+
+            $positive = array_values(array_filter($a, fn ($x) => $x > 0.0));
+            if (!empty($positive)) {
+                $vpos = Vector::fromArray($positive);
+                $this->assertSame(
+                    array_map(fn ($x) => 1.0 / sqrt($x), $positive),
+                    $vpos->rsqrt()->asArray(),
+                    "rsqrt failed for length {$n}"
+                );
+            }
         }
     }
 

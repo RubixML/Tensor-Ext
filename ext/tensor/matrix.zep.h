@@ -71,6 +71,7 @@ PHP_METHOD(Tensor_Matrix, reciprocal);
 PHP_METHOD(Tensor_Matrix, abs);
 PHP_METHOD(Tensor_Matrix, square);
 PHP_METHOD(Tensor_Matrix, sqrt);
+PHP_METHOD(Tensor_Matrix, rsqrt);
 PHP_METHOD(Tensor_Matrix, exp);
 PHP_METHOD(Tensor_Matrix, expm1);
 PHP_METHOD(Tensor_Matrix, log);
@@ -421,6 +422,9 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_square, 0, 0, Tenso
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_sqrt, 0, 0, Tensor\\Matrix, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_rsqrt, 0, 0, Tensor\\Matrix, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_matrix_exp, 0, 0, Tensor\\Matrix, 0)
@@ -859,6 +863,7 @@ ZEPHIR_INIT_FUNCS(tensor_matrix_method_entry) {
 	PHP_ME(Tensor_Matrix, abs, arginfo_tensor_matrix_abs, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, square, arginfo_tensor_matrix_square, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, sqrt, arginfo_tensor_matrix_sqrt, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Matrix, rsqrt, arginfo_tensor_matrix_rsqrt, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, exp, arginfo_tensor_matrix_exp, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, expm1, arginfo_tensor_matrix_expm1, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Matrix, log, arginfo_tensor_matrix_log, ZEND_ACC_PUBLIC)

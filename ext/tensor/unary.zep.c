@@ -40,6 +40,12 @@ ZEPHIR_DOC_METHOD(Tensor_Unary, square);
  */
 ZEPHIR_DOC_METHOD(Tensor_Unary, sqrt);
 /**
+ * Return the reciprocal square root of the tensor.
+ *
+ * @return mixed
+ */
+ZEPHIR_DOC_METHOD(Tensor_Unary, rsqrt);
+/**
  * Return the exponential of the tensor.
  *
  * @return mixed

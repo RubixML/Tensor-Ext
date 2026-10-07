@@ -54,6 +54,7 @@ PHP_METHOD(Tensor_Vector, reciprocal);
 PHP_METHOD(Tensor_Vector, abs);
 PHP_METHOD(Tensor_Vector, square);
 PHP_METHOD(Tensor_Vector, sqrt);
+PHP_METHOD(Tensor_Vector, rsqrt);
 PHP_METHOD(Tensor_Vector, exp);
 PHP_METHOD(Tensor_Vector, expm1);
 PHP_METHOD(Tensor_Vector, log);
@@ -331,6 +332,9 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_square, 0, 0, Tenso
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_sqrt, 0, 0, Tensor\\Vector, 0)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_rsqrt, 0, 0, Tensor\\Vector, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_tensor_vector_exp, 0, 0, Tensor\\Vector, 0)
@@ -680,6 +684,7 @@ PHP_ME(Tensor_Vector, transpose, arginfo_tensor_vector_transpose, ZEND_ACC_PUBLI
 	PHP_ME(Tensor_Vector, abs, arginfo_tensor_vector_abs, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, square, arginfo_tensor_vector_square, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, sqrt, arginfo_tensor_vector_sqrt, ZEND_ACC_PUBLIC)
+	PHP_ME(Tensor_Vector, rsqrt, arginfo_tensor_vector_rsqrt, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, exp, arginfo_tensor_vector_exp, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, expm1, arginfo_tensor_vector_expm1, ZEND_ACC_PUBLIC)
 	PHP_ME(Tensor_Vector, log, arginfo_tensor_vector_log, ZEND_ACC_PUBLIC)

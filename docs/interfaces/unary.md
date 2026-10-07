@@ -26,6 +26,10 @@ Square the tensor.
 
 Return the square root of the tensor.
 
+### `rsqrt() : mixed`
+
+Return the reciprocal square root of the tensor.
+
 ### `reciprocal() : mixed`
 
 Return the element-wise reciprocal of the tensor.

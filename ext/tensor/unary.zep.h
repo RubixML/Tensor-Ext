@@ -12,6 +12,9 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_unary_sqrt, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_unary_rsqrt, 0, 0, 0)
+ZEND_END_ARG_INFO()
+
 ZEND_BEGIN_ARG_INFO_EX(arginfo_tensor_unary_exp, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
@@ -58,6 +61,7 @@ ZEPHIR_INIT_FUNCS(tensor_unary_method_entry) {
 	PHP_ABSTRACT_ME(Tensor_Unary, abs, arginfo_tensor_unary_abs)
 	PHP_ABSTRACT_ME(Tensor_Unary, square, arginfo_tensor_unary_square)
 	PHP_ABSTRACT_ME(Tensor_Unary, sqrt, arginfo_tensor_unary_sqrt)
+	PHP_ABSTRACT_ME(Tensor_Unary, rsqrt, arginfo_tensor_unary_rsqrt)
 	PHP_ABSTRACT_ME(Tensor_Unary, exp, arginfo_tensor_unary_exp)
 	PHP_ABSTRACT_ME(Tensor_Unary, expm1, arginfo_tensor_unary_expm1)
 	PHP_ABSTRACT_ME(Tensor_Unary, log, arginfo_tensor_unary_log)

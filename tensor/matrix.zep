@@ -1368,6 +1368,16 @@ class Matrix implements Tensor
     }
 
     /**
+     * Return the reciprocal square root of the matrix.
+     *
+     * @return self
+     */
+    public function rsqrt() -> <Matrix>
+    {
+        return new self(tensor_rsqrt(this->a), this->m, this->n);
+    }
+
+    /**
      * Return the exponential of the matrix.
      *
      * @return self

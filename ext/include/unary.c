@@ -86,6 +86,7 @@
 
 TENSOR_UNARY_DISPATCH(abs, fabs(va[i]))
 TENSOR_UNARY_DISPATCH(sqrt, sqrt(va[i]))
+TENSOR_UNARY_DISPATCH(rsqrt, 1.0 / sqrt(va[i]))
 TENSOR_UNARY_DISPATCH(floor, floor(va[i]))
 TENSOR_UNARY_DISPATCH(ceil, ceil(va[i]))
 TENSOR_UNARY_DISPATCH(negate, -va[i])
@@ -466,6 +467,7 @@ void tensor_unary_dispatch_sse_init(void)
 {
 	tensor_abs_route = tensor_abs_sse;
 	tensor_sqrt_route = tensor_sqrt_sse;
+	tensor_rsqrt_route = tensor_rsqrt_sse;
 	tensor_floor_route = tensor_floor_sse;
 	tensor_ceil_route = tensor_ceil_sse;
 	tensor_negate_route = tensor_negate_sse;
@@ -484,6 +486,7 @@ void tensor_unary_dispatch_avx_init(void)
 {
 	tensor_abs_route = tensor_abs_avx;
 	tensor_sqrt_route = tensor_sqrt_avx;
+	tensor_rsqrt_route = tensor_rsqrt_avx;
 	tensor_floor_route = tensor_floor_avx;
 	tensor_ceil_route = tensor_ceil_avx;
 	tensor_negate_route = tensor_negate_avx;
@@ -502,6 +505,7 @@ void tensor_unary_dispatch_avx512_init(void)
 {
 	tensor_abs_route = tensor_abs_avx512;
 	tensor_sqrt_route = tensor_sqrt_avx512;
+	tensor_rsqrt_route = tensor_rsqrt_avx512;
 	tensor_floor_route = tensor_floor_avx512;
 	tensor_ceil_route = tensor_ceil_avx512;
 	tensor_negate_route = tensor_negate_avx512;

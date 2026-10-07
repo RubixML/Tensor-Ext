@@ -496,6 +496,17 @@ class ColumnVectorTest extends TestCase
     /**
      * @test
      */
+    public function rsqrtReturnsColumnVector() : void
+    {
+        $b = ColumnVector::fromArray([4.0, 9.0, 0.25])->rsqrt();
+
+        $this->assertInstanceOf(ColumnVector::class, $b);
+        $this->assertEqualsWithDelta([0.5, 0.3333333333333333, 2.0], $b->asArray(), 1e-8);
+    }
+
+    /**
+     * @test
+     */
     public function sizes() : void
     {
         $a = ColumnVector::fromArray([1.0, 2.0, 3.0]);
