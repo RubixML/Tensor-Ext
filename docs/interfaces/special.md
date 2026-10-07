@@ -8,7 +8,7 @@ Operations that do not belong to any of the other interface groups.
 
 `Special` holds the operations that neither the basic algebraic and trigonometric families (`Arithmetic`, `Comparable`, `Unary`, `Trigonometric`), aggregate reductions (`Reductions`), nor array-like access (`ArrayLike`) can describe.
 
-`softmax()` is the only shape-preserving member whose output depends on a whole reduction axis rather than on one input element, so it is neither element-wise nor a reduction. `erf()` is element-wise error-function transforms grouped here so the error-function family stays together, distinct from the basic algebraic operations.
+`softmax()` is the only shape-preserving member whose output depends on a whole reduction axis rather than on one input element, so it is neither element-wise nor a reduction. `erf()` is an element-wise error-function transform grouped here so the error-function family stays together, distinct from the basic algebraic operations.
 
 ```php
 interface Special
