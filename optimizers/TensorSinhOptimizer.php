@@ -26,7 +26,7 @@ class TensorSinhOptimizer extends OptimizerAbstract
 
         if (count($expression['parameters']) !== 1) {
             throw new CompilerException(
-                'Tensor sinh accepts exactly 1 argument, ' . count($expression['parameters']) . 'given.',
+                'Tensor sinh accepts exactly 1 argument, ' . count($expression['parameters']) . ' given.',
                 $expression
             );
         }
