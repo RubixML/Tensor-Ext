@@ -582,11 +582,11 @@ void tensor_reduce_argmax(zval * return_value, zval * obj, zval * groups, zval *
  */
 void tensor_median(zval * return_value, zval * obj, zval * n)
 {
-	double * va = NULL;
+	tensor_double_view v;
 	zend_long m = 0, n_hat = 0;
 	zend_long i;
 
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
+	if (UNEXPECTED(!tensor_matrix_view(obj, zephir_get_intval(n), &v, &m, &n_hat))) {
 		return;
 	}
 
@@ -595,7 +595,7 @@ void tensor_median(zval * return_value, zval * obj, zval * n)
 	if (UNEXPECTED(m > 0 && n_hat > 0)) {
 		copy = safe_emalloc((size_t) m * (size_t) n_hat, sizeof(double), 0);
 
-		memcpy(copy, va, (size_t) m * (size_t) n_hat * sizeof(double));
+		tensor_view_copy_to(&v, copy);
 	}
 
 	zval c;
@@ -640,11 +640,11 @@ void tensor_median(zval * return_value, zval * obj, zval * n)
  */
 void tensor_quantile(zval * return_value, zval * obj, zval * n, zval * q)
 {
-	double * va = NULL;
+	tensor_double_view v;
 	zend_long m = 0, n_hat = 0;
 	zend_long i;
 
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
+	if (UNEXPECTED(!tensor_matrix_view(obj, zephir_get_intval(n), &v, &m, &n_hat))) {
 		return;
 	}
 
@@ -653,7 +653,7 @@ void tensor_quantile(zval * return_value, zval * obj, zval * n, zval * q)
 	if (UNEXPECTED(m > 0 && n_hat > 0)) {
 		copy = safe_emalloc((size_t) m * (size_t) n_hat, sizeof(double), 0);
 
-		memcpy(copy, va, (size_t) m * (size_t) n_hat * sizeof(double));
+		tensor_view_copy_to(&v, copy);
 	}
 
 	zval c;

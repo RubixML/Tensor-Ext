@@ -3,6 +3,7 @@
 #endif
 
 #include <php.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <Zend/zend_alloc_sizes.h>
@@ -310,19 +311,10 @@ void tensor_buffer_from_array(zval * ret, zval * arr)
  * See include/view.h for the model. Everything here works on a resolved
  * `tensor_double_view`, which is the raw storage pointer plus the strides of a
  * TensorBuffer. A plain dense buffer resolves to a 1-D contiguous view of its
- * whole allocation, so kernels can keep calling tensor_tensorbuffer_doubles()
- * without knowing about strides.
+ * whole allocation, and the helpers below expose that view to kernels as either
+ * a native stride walk or a materialised contiguous run, without their having
+ * to know about strides.
  * ------------------------------------------------------------------------- */
-
-/* Bumped by every in-place write to a Buffer. A view caches the dense copy it
- * gathered for the kernels that need one; the epoch lets it notice that the
- * source was rewritten behind its back and re-gather. */
-static zend_long tensor_buffer_epoch = 0;
-
-void tensor_buffer_bump_epoch(void)
-{
-	++tensor_buffer_epoch;
-}
 
 /**
  * Copy up to `max` integers out of a PHP array, discarding keys. Returns the
@@ -601,8 +593,6 @@ void tensor_tensorbuffer_set(zval * ret, zval * buffer, zval * offset, zval * sh
 		zephir_buffer_doubles(buffer)[i] = zephir_get_doubleval(value);
 	}
 
-	tensor_buffer_bump_epoch();
-
 	ZVAL_NULL(ret);
 }
 
@@ -818,105 +808,280 @@ void tensor_buffer_transpose_view(zval * ret, zval * a, zend_long m, zend_long n
 }
 
 /**
- * Unwrap the double buffer hidden inside a `Tensor\TensorBuffer` object
- * (see include/buffer.h).
- *
- * A dense buffer (or a dense view) returns a pointer straight into the source.
- * A non-contiguous view is gathered into a dense Buffer that is cached on the
- * view and reused until the source is written through set()/sort().
+ * Resolve any kernel operand -- a `Tensor\TensorBuffer` decorator or a raw
+ * `Tensor\Buffer` -- into a stride view (see include/view.h).
  */
-double * tensor_tensorbuffer_doubles(zval * obj, zend_long * len, int * success)
+int tensor_view_resolve_arg(zval * obj, tensor_double_view * v)
 {
-	zend_long dummy = 0;
-
-	if (len == NULL) {
-		len = &dummy;
+	if (Z_TYPE_P(obj) == IS_OBJECT && Z_OBJCE_P(obj) == tensor_tensorbuffer_ce) {
+		return tensor_view_resolve_object(obj, v);
 	}
 
-	if (success != NULL) {
-		*success = 0;
+	if (UNEXPECTED(!zephir_is_buffer(obj))) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument must be a Buffer or TensorBuffer object."));
+		return 0;
 	}
 
-	*len = 0;
+	if (UNEXPECTED(zephir_buffer_kind(obj) != ZEPHIR_BUFFER_DOUBLE)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument must wrap a buffer of type double."));
+		return 0;
+	}
 
+	v->base = zephir_buffer_doubles(obj);
+	v->offset = 0;
+	v->len = zephir_buffer_len(obj);
+	v->ndim = 1;
+	v->shape[0] = v->len;
+	v->strides[0] = 1;
+	v->contiguous = 1;
+
+	return 1;
+}
+
+/**
+ * Copy the logical elements of `v` in row-major order into `dst`.
+ */
+void tensor_view_copy_to(const tensor_double_view * v, double * dst)
+{
+	if (v->len <= 0) {
+		return;
+	}
+
+	if (v->contiguous) {
+		memcpy(dst, v->base + v->offset, (size_t) v->len * sizeof(double));
+		return;
+	}
+
+	tensor_view_reader r;
+
+	tensor_view_reader_init(&r, v);
+
+	for (zend_long i = 0; i < v->len; ++i) {
+		dst[i] = tensor_view_reader_value(&r);
+		tensor_view_reader_advance(&r);
+	}
+}
+
+/**
+ * Copy logical row `row` of `v` into `dst`.
+ */
+void tensor_view_copy_row(const tensor_double_view * v, zend_long row, double * dst)
+{
+	zend_long c = tensor_view_row_length(v);
+
+	if (c <= 0) {
+		return;
+	}
+
+	const double * base = v->base + v->offset;
+	zend_long start = row * c;
+
+	if (v->ndim <= 1) {
+		zend_long stride = v->strides[0];
+
+		if (stride == 1) {
+			memcpy(dst, base + start, (size_t) c * sizeof(double));
+		} else {
+			for (zend_long j = 0; j < c; ++j) {
+				dst[j] = base[start + j * stride];
+			}
+		}
+
+		return;
+	}
+
+	zend_long off = tensor_view_offset(v, start);
+	zend_long stride = v->strides[v->ndim - 1];
+
+	if (stride == 1) {
+		memcpy(dst, base + off, (size_t) c * sizeof(double));
+	} else {
+		for (zend_long j = 0; j < c; ++j) {
+			dst[j] = base[off + j * stride];
+		}
+	}
+}
+
+/**
+ * Ensure `obj`'s elements are contiguous (see include/view.h).
+ */
+int tensor_view_doubles(zval * obj, const double ** ptr, zend_long * len, double ** owned)
+{
 	tensor_double_view v;
 
-	if (UNEXPECTED(!tensor_view_resolve_object(obj, &v))) {
-		return NULL;
+	if (UNEXPECTED(!tensor_view_resolve_arg(obj, &v))) {
+		return 0;
 	}
 
+	*owned = NULL;
 	*len = v.len;
 
-	if (v.contiguous) {
-		if (success != NULL) {
-			*success = 1;
+	if (v.contiguous || v.len == 0) {
+		*ptr = v.contiguous ? v.base + v.offset : NULL;
+		return 1;
+	}
+
+	double * dst = safe_emalloc((size_t) v.len, sizeof(double), 0);
+
+	tensor_view_copy_to(&v, dst);
+
+	*owned = dst;
+	*ptr = dst;
+
+	return 1;
+}
+
+/**
+ * Classify `obj` as an `m` x `n` matrix operand for BLAS/LAPACK (see
+ * include/view.h). `*trans` is 0 for the stored layout or 1 when the logical
+ * matrix is the transpose of the stored one.
+ */
+int tensor_matrix_blas(zval * obj, zend_long rows, zend_long cols,
+	const double ** ptr, zend_long * ld, int * trans, double ** owned)
+{
+	tensor_double_view v;
+
+	if (UNEXPECTED(!tensor_view_resolve_arg(obj, &v))) {
+		return 0;
+	}
+
+	*owned = NULL;
+
+	if (v.ndim <= 1) {
+		*ptr = v.base + v.offset;
+		*ld = cols;
+		*trans = 0;
+		return 1;
+	}
+
+	if (v.ndim == 2 && v.shape[0] == rows && v.shape[1] == cols) {
+		zend_long s0 = v.strides[0];
+		zend_long s1 = v.strides[1];
+
+		if (s1 == 1 && s0 == cols) {
+			*ptr = v.base + v.offset;
+			*ld = cols;
+			*trans = 0;
+			return 1;
 		}
 
-		return v.base + v.offset;
+		if (s0 == 1 && s1 == rows) {
+			*ptr = v.base + v.offset;
+			*ld = rows;
+			*trans = 1;
+			return 1;
+		}
 	}
 
-	zval rv_epoch, rv_data;
+	zend_long total = rows * cols;
 
-	ZVAL_UNDEF(&rv_epoch);
-	ZVAL_UNDEF(&rv_data);
+	if (total <= 0) {
+		*ptr = NULL;
+		*ld = cols;
+		*trans = 0;
+		return 1;
+	}
 
-	zval * epoch_prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseEpoch", sizeof("denseEpoch") - 1, 1, &rv_epoch);
-	zval * data_prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseData", sizeof("denseData") - 1, 1, &rv_data);
+	double * dst = safe_emalloc((size_t) rows * (size_t) cols, sizeof(double), 0);
 
-	if (epoch_prop != NULL && Z_TYPE_P(epoch_prop) == IS_LONG
-		&& Z_LVAL_P(epoch_prop) == tensor_buffer_epoch
-		&& data_prop != NULL && zephir_is_buffer(data_prop)
-		&& zephir_buffer_kind(data_prop) == ZEPHIR_BUFFER_DOUBLE
-		&& zephir_buffer_len(data_prop) == v.len) {
-		if (!Z_ISUNDEF(rv_epoch)) {
-			zval_ptr_dtor(&rv_epoch);
+	if (v.len == total) {
+		tensor_view_copy_to(&v, dst);
+	} else {
+		for (zend_long i = 0; i < total; ++i) {
+			dst[i] = tensor_double_view_get(&v, i);
+		}
+	}
+
+	*owned = dst;
+	*ptr = dst;
+	*ld = cols;
+	*trans = 0;
+
+	return 1;
+}
+
+/**
+ * Classify `obj` as a vector operand for BLAS (see include/view.h).
+ */
+int tensor_vector_blas(zval * obj, const double ** ptr, zend_long * len, zend_long * inc, double ** owned)
+{
+	tensor_double_view v;
+
+	if (UNEXPECTED(!tensor_view_resolve_arg(obj, &v))) {
+		return 0;
+	}
+
+	*owned = NULL;
+
+	if (v.ndim <= 1) {
+		*ptr = v.base + v.offset;
+		*len = v.ndim == 1 ? v.shape[0] : v.len;
+		*inc = v.ndim == 1 ? v.strides[0] : 1;
+		return 1;
+	}
+
+	if (v.contiguous || v.len == 0) {
+		*ptr = v.contiguous ? v.base + v.offset : NULL;
+		*len = v.len;
+		*inc = 1;
+		return 1;
+	}
+
+	double * dst = safe_emalloc((size_t) v.len, sizeof(double), 0);
+
+	tensor_view_copy_to(&v, dst);
+
+	*owned = dst;
+	*ptr = dst;
+	*len = v.len;
+	*inc = 1;
+
+	return 1;
+}
+
+/**
+ * Return the largest absolute value among the elements of `v` (see
+ * include/view.h).
+ */
+double tensor_view_abs_max(const tensor_double_view * v)
+{
+	if (v->len <= 0) {
+		return 0.0;
+	}
+
+	double max = 0.0;
+
+	if (v->contiguous) {
+		const double * data = v->base + v->offset;
+
+		for (zend_long i = 0; i < v->len; ++i) {
+			double a = fabs(data[i]);
+
+			if (a > max) {
+				max = a;
+			}
 		}
 
-		if (!Z_ISUNDEF(rv_data)) {
-			zval_ptr_dtor(&rv_data);
+		return max;
+	}
+
+	tensor_view_reader r;
+
+	tensor_view_reader_init(&r, v);
+
+	for (zend_long i = 0; i < v->len; ++i) {
+		double a = fabs(tensor_view_reader_value(&r));
+
+		if (a > max) {
+			max = a;
 		}
 
-		if (success != NULL) {
-			*success = 1;
-		}
-
-		return zephir_buffer_doubles(data_prop);
+		tensor_view_reader_advance(&r);
 	}
 
-	if (!Z_ISUNDEF(rv_epoch)) {
-		zval_ptr_dtor(&rv_epoch);
-	}
-
-	if (!Z_ISUNDEF(rv_data)) {
-		zval_ptr_dtor(&rv_data);
-	}
-
-	zval gathered;
-
-	if (UNEXPECTED(zephir_buffer_create(&gathered, v.len, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
-		return NULL;
-	}
-
-	double * dst = zephir_buffer_doubles(&gathered);
-
-	for (zend_long i = 0; i < v.len; ++i) {
-		dst[i] = tensor_double_view_get(&v, i);
-	}
-
-	zval epoch_value;
-
-	ZVAL_LONG(&epoch_value, tensor_buffer_epoch);
-
-	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseData", sizeof("denseData") - 1, &gathered);
-	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseEpoch", sizeof("denseEpoch") - 1, &epoch_value);
-
-	zval_ptr_dtor(&gathered);
-
-	if (success != NULL) {
-		*success = 1;
-	}
-
-	return dst;
+	return max;
 }
 
 static int tensor_double_cmp(const void * a, const void * b)
@@ -969,8 +1134,6 @@ void tensor_buffer_sort(zval * return_value, zval * obj, zval * ascending)
 		qsort((void *) zephir_buffer_doubles(obj), (size_t) len, sizeof(double),
 			ascending_order ? tensor_double_cmp : tensor_double_cmp_desc);
 	}
-
-	tensor_buffer_bump_epoch();
 
 	RETURN_NULL();
 }

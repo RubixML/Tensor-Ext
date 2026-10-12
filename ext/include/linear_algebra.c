@@ -174,29 +174,44 @@ static tensor_outer_fill_fn tensor_outer_fill_route = tensor_outer_fill_sse;
  */
 void tensor_matmul(zval * return_value, zval * a, zval * b, zval * m, zval * p, zval * n)
 {
-    zend_long i;
     zend_long ma = zephir_get_intval(m);
     zend_long pa = zephir_get_intval(p);
     zend_long nb = zephir_get_intval(n);
-    zend_long na = 0, nbb = 0;
-    int ok_a = 0, ok_b = 0;
 
-    double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
-    double * vb = tensor_tensorbuffer_doubles(b, &nbb, &ok_b);
+    const double * va = NULL;
+    const double * vb = NULL;
+    zend_long lda = 0, ldb = 0;
+    int trans_a = 0, trans_b = 0;
+    double * owned_a = NULL;
+    double * owned_b = NULL;
 
-    if (UNEXPECTED(!ok_a || !ok_b)) {
+    if (UNEXPECTED(!tensor_matrix_blas(a, ma, pa, &va, &lda, &trans_a, &owned_a))) {
+        return;
+    }
+
+    if (UNEXPECTED(!tensor_matrix_blas(b, pa, nb, &vb, &ldb, &trans_b, &owned_b))) {
+        if (owned_a != NULL) { efree(owned_a); }
         return;
     }
 
     zval c;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma * nb, &c) == FAILURE)) {
+        if (owned_a != NULL) { efree(owned_a); }
+        if (owned_b != NULL) { efree(owned_b); }
         return;
     }
 
     double * vc = zephir_buffer_doubles(&c);
 
-    cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, ma, nb, pa, 1.0, va, pa, vb, nb, 0.0, vc, nb);
+    cblas_dgemm(CblasRowMajor,
+        trans_a ? CblasTrans : CblasNoTrans,
+        trans_b ? CblasTrans : CblasNoTrans,
+        (blasint) ma, (blasint) nb, (blasint) pa,
+        1.0, va, (blasint) lda, vb, (blasint) ldb, 0.0, vc, (blasint) nb);
+
+    if (owned_a != NULL) { efree(owned_a); }
+    if (owned_b != NULL) { efree(owned_b); }
 
     zval_ptr_dtor(&c);
 }
@@ -214,25 +229,44 @@ void tensor_matrix_dot(zval * return_value, zval * a, zval * b, zval * m, zval *
 {
     zend_long ma = zephir_get_intval(m);
     zend_long pc = zephir_get_intval(p);
-    zend_long na = 0, nb = 0;
-    int ok_a = 0, ok_b = 0;
 
-    double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
-    double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
+    const double * va = NULL;
+    const double * vb = NULL;
+    zend_long lda = 0, incb = 1, nvb = 0;
+    int trans_a = 0;
+    double * owned_a = NULL;
+    double * owned_b = NULL;
 
-    if (UNEXPECTED(!ok_a || !ok_b)) {
+    if (UNEXPECTED(!tensor_matrix_blas(a, ma, pc, &va, &lda, &trans_a, &owned_a))) {
+        return;
+    }
+
+    if (UNEXPECTED(!tensor_vector_blas(b, &vb, &nvb, &incb, &owned_b))) {
+        if (owned_a != NULL) { efree(owned_a); }
         return;
     }
 
     zval c;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(return_value, ma, &c) == FAILURE)) {
+        if (owned_a != NULL) { efree(owned_a); }
+        if (owned_b != NULL) { efree(owned_b); }
         return;
     }
 
     double * vc = zephir_buffer_doubles(&c);
 
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, (blasint) ma, (blasint) pc, 1.0, va, (blasint) pc, vb, 1, 0.0, vc, 1);
+    /* With a transposed stored operand CBLAS reads A as `pc` x `ma` and
+     * operates on its transpose, so the row/column counts swap: the result has
+     * `ma` entries either way. */
+    blasint gm = (blasint) (trans_a ? pc : ma);
+    blasint gn = (blasint) (trans_a ? ma : pc);
+
+    cblas_dgemv(CblasRowMajor, trans_a ? CblasTrans : CblasNoTrans,
+        gm, gn, 1.0, va, (blasint) lda, vb, (blasint) incb, 0.0, vc, 1);
+
+    if (owned_a != NULL) { efree(owned_a); }
+    if (owned_b != NULL) { efree(owned_b); }
 
     zval_ptr_dtor(&c);
 }
@@ -246,17 +280,25 @@ void tensor_matrix_dot(zval * return_value, zval * a, zval * b, zval * m, zval *
  */
 void tensor_dot(zval * return_value, zval * a, zval * b)
 {
-	zend_long na = 0, nb = 0;
-	int ok_a = 0, ok_b = 0;
+	const double * va = NULL;
+	const double * vb = NULL;
+	zend_long na = 0, nb = 0, inca = 1, incb = 1;
+	double * owned_a = NULL;
+	double * owned_b = NULL;
 
-	double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
-	double * vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
-
-	if (UNEXPECTED(!ok_a || !ok_b)) {
+	if (UNEXPECTED(!tensor_vector_blas(a, &va, &na, &inca, &owned_a))) {
 		return;
 	}
 
-	RETVAL_DOUBLE(cblas_ddot((blasint) na, va, 1, vb, 1));
+	if (UNEXPECTED(!tensor_vector_blas(b, &vb, &nb, &incb, &owned_b))) {
+		if (owned_a != NULL) { efree(owned_a); }
+		return;
+	}
+
+	RETVAL_DOUBLE(cblas_ddot((blasint) na, va, (blasint) inca, vb, (blasint) incb));
+
+	if (owned_a != NULL) { efree(owned_a); }
+	if (owned_b != NULL) { efree(owned_b); }
 }
 
 /**
@@ -270,21 +312,18 @@ void tensor_inverse(zval * return_value, zval * a, zval * n)
 {
     zend_long i;
     zend_long nn = zephir_get_intval(n);
-    zend_long na = 0;
-    int ok_a = 0;
+    tensor_double_view v;
 
-    double * va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
+
+    zend_long na = v.len;
 
     double * w = emalloc(na * sizeof(double));
     int * pivots = emalloc(nn * sizeof(int));
 
-    for (i = 0; i < na; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status;
 
@@ -342,31 +381,6 @@ static double tensor_relative_tolerance(unsigned int m, unsigned int n, double s
 }
 
 /**
- * Return the largest absolute value among the first `count` elements of `a`,
- * which is the scale a tolerance is measured against.
- *
- * @param a
- * @param count
- * @return double
- */
-static double tensor_absolute_max(const double * a, zend_long count)
-{
-    zend_long i;
-
-    double max = 0.0;
-
-    for (i = 0; i < count; ++i) {
-        double v = fabs(a[i]);
-
-        if (v > max) {
-            max = v;
-        }
-    }
-
-    return max;
-}
-
-/**
  * Return the (Moore-Penrose) pseudoinverse of a general matrix A.
  * 
  * @param return_value
@@ -379,14 +393,13 @@ void tensor_pseudoinverse(zval * return_value, zval * a, zval * m, zval * n)
     zend_long i;
     zend_long ma = zephir_get_intval(m);
     zend_long na = zephir_get_intval(n);
-    zend_long nbuf = 0;
-    int ok_a = 0;
+    tensor_double_view v;
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
+
+    zend_long nbuf = v.len;
 
     unsigned int k = MIN(ma, na);
 
@@ -396,9 +409,7 @@ void tensor_pseudoinverse(zval * return_value, zval * a, zval * m, zval * n)
     double * vvt = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
     double * vb = safe_emalloc((size_t) na * (size_t) ma, sizeof(double), 0);
 
-    for (i = 0; i < nbuf; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status = LAPACKE_dgesdd(LAPACK_ROW_MAJOR, 'A', ma, na, w, na, vs, vu, ma, vvt, na);
 
@@ -524,7 +535,7 @@ static long tensor_ref_singular(double * w, unsigned int m, unsigned int n, doub
  * above `tolerance`. Returns the number of row swaps and sets `*status` to the
  * LAPACK result (negative on failure).
  */
-static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, double tolerance, lapack_int * status);
+static long tensor_ref_step(double * w, const tensor_double_view * orig, unsigned int m, unsigned int n, double tolerance, lapack_int * status);
 
 /**
  * Compute the row echelon form (REF) of matrix A, reading A out of a
@@ -538,33 +549,28 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
  */
 void tensor_ref(zval * return_value, zval * a, zval * m, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i;
+    tensor_double_view v;
 
     unsigned int ma = (unsigned int) zephir_get_intval(m);
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
     double * w = safe_emalloc((size_t) ma * (size_t) na, sizeof(double), 0);
 
-    for (i = 0; i < ma * na; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status;
 
     long swaps = tensor_ref_step(
         w,
-        va,
+        &v,
         ma,
         na,
-        tensor_relative_tolerance(ma, na, tensor_absolute_max(va, nbuf)),
+        tensor_relative_tolerance(ma, na, tensor_view_abs_max(&v)),
         &status
     );
 
@@ -614,23 +620,18 @@ void tensor_ref(zval * return_value, zval * a, zval * m, zval * n)
  */
 void tensor_cholesky(zval * return_value, zval * a, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i, j;
+    tensor_double_view v;
 
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
     double * w = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
 
-    for (i = 0; i < na * na; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status = LAPACKE_dpotrf(LAPACK_ROW_MAJOR, 'L', na, w, na);
 
@@ -681,15 +682,12 @@ void tensor_cholesky(zval * return_value, zval * a, zval * n)
  */
 void tensor_lu(zval * return_value, zval * a, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i, j;
+    tensor_double_view v;
 
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
@@ -697,9 +695,7 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
     double * va_ = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
     int * pivots = emalloc(na * sizeof(int));
 
-    for (i = 0; i < na * na; ++i) {
-        va_[i] = va[i];
-    }
+    tensor_view_copy_to(&v, va_);
 
     lapack_int status = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, na, na, va_, na, pivots);
 
@@ -856,15 +852,12 @@ void tensor_lu(zval * return_value, zval * a, zval * n)
  */
 void tensor_eig(zval * return_value, zval * a, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i;
+    tensor_double_view v;
 
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
@@ -873,9 +866,7 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
     double * wi = emalloc(na * sizeof(double));
     double * vr = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
 
-    for (i = 0; i < na * na; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status = LAPACKE_dgeev(LAPACK_ROW_MAJOR, 'N', 'V', na, w, na, wr, wi, NULL, na, vr, na);
 
@@ -982,24 +973,19 @@ void tensor_eig(zval * return_value, zval * a, zval * n)
  */
 void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i;
+    tensor_double_view v;
 
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
     double * w = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
     double * wr = emalloc(na * sizeof(double));
 
-    for (i = 0; i < na * na; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status = LAPACKE_dsyev(LAPACK_ROW_MAJOR, 'V', 'U', na, w, na, wr);
 
@@ -1092,17 +1078,14 @@ void tensor_eig_symmetric(zval * return_value, zval * a, zval * n)
  */
 void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i;
+    tensor_double_view v;
 
     unsigned int ma = (unsigned int) zephir_get_intval(m);
     unsigned int na = (unsigned int) zephir_get_intval(n);
     unsigned int k = MIN(ma, na);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
@@ -1111,9 +1094,7 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
     double * vs = emalloc(k * sizeof(double));
     double * vvt = safe_emalloc((size_t) na * (size_t) na, sizeof(double), 0);
 
-    for (i = 0; i < ma * na; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status = LAPACKE_dgesdd(LAPACK_ROW_MAJOR, 'A', ma, na, w, na, vs, vu, ma, vvt, na);
 
@@ -1217,7 +1198,7 @@ void tensor_svd(zval * return_value, zval * a, zval * m, zval * n)
  * only a pivot if it is above `tolerance`; the reduction leaves the rows below
  * the last such one at zero, whatever roundoff they were left with.
  */
-static long tensor_ref_step(double * w, const double * orig, unsigned int m, unsigned int n, double tolerance, lapack_int * status)
+static long tensor_ref_step(double * w, const tensor_double_view * orig, unsigned int m, unsigned int n, double tolerance, lapack_int * status)
 {
     unsigned int i, j;
 
@@ -1237,9 +1218,7 @@ static long tensor_ref_step(double * w, const double * orig, unsigned int m, uns
         /* Singular: `dgetrf` left `w` partially eliminated. The pure-PHP REF
          * fallback must operate on the original (unmodified) matrix to match
          * the previous behaviour, so restore `w` from `orig` first. */
-        for (i = 0; i < m * n; ++i) {
-            w[i] = orig[i];
-        }
+        tensor_view_copy_to(orig, w);
 
         swaps = tensor_ref_singular(w, m, n, tolerance);
     } else if (*status != 0) {
@@ -1411,30 +1390,25 @@ static void tensor_rref_step(double * w, unsigned int m, unsigned int n, double 
  */
 void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i;
+    tensor_double_view v;
 
     unsigned int ma = (unsigned int) zephir_get_intval(m);
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
     double * w = safe_emalloc((size_t) ma * (size_t) na, sizeof(double), 0);
 
-    for (i = 0; i < ma * na; ++i) {
-        w[i] = va[i];
-    }
+    tensor_view_copy_to(&v, w);
 
     lapack_int status;
 
-    double tolerance = tensor_relative_tolerance(ma, na, tensor_absolute_max(va, nbuf));
+    double tolerance = tensor_relative_tolerance(ma, na, tensor_view_abs_max(&v));
 
-    (void) tensor_ref_step(w, va, ma, na, tolerance, &status);
+    (void) tensor_ref_step(w, &v, ma, na, tolerance, &status);
 
     if (status < 0) {
         efree(w);
@@ -1494,30 +1468,41 @@ void tensor_rref(zval * return_value, zval * a, zval * m, zval * n)
  */
 void tensor_rank(zval * return_value, zval * a, zval * m, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
     unsigned int i, j;
+    tensor_double_view v;
 
     unsigned int ma = (unsigned int) zephir_get_intval(m);
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
+    if (v.ndim <= 1) {
+        v.ndim = 2;
+        v.shape[0] = (zend_long) ma;
+        v.shape[1] = (zend_long) na;
+        v.strides[0] = (zend_long) na;
+        v.strides[1] = 1;
+        v.contiguous = 1;
+    }
+
     unsigned int rank = 0;
+    double * row = emalloc((na ? na : 1) * sizeof(double));
 
     for (i = 0; i < ma; ++i) {
+        tensor_view_copy_row(&v, i, row);
+
         for (j = 0; j < na; ++j) {
-            if (va[i * na + j] != 0.0) {
+            if (row[j] != 0.0) {
                 ++rank;
 
                 break;
             }
         }
     }
+
+    efree(row);
 
     RETVAL_LONG((zend_long) rank);
 }
@@ -1532,16 +1517,12 @@ void tensor_rank(zval * return_value, zval * a, zval * m, zval * n)
  */
 void tensor_is_symmetric(zval * return_value, zval * a, zval * n)
 {
-    zend_long nbuf = 0;
-    int ok_a = 0;
-
     unsigned int i, j;
+    tensor_double_view v;
 
     unsigned int na = (unsigned int) zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &v))) {
         return;
     }
 
@@ -1553,7 +1534,7 @@ void tensor_is_symmetric(zval * return_value, zval * a, zval * n)
 
     for (i = 0; i < na - 1; ++i) {
         for (j = i + 1; j < na; ++j) {
-            if (va[i * na + j] != va[j * na + i]) {
+            if (tensor_double_view_get(&v, (zend_long) i * na + j) != tensor_double_view_get(&v, (zend_long) j * na + i)) {
                 RETVAL_FALSE;
 
                 return;
@@ -1576,22 +1557,29 @@ void tensor_is_symmetric(zval * return_value, zval * a, zval * n)
  */
 void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
 {
+    const double * va = NULL;
+    const double * vb = NULL;
     zend_long nbufa = 0, nbufb = 0;
-    int ok_a = 0, ok_b = 0;
+    double * owned_a = NULL;
+    double * owned_b = NULL;
 
     unsigned int naHat = (unsigned int) zephir_get_intval(na);
     unsigned int nbHat = (unsigned int) zephir_get_intval(nb);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbufa, &ok_a);
-    double * vb = tensor_tensorbuffer_doubles(b, &nbufb, &ok_b);
+    if (UNEXPECTED(!tensor_view_doubles(a, &va, &nbufa, &owned_a))) {
+        return;
+    }
 
-    if (UNEXPECTED(!ok_a || !ok_b)) {
+    if (UNEXPECTED(!tensor_view_doubles(b, &vb, &nbufb, &owned_b))) {
+        if (owned_a != NULL) { efree(owned_a); }
         return;
     }
 
     zval product, buf;
 
     if (UNEXPECTED(tensor_tensorbuffer_create(&product, (zend_long) naHat * nbHat, &buf) == FAILURE)) {
+        if (owned_a != NULL) { efree(owned_a); }
+        if (owned_b != NULL) { efree(owned_b); }
         return;
     }
     {
@@ -1601,6 +1589,9 @@ void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
     }
 
     zval_ptr_dtor(&buf);
+
+    if (owned_a != NULL) { efree(owned_a); }
+    if (owned_b != NULL) { efree(owned_b); }
 
     *return_value = product;
 }
@@ -1618,15 +1609,12 @@ void tensor_outer(zval * return_value, zval * a, zval * b, zval * na, zval * nb)
 void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
 {
     zend_long i, j;
-    zend_long nbuf = 0;
-    int ok_a = 0;
+    tensor_double_view va_view;
 
     zend_long ma = zephir_get_intval(m);
     zend_long na = zephir_get_intval(n);
 
-    double * va = tensor_tensorbuffer_doubles(a, &nbuf, &ok_a);
-
-    if (UNEXPECTED(!ok_a)) {
+    if (UNEXPECTED(!tensor_view_resolve_arg(a, &va_view))) {
         return;
     }
 
@@ -1642,6 +1630,15 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
+    if (va_view.ndim <= 1) {
+        va_view.ndim = 2;
+        va_view.shape[0] = ma;
+        va_view.shape[1] = na;
+        va_view.strides[0] = na;
+        va_view.strides[1] = 1;
+        va_view.contiguous = 1;
+    }
+
     /* Centre the rows into a scratch block. This is a plain block rather than a
      * TensorBuffer because it never escapes this call, and materialising the
      * centred matrix up front also keeps the product free of the cancellation
@@ -1649,12 +1646,14 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
     double * vb = safe_emalloc((size_t) ma * (size_t) na, sizeof(double), 0);
 
     for (i = 0; i < ma; ++i) {
-        const double * src = va + i * na;
         double * dst = vb + i * na;
-        double mu = tensor_sum_doubles(src, na) / (double) na;
+
+        tensor_view_copy_row(&va_view, i, dst);
+
+        double mu = tensor_sum_doubles(dst, na) / (double) na;
 
         for (j = 0; j < na; ++j) {
-            dst[j] = src[j] - mu;
+            dst[j] -= mu;
         }
     }
 

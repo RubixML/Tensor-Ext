@@ -179,7 +179,7 @@ Reduce the matrix down to a scalar.
 
 ### `transpose() : Matrix`
 
-Transpose the matrix, i.e. rows become columns and columns become rows. The result is an O(1) view over the same storage (shape `[n, m]`, stride `[1, n]`), so no elements are copied; consumers that need contiguous data, such as `matmul()` or `toArray()`, gather the view lazily, while the row-wise reductions (`sum()`, `product()`, `min()`, `max()`, `argmin()`, `argmax()`) iterate the view through its strides in place. The transposed matrix is read-only.
+Transpose the matrix, i.e. rows become columns and columns become rows. The result is an O(1) view over the same storage (shape `[n, m]`, stride `[1, n]`), so no elements are copied. The kernels consume the view through its strides in place: the row-wise reductions (`sum()`, `product()`, `min()`, `max()`, `argmin()`, `argmax()`) walk the strides directly, the BLAS/LAPACK operations (`matmul()`, `dot()`, `covariance()`, `inverse()`, `svd()`, and the other factorisations) pass the leading dimension and transpose flag through to the native library, and the few consumers that genuinely need contiguous data, such as `toArray()`, materialise a transient copy for the call. The transposed matrix is read-only.
 
 ## Linear Algebra
 

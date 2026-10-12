@@ -430,19 +430,19 @@ static void tensor_conv_2d_range(
 void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride, zval * padding)
 {
 	zend_long na = 0, nb = 0;
-	int ok_a = 0, ok_b = 0;
+	const double * va = NULL;
+	const double * vb = NULL;
+	double * owned_a = NULL;
+	double * owned_b = NULL;
 
 	ZVAL_NULL(return_value);
 
-	double * restrict va = tensor_tensorbuffer_doubles(a, &na, &ok_a);
-
-	if (UNEXPECTED(!ok_a)) {
+	if (UNEXPECTED(!tensor_view_doubles(a, &va, &na, &owned_a))) {
 		return;
 	}
 
-	double * restrict vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);
-
-	if (UNEXPECTED(!ok_b)) {
+	if (UNEXPECTED(!tensor_view_doubles(b, &vb, &nb, &owned_b))) {
+		if (owned_a != NULL) { efree(owned_a); }
 		return;
 	}
 
@@ -455,6 +455,8 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride, 
 	zval c;
 
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, nout, &c) == FAILURE)) {
+		if (owned_a != NULL) { efree(owned_a); }
+		if (owned_b != NULL) { efree(owned_b); }
 		return;
 	}
 
@@ -509,6 +511,9 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride, 
 		}
 	}
 
+	if (owned_a != NULL) { efree(owned_a); }
+	if (owned_b != NULL) { efree(owned_b); }
+
 	zval_ptr_dtor(&c);
 }
 
@@ -529,7 +534,10 @@ void tensor_convolve_1d(zval * return_value, zval * a, zval * b, zval * stride, 
 void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, zval * padding, zval * ma, zval * na, zval * mb, zval * nb)
 {
 	zend_long nbufa = 0, nbufb = 0;
-	int ok_a = 0, ok_b = 0;
+	const double * va = NULL;
+	const double * vb = NULL;
+	double * owned_a = NULL;
+	double * owned_b = NULL;
 
 	ZVAL_NULL(return_value);
 
@@ -540,15 +548,12 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 	zend_long mb_ = zephir_get_intval(mb);
 	zend_long nb_ = zephir_get_intval(nb);
 
-	double * restrict va = tensor_tensorbuffer_doubles(a, &nbufa, &ok_a);
-
-	if (UNEXPECTED(!ok_a)) {
+	if (UNEXPECTED(!tensor_view_doubles(a, &va, &nbufa, &owned_a))) {
 		return;
 	}
 
-	double * restrict vb = tensor_tensorbuffer_doubles(b, &nbufb, &ok_b);
-
-	if (UNEXPECTED(!ok_b)) {
+	if (UNEXPECTED(!tensor_view_doubles(b, &vb, &nbufb, &owned_b))) {
+		if (owned_a != NULL) { efree(owned_a); }
 		return;
 	}
 
@@ -563,6 +568,8 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 	zval c;
 
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, nout, &c) == FAILURE)) {
+		if (owned_a != NULL) { efree(owned_a); }
+		if (owned_b != NULL) { efree(owned_b); }
 		return;
 	}
 
@@ -632,6 +639,9 @@ void tensor_convolve_2d(zval * return_value, zval * a, zval * b, zval * stride, 
 			efree(heap);
 		}
 	}
+
+	if (owned_a != NULL) { efree(owned_a); }
+	if (owned_b != NULL) { efree(owned_b); }
 
 	zval_ptr_dtor(&c);
 }

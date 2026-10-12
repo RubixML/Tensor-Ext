@@ -906,6 +906,68 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * BLAS/LAPACK kernels must accept a non-contiguous (transposed) operand
+     * natively and return the same result as when the operand is first
+     * materialised into a dense matrix.
+     *
+     * @test
+     */
+    public function linearAlgebraOnTransposedView() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ]);
+
+        $t = $a->transpose();
+
+        $dense = Matrix::fromArray($t->asArray());
+
+        $this->assertEqualsWithDelta(
+            $dense->matmul($a)->asArray(),
+            $t->matmul($a)->asArray(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEqualsWithDelta(
+            $a->matmul($dense)->asArray(),
+            $a->matmul($t)->asArray(),
+            self::MAX_DELTA
+        );
+
+        $v = Vector::fromArray([1.0, 2.0]);
+
+        $this->assertEqualsWithDelta(
+            $dense->dot($v)->asArray(),
+            $t->dot($v)->asArray(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEqualsWithDelta(
+            $dense->covariance()->asArray(),
+            $t->covariance()->asArray(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEqualsWithDelta(
+            $dense->rank(),
+            $t->rank(),
+            self::MAX_DELTA
+        );
+
+        $s = Matrix::fromArray([
+            [4.0, 7.0],
+            [2.0, 6.0],
+        ]);
+
+        $this->assertEqualsWithDelta(
+            $s->inverse()->transpose()->asArray(),
+            $s->transpose()->inverse()->asArray(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
      * Regression test: passing an array callable [instance, 'method'] to
      * Matrix::map() must not segfault. The previous Zephir dynamic
      * user-callback dispatch inside TensorBuffer::map() was triggered only

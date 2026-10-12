@@ -36,15 +36,13 @@
 
 #define TENSOR_UNARY_BODY(expr)                                                      \
 	zend_long i;                                                                 \
-	zend_long n = 0;                                                             \
-	int ok = 0;                                                                  \
+	tensor_double_view v_a;                                                      \
                                                                                      \
-	double * restrict va = tensor_tensorbuffer_doubles(a, &n, &ok);              \
-                                                                                     \
-	if (UNEXPECTED(!ok)) {                                                       \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a))) {                         \
 		return;                                                              \
 	}                                                                            \
                                                                                      \
+	zend_long n = v_a.len;                                                       \
 	zval b;                                                                      \
                                                                                      \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) {\
@@ -53,8 +51,22 @@
                                                                                      \
 	double * restrict vb = zephir_buffer_doubles(&b);                            \
                                                                                      \
-	for (i = 0; i < n; ++i) {                                                    \
-		vb[i] = expr;                                                        \
+	if (v_a.contiguous) {                                                        \
+		const double * restrict va = v_a.base + v_a.offset;                      \
+                                                                                     \
+		for (i = 0; i < n; ++i) {                                                \
+			double x = va[i];                                                    \
+			vb[i] = expr;                                                        \
+		}                                                                        \
+	} else {                                                                     \
+		tensor_view_reader ra;                                                   \
+		tensor_view_reader_init(&ra, &v_a);                                      \
+                                                                                     \
+		for (i = 0; i < n; ++i) {                                                \
+			double x = tensor_view_reader_value(&ra);                            \
+			vb[i] = expr;                                                        \
+			tensor_view_reader_advance(&ra);                                     \
+		}                                                                        \
 	}                                                                            \
                                                                                      \
 	zval_ptr_dtor(&b);
@@ -84,15 +96,15 @@
 		tensor_##name##_route(return_value, a);                         \
 	}
 
-TENSOR_UNARY_DISPATCH(abs, fabs(va[i]))
-TENSOR_UNARY_DISPATCH(sqrt, sqrt(va[i]))
-TENSOR_UNARY_DISPATCH(rsqrt, 1.0 / sqrt(va[i]))
-TENSOR_UNARY_DISPATCH(floor, floor(va[i]))
-TENSOR_UNARY_DISPATCH(ceil, ceil(va[i]))
-TENSOR_UNARY_DISPATCH(negate, -va[i])
-TENSOR_UNARY_DISPATCH(sign, va[i] > 0.0 ? 1.0 : (va[i] < 0.0 ? -1.0 : 0.0))
-TENSOR_UNARY_DISPATCH(rad2deg, (va[i] / M_PI) * 180.0)
-TENSOR_UNARY_DISPATCH(deg2rad, (va[i] / 180.0) * M_PI)
+TENSOR_UNARY_DISPATCH(abs, fabs(x))
+TENSOR_UNARY_DISPATCH(sqrt, sqrt(x))
+TENSOR_UNARY_DISPATCH(rsqrt, 1.0 / sqrt(x))
+TENSOR_UNARY_DISPATCH(floor, floor(x))
+TENSOR_UNARY_DISPATCH(ceil, ceil(x))
+TENSOR_UNARY_DISPATCH(negate, -x)
+TENSOR_UNARY_DISPATCH(sign, x > 0.0 ? 1.0 : (x < 0.0 ? -1.0 : 0.0))
+TENSOR_UNARY_DISPATCH(rad2deg, (x / M_PI) * 180.0)
+TENSOR_UNARY_DISPATCH(deg2rad, (x / 180.0) * M_PI)
 
 #undef TENSOR_UNARY_DISPATCH
 #undef TENSOR_UNARY_BODY
@@ -104,15 +116,14 @@ TENSOR_UNARY_DISPATCH(deg2rad, (va[i] / 180.0) * M_PI)
 #define TENSOR_UNARY(name, expr)                                                             \
 	void tensor_##name(zval * return_value, zval * a)                                    \
 	{                                                                                    \
-		zend_long n = 0;                                                             \
-		int ok = 0;                                                                  \
+		zend_long i;                                                                 \
+		tensor_double_view v_a;                                                      \
                                                                                              \
-		double * va = tensor_tensorbuffer_doubles(a, &n, &ok);                       \
-                                                                                             \
-		if (UNEXPECTED(!ok)) {                                                       \
+		if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a))) {                         \
 			return;                                                              \
 		}                                                                            \
                                                                                              \
+		zend_long n = v_a.len;                                                       \
 		zval b;                                                                      \
                                                                                              \
 		if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &b) == FAILURE)) {\
@@ -121,31 +132,43 @@ TENSOR_UNARY_DISPATCH(deg2rad, (va[i] / 180.0) * M_PI)
                                                                                              \
 		double * vb = zephir_buffer_doubles(&b);                                     \
                                                                                              \
-		zend_long i;                                                                 \
+		if (v_a.contiguous) {                                                        \
+			const double * va = v_a.base + v_a.offset;                               \
                                                                                              \
-		for (i = 0; i < n; ++i) {                                                    \
-			vb[i] = expr;                                                        \
+			for (i = 0; i < n; ++i) {                                                \
+				double x = va[i];                                                    \
+				vb[i] = expr;                                                        \
+			}                                                                        \
+		} else {                                                                     \
+			tensor_view_reader ra;                                                   \
+			tensor_view_reader_init(&ra, &v_a);                                      \
+                                                                                             \
+			for (i = 0; i < n; ++i) {                                                \
+				double x = tensor_view_reader_value(&ra);                            \
+				vb[i] = expr;                                                        \
+				tensor_view_reader_advance(&ra);                                     \
+			}                                                                        \
 		}                                                                            \
                                                                                              \
 		zval_ptr_dtor(&b);                                                           \
 	}
 
-TENSOR_UNARY(exp, exp(va[i]))
-TENSOR_UNARY(expm1, expm1(va[i]))
-TENSOR_UNARY(log, log(va[i]))
-TENSOR_UNARY(log1p, log1p(va[i]))
-TENSOR_UNARY(sigmoid, 1.0 / (1.0 + exp(-va[i])))
-TENSOR_UNARY(softplus, va[i] > 0.0 ? va[i] + log1p(exp(-va[i])) : log1p(exp(va[i])))
-TENSOR_UNARY(sin, sin(va[i]))
-TENSOR_UNARY(asin, asin(va[i]))
-TENSOR_UNARY(cos, cos(va[i]))
-TENSOR_UNARY(acos, acos(va[i]))
-TENSOR_UNARY(tan, tan(va[i]))
-TENSOR_UNARY(atan, atan(va[i]))
-TENSOR_UNARY(tanh, tanh(va[i]))
-TENSOR_UNARY(sinh, sinh(va[i]))
-TENSOR_UNARY(cosh, cosh(va[i]))
-TENSOR_UNARY(erf, erf(va[i]))
+TENSOR_UNARY(exp, exp(x))
+TENSOR_UNARY(expm1, expm1(x))
+TENSOR_UNARY(log, log(x))
+TENSOR_UNARY(log1p, log1p(x))
+TENSOR_UNARY(sigmoid, 1.0 / (1.0 + exp(-x)))
+TENSOR_UNARY(softplus, x > 0.0 ? x + log1p(exp(-x)) : log1p(exp(x)))
+TENSOR_UNARY(sin, sin(x))
+TENSOR_UNARY(asin, asin(x))
+TENSOR_UNARY(cos, cos(x))
+TENSOR_UNARY(acos, acos(x))
+TENSOR_UNARY(tan, tan(x))
+TENSOR_UNARY(atan, atan(x))
+TENSOR_UNARY(tanh, tanh(x))
+TENSOR_UNARY(sinh, sinh(x))
+TENSOR_UNARY(cosh, cosh(x))
+TENSOR_UNARY(erf, erf(x))
 
 #undef TENSOR_UNARY
 
@@ -153,15 +176,13 @@ TENSOR_UNARY(erf, erf(va[i]))
 void tensor_log_base(zval * return_value, zval * a, zval * b)
 {
 	zend_long i;
-	zend_long n = 0;
-	int ok = 0;
+	tensor_double_view v_a;
 
-	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);
-
-	if (UNEXPECTED(!ok)) {
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a))) {
 		return;
 	}
 
+	zend_long n = v_a.len;
 	double log_base = log(zephir_get_doubleval(b));
 
 	zval c;
@@ -172,8 +193,21 @@ void tensor_log_base(zval * return_value, zval * a, zval * b)
 
 	double * vc = zephir_buffer_doubles(&c);
 
-	for (i = 0; i < n; ++i) {
-		vc[i] = log(va[i]) / log_base;
+	if (v_a.contiguous) {
+		const double * va = v_a.base + v_a.offset;
+
+		for (i = 0; i < n; ++i) {
+			vc[i] = log(va[i]) / log_base;
+		}
+	} else {
+		tensor_view_reader ra;
+
+		tensor_view_reader_init(&ra, &v_a);
+
+		for (i = 0; i < n; ++i) {
+			vc[i] = log(tensor_view_reader_value(&ra)) / log_base;
+			tensor_view_reader_advance(&ra);
+		}
 	}
 
 	zval_ptr_dtor(&c);
@@ -329,15 +363,13 @@ static double tensor_math_round(double value, int places)
 void tensor_round(zval * return_value, zval * a, zval * precision)
 {
 	zend_long i;
-	zend_long n = 0;
-	int ok = 0;
+	tensor_double_view v_a;
 
-	double * va = tensor_tensorbuffer_doubles(a, &n, &ok);
-
-	if (UNEXPECTED(!ok)) {
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a))) {
 		return;
 	}
 
+	zend_long n = v_a.len;
 	zend_long p = zephir_get_intval(precision);
 
 	int places = p > INT_MAX ? INT_MAX : (int) p;
@@ -350,8 +382,21 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 
 	double * vc = zephir_buffer_doubles(&c);
 
-	for (i = 0; i < n; ++i) {
-		vc[i] = tensor_math_round(va[i], places);
+	if (v_a.contiguous) {
+		const double * va = v_a.base + v_a.offset;
+
+		for (i = 0; i < n; ++i) {
+			vc[i] = tensor_math_round(va[i], places);
+		}
+	} else {
+		tensor_view_reader ra;
+
+		tensor_view_reader_init(&ra, &v_a);
+
+		for (i = 0; i < n; ++i) {
+			vc[i] = tensor_math_round(tensor_view_reader_value(&ra), places);
+			tensor_view_reader_advance(&ra);
+		}
 	}
 
 	zval_ptr_dtor(&c);
@@ -364,15 +409,13 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 
 #define TENSOR_CLIP_BODY(TENSOR_CLIP_EXPR)                                           \
 	zend_long i;                                                                 \
-	zend_long n = 0;                                                             \
-	int ok = 0;                                                                  \
+	tensor_double_view v_a;                                                      \
                                                                                      \
-	double * restrict va = tensor_tensorbuffer_doubles(a, &n, &ok);              \
-                                                                                     \
-	if (UNEXPECTED(!ok)) {                                                       \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a))) {                         \
 		return;                                                              \
 	}                                                                            \
                                                                                      \
+	zend_long n = v_a.len;                                                       \
 	zval c;                                                                      \
                                                                                      \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, n, &c) == FAILURE)) {\
@@ -381,8 +424,22 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
                                                                                      \
 	double * restrict vc = zephir_buffer_doubles(&c);                            \
                                                                                      \
-	for (i = 0; i < n; ++i) {                                                    \
-		vc[i] = TENSOR_CLIP_EXPR;                                            \
+	if (v_a.contiguous) {                                                        \
+		const double * restrict va = v_a.base + v_a.offset;                      \
+                                                                                     \
+		for (i = 0; i < n; ++i) {                                                \
+			double x = va[i];                                                    \
+			vc[i] = TENSOR_CLIP_EXPR;                                            \
+		}                                                                        \
+	} else {                                                                     \
+		tensor_view_reader ra;                                                   \
+		tensor_view_reader_init(&ra, &v_a);                                      \
+                                                                                     \
+		for (i = 0; i < n; ++i) {                                                \
+			double x = tensor_view_reader_value(&ra);                            \
+			vc[i] = TENSOR_CLIP_EXPR;                                            \
+			tensor_view_reader_advance(&ra);                                     \
+		}                                                                        \
 	}                                                                            \
                                                                                      \
 	zval_ptr_dtor(&c);
@@ -422,7 +479,7 @@ void tensor_round(zval * return_value, zval * a, zval * precision)
 		tensor_##name##_route(return_value, a, lo_zval, hi_zval);            \
 	}
 
-TENSOR_CLIP_DISPATCH(clip, va[i] > hi ? hi : (va[i] < lo ? lo : va[i]))
+TENSOR_CLIP_DISPATCH(clip, x > hi ? hi : (x < lo ? lo : x))
 
 #undef TENSOR_CLIP_DISPATCH
 
@@ -454,8 +511,8 @@ TENSOR_CLIP_DISPATCH(clip, va[i] > hi ? hi : (va[i] < lo ? lo : va[i]))
 		tensor_##name##_route(return_value, a, b);                            \
 	}
 
-TENSOR_CLIP_BOUND_DISPATCH(clip_lower, va[i] < bound ? bound : va[i])
-TENSOR_CLIP_BOUND_DISPATCH(clip_upper, va[i] > bound ? bound : va[i])
+TENSOR_CLIP_BOUND_DISPATCH(clip_lower, x < bound ? bound : x)
+TENSOR_CLIP_BOUND_DISPATCH(clip_upper, x > bound ? bound : x)
 
 #undef TENSOR_CLIP_BOUND_DISPATCH
 #undef TENSOR_CLIP_BODY

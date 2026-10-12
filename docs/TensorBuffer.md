@@ -10,7 +10,7 @@ The Zephir kernel `Buffer` (`Tensor\Buffer`) is an ordinary refcounted object th
 
 `TensorBuffer` composes a `Buffer` and delegates to it, adding operations that cannot be expressed through the minimal API. Those operations are implemented in C over the buffer's raw element pointers (`qsort`, `memcpy`), so no intermediate PHP array is materialised.
 
-`sort()` mutates the wrapped buffer in place. `slice()`, `sliceStrided()`, and `split()` on a **double** buffer return an O(1) **view**: a decorator that keeps the source buffer plus an element `offset`, a logical `shape`, and a matching `strides` array, without copying any elements. Views are read-only — `set()` and `sort()` reject them — and `asBuffer()` materialises a fresh dense `Buffer` on demand. Kernels that require contiguous storage gather a non-contiguous view into a cached dense buffer that is invalidated whenever the source is rewritten through `set()` or `sort()`. On long buffers the operations keep their existing copy semantics.
+`sort()` mutates the wrapped buffer in place. `slice()`, `sliceStrided()`, and `split()` on a **double** buffer return an O(1) **view**: a decorator that keeps the source buffer plus an element `offset`, a logical `shape`, and a matching `strides` array, without copying any elements. Views are read-only — `set()` and `sort()` reject them — and `asBuffer()` materialises a fresh dense `Buffer` on demand. Kernels consume a non-contiguous view natively, either by walking its strides in place or, where the underlying C library requires a contiguous block, by materialising a transient work copy for the duration of the call; nothing is cached, so a write through `set()` or `sort()` is observed immediately. On long buffers the operations keep their existing copy semantics.
 
 ## Constructors
 
@@ -92,5 +92,5 @@ Return a new decorator wrapping a new buffer containing the elements of this buf
 - `sort()`, `slice()`, `sliceStrided()`, `concat()`, `split()`, and `repeat()` are implemented in C (`ext/include/buffer.c`) and route through this class's optimizer calls, operating directly on the buffer's raw pointer.
 - A view is a `TensorBuffer` carrying integer `offset`, `shape`, and `strides` properties; a decorator without them is a plain dense buffer and is treated as `offset = 0`, `shape = [length]`, `strides = [1]`.
 - `Matrix::transpose()` now returns such a view shape `[n, m]`, stride `[1, n]`, and `Matrix::rowAsVector()` / `columnAsVector()` / `diagonalAsVector()` compose slice and strided views over it.
-- The reduction kernels (`sum`, `product`, `min`, `max`, `argmin`, `argmax`) read a non-contiguous view through its `offset` and `strides` in place (`ext/include/reductions.c`), so reducing a transposed matrix does not trigger the lazy gather.
+- The reduction kernels (`sum`, `product`, `min`, `max`, `argmin`, `argmax`) read a non-contiguous view through its `offset` and `strides` in place (`ext/include/reductions.c`), so reducing a transposed matrix does not trigger any copy.
 - Both element kinds (`TYPE_DOUBLE` and `TYPE_LONG`) are supported; `slice()`, `sliceStrided()`, `concat()`, `split()`, and `repeat()` preserve the source kind.

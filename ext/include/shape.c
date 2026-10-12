@@ -16,25 +16,20 @@
 #include "../tensor/exceptions/invalidargumentexception.zep.h"
 
 /**
- * Row-wise operations work directly on the flat row-major buffer that backs a
- * Matrix (m * n doubles) instead of materializing per-row Buffers. This
- * helper unwraps the buffer and validates that it can be divided into whole
- * rows of length n, mirroring the semantics of `TensorBuffer::split()`. The
- * derived row count `*m` and the raw data pointer are written on success.
+ * Row-wise operations work over the logical rows of a Matrix (m groups of n
+ * doubles) instead of materializing per-row Buffers. This helper resolves the
+ * operand into a stride view and derives the row count, mirroring the semantics
+ * of `TensorBuffer::split()` without assuming the storage is contiguous. The
+ * view and the derived count `*m` are written on success.
  *
- * The row-wise statistical operations in reductions.c share this rather than
- * carrying their own copy.
+ * The row-wise statistical and softmax kernels share this rather than carrying
+ * their own copy: each walks `m` rows with tensor_view_copy_row().
  *
  * @return 1 on success, 0 on failure (throwing).
  */
-int tensor_matrix_doubles_len(zval * obj, zend_long n_hat, double ** ptr, zend_long * m, zend_long * n)
+int tensor_matrix_view(zval * obj, zend_long n_hat, tensor_double_view * v, zend_long * m, zend_long * n)
 {
-	zend_long total = 0;
-	int ok = 0;
-
-	double * va = tensor_tensorbuffer_doubles(obj, &total, &ok);
-
-	if (UNEXPECTED(!ok)) {
+	if (UNEXPECTED(!tensor_view_resolve_arg(obj, v))) {
 		return 0;
 	}
 
@@ -44,31 +39,10 @@ int tensor_matrix_doubles_len(zval * obj, zend_long n_hat, double ** ptr, zend_l
 		return 0;
 	}
 
-	*ptr = va;
 	*n = n_hat;
-	*m = total / n_hat;
+	*m = v->len / n_hat;
 
 	return 1;
-}
-
-/**
- * Unwrap the flat row-major buffer as before, taking the row length straight
- * from a zend_long rather than a zval.
- *
- * The split exists so that softmax.c can fold an empty vector, which arrives as
- * a zero row length, into a single empty row before validation instead of
- * having to build a zval to hand to tensor_matrix_doubles.
- *
- * @param obj
- * @param n_zval
- * @param ptr
- * @param m
- * @param n
- * @return 1 on success, 0 on failure (throwing).
- */
-int tensor_matrix_doubles(zval * obj, zval * n_zval, double ** ptr, zend_long * m, zend_long * n)
-{
-	return tensor_matrix_doubles_len(obj, zephir_get_intval(n_zval), ptr, m, n);
 }
 
 /**
@@ -105,11 +79,11 @@ void tensor_matrix_transpose(zval * return_value, zval * a, zval * m, zval * n)
  */
 void tensor_matrix_repeat(zval * return_value, zval * obj, zval * n, zval * times_m, zval * times_n)
 {
-	double * va = NULL;
+	tensor_double_view v;
 	zend_long m = 0, n_hat = 0;
 	zend_long t_m = 0, t_n = 0;
 
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
+	if (UNEXPECTED(!tensor_matrix_view(obj, zephir_get_intval(n), &v, &m, &n_hat))) {
 		return;
 	}
 
@@ -164,14 +138,33 @@ void tensor_matrix_repeat(zval * return_value, zval * obj, zval * n, zval * time
 	double * vc = zephir_buffer_doubles(&c);
 
 	zend_long i, k;
+	double * row = NULL;
 
-	for (i = 0; i < rows; ++i) {
-		const double * src = va + (i % m) * n_hat;
-		double * dst = vc + i * cols;
+	if (v.contiguous) {
+		const double * va = v.base + v.offset;
 
-		for (k = 0; k <= t_n; ++k) {
-			memcpy(dst + k * n_hat, src, (size_t) n_hat * sizeof(double));
+		for (i = 0; i < rows; ++i) {
+			const double * src = va + (i % m) * n_hat;
+			double * dst = vc + i * cols;
+
+			for (k = 0; k <= t_n; ++k) {
+				memcpy(dst + k * n_hat, src, (size_t) n_hat * sizeof(double));
+			}
 		}
+	} else {
+		row = safe_emalloc((size_t) n_hat, sizeof(double), 0);
+
+		for (i = 0; i < rows; ++i) {
+			double * dst = vc + i * cols;
+
+			tensor_view_copy_row(&v, i % m, row);
+
+			for (k = 0; k <= t_n; ++k) {
+				memcpy(dst + k * n_hat, row, (size_t) n_hat * sizeof(double));
+			}
+		}
+
+		efree(row);
 	}
 
 	zval_ptr_dtor(&c);
@@ -187,26 +180,41 @@ void tensor_matrix_repeat(zval * return_value, zval * obj, zval * n, zval * time
  */
 void tensor_matrix_to_array(zval * return_value, zval * obj, zval * n)
 {
-	double * va = NULL;
+	tensor_double_view v;
 	zend_long m = 0, n_hat = 0;
 	zend_long i, j;
 
-	if (UNEXPECTED(!tensor_matrix_doubles(obj, n, &va, &m, &n_hat))) {
+	if (UNEXPECTED(!tensor_matrix_view(obj, zephir_get_intval(n), &v, &m, &n_hat))) {
 		return;
 	}
 
 	array_init_size(return_value, (zend_ulong) m);
 
+	const double * va = v.contiguous ? v.base + v.offset : NULL;
+	double * row = va == NULL ? safe_emalloc((size_t) n_hat, sizeof(double), 0) : NULL;
+
 	for (i = 0; i < m; ++i) {
-		const double * row = va + i * n_hat;
+		const double * src;
+
+		if (va != NULL) {
+			src = va + i * n_hat;
+		} else {
+			tensor_view_copy_row(&v, i, row);
+			src = row;
+		}
+
 		zval row_value;
 
 		array_init_size(&row_value, (zend_ulong) n_hat);
 
 		for (j = 0; j < n_hat; ++j) {
-			add_next_index_double(&row_value, row[j]);
+			add_next_index_double(&row_value, src[j]);
 		}
 
 		add_next_index_zval(return_value, &row_value);
+	}
+
+	if (row != NULL) {
+		efree(row);
 	}
 }

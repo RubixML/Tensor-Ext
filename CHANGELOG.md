@@ -4,7 +4,9 @@
     - `Matrix::transpose()` is now an O(1) view over the source storage
     - `TensorBuffer::slice()`, `sliceStrided()`, and `split()` return read-only O(1) views on double buffers
     - Added an N-dimensional stride view model to `TensorBuffer` (`offset`/`shape`/`strides`)
-    - Non-contiguous views are gathered lazily into a cached dense buffer, invalidated on writes
+    - C kernels consume non-contiguous views in place; the cached dense gather was removed
+    - Element-wise, unary, comparison, shape, softmax, and median/quantile kernels walk strided views directly
+    - BLAS/LAPACK kernels (`matmul`, `matrix_dot`, `dot`, `covariance`, `inverse`, `cholesky`, `lu`, `eig`, `eig_symmetric`, `svd`, `rank`, `ref`, `rref`, `pseudoinverse`) accept transposed views natively via leading-dimension/transpose flags or a transient work copy
     - Reductions (`sum`/`product`/`min`/`max`/`argmin`/`argmax`) consume non-contiguous views in place instead of gathering a dense copy
     - `set()` and `sort()` reject read-only views
     - `asBuffer()` materialises a dense copy on view decorators

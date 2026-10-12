@@ -64,19 +64,6 @@ ZEPHIR_INIT_CLASS(Tensor_TensorBuffer)
 	 * @var int[]|null
 	 */
 	zend_declare_property_null(tensor_tensorbuffer_ce, SL("strides"), ZEND_ACC_PROTECTED);
-	/**
-	 * A dense copy of the view gathered for kernels that require contiguous
-	 * storage, cached for the lifetime of the view.
-	 *
-	 * @var \Tensor\Buffer|null
-	 */
-	zend_declare_property_null(tensor_tensorbuffer_ce, SL("denseData"), ZEND_ACC_PROTECTED);
-	/**
-	 * The in-place write epoch the cached dense copy was gathered against.
-	 *
-	 * @var int|null
-	 */
-	zend_declare_property_null(tensor_tensorbuffer_ce, SL("denseEpoch"), ZEND_ACC_PROTECTED);
 	zephir_declare_class_constant_long(tensor_tensorbuffer_ce, SL("TYPE_DOUBLE"), 1);
 
 	zephir_declare_class_constant_long(tensor_tensorbuffer_ce, SL("TYPE_LONG"), 2);
@@ -120,11 +107,11 @@ PHP_METHOD(Tensor_TensorBuffer, fromBuffers)
 	}
 	if (UNEXPECTED(rows == 1)) {
 		zephir_memory_observe(&_1$$4);
-		zephir_array_fetch_long(&_1$$4, &buffers, 0, PH_NOISY, "tensor/tensorbuffer.zep", 83);
+		zephir_array_fetch_long(&_1$$4, &buffers, 0, PH_NOISY, "tensor/tensorbuffer.zep", 68);
 		RETURN_CCTOR(&_1$$4);
 	}
 	zephir_memory_observe(&_2);
-	zephir_array_fetch_long(&_2, &buffers, 0, PH_NOISY, "tensor/tensorbuffer.zep", 86);
+	zephir_array_fetch_long(&_2, &buffers, 0, PH_NOISY, "tensor/tensorbuffer.zep", 71);
 	ZVAL_LONG(&_3, 1);
 	ZEPHIR_CALL_FUNCTION(&_4, "array_slice", NULL, 24, &buffers, &_3);
 	zephir_check_call_status();
@@ -229,7 +216,7 @@ PHP_METHOD(Tensor_TensorBuffer, get)
 	if (Z_TYPE_P(&_0) == IS_NULL) {
 		zephir_read_property_cached(&_1$$3, this_ptr, _zephir_prop_1, 21, PH_NOISY_CC | PH_READONLY);
 		zephir_memory_observe(&_2$$3);
-		zephir_array_fetch_long(&_2$$3, &_1$$3, index, PH_NOISY, "tensor/tensorbuffer.zep", 116);
+		zephir_array_fetch_long(&_2$$3, &_1$$3, index, PH_NOISY, "tensor/tensorbuffer.zep", 101);
 		RETURN_CCTOR(&_2$$3);
 	}
 	ZEPHIR_INIT_VAR(&value);
@@ -337,7 +324,7 @@ PHP_METHOD(Tensor_TensorBuffer, sort)
 		}
 	zephir_read_property_cached(&_0, this_ptr, _zephir_prop_0, 22, PH_NOISY_CC | PH_READONLY);
 	if (UNEXPECTED(Z_TYPE_P(&_0) != IS_NULL)) {
-		ZEPHIR_THROW_EXCEPTION_DEBUG_STR(tensor_exceptions_invalidargumentexception_ce, "Cannot sort a read-only view.", "tensor/tensorbuffer.zep", 146);
+		ZEPHIR_THROW_EXCEPTION_DEBUG_STR(tensor_exceptions_invalidargumentexception_ce, "Cannot sort a read-only view.", "tensor/tensorbuffer.zep", 131);
 		return;
 	}
 	ZEPHIR_INIT_VAR(&status);
@@ -429,7 +416,7 @@ PHP_METHOD(Tensor_TensorBuffer, slice)
 		ZEPHIR_CONCAT_SS(&_6$$3, "Offset and length", " must be within the bounds of the buffer.");
 		ZEPHIR_CALL_METHOD(NULL, &_5$$3, "__construct", NULL, 2, &_6$$3);
 		zephir_check_call_status();
-		zephir_throw_exception_debug(&_5$$3, "tensor/tensorbuffer.zep", 164);
+		zephir_throw_exception_debug(&_5$$3, "tensor/tensorbuffer.zep", 149);
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
@@ -590,7 +577,7 @@ PHP_METHOD(Tensor_TensorBuffer, sliceStrided)
 		ZEPHIR_CONCAT_SS(&_10$$10, "Offset, length, and", " stride must be within the bounds of the buffer.");
 		ZEPHIR_CALL_METHOD(NULL, &_9$$10, "__construct", NULL, 2, &_10$$10);
 		zephir_check_call_status();
-		zephir_throw_exception_debug(&_9$$10, "tensor/tensorbuffer.zep", 233);
+		zephir_throw_exception_debug(&_9$$10, "tensor/tensorbuffer.zep", 218);
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
@@ -653,7 +640,7 @@ PHP_METHOD(Tensor_TensorBuffer, concat)
 	zephir_get_arrval(&buffers, buffers_param);
 	ZEPHIR_INIT_VAR(&unwrapped);
 	array_init(&unwrapped);
-	zephir_is_iterable(&buffers, 0, "tensor/tensorbuffer.zep", 264);
+	zephir_is_iterable(&buffers, 0, "tensor/tensorbuffer.zep", 249);
 	if (Z_TYPE_P(&buffers) == IS_ARRAY) {
 		ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(&buffers), _0)
 		{
@@ -661,7 +648,7 @@ PHP_METHOD(Tensor_TensorBuffer, concat)
 			ZVAL_COPY(&buffer, _0);
 			ZEPHIR_CALL_METHOD(&_1$$3, &buffer, "asBuffer", NULL, 0);
 			zephir_check_call_status();
-			zephir_array_append(&unwrapped, &_1$$3, PH_SEPARATE, "tensor/tensorbuffer.zep", 261);
+			zephir_array_append(&unwrapped, &_1$$3, PH_SEPARATE, "tensor/tensorbuffer.zep", 246);
 		} ZEND_HASH_FOREACH_END();
 	} else {
 		ZEPHIR_CALL_METHOD(NULL, &buffers, "rewind", NULL, 0);
@@ -683,7 +670,7 @@ PHP_METHOD(Tensor_TensorBuffer, concat)
 			zephir_check_call_status();
 				ZEPHIR_CALL_METHOD(&_4$$4, &buffer, "asBuffer", NULL, 0);
 				zephir_check_call_status();
-				zephir_array_append(&unwrapped, &_4$$4, PH_SEPARATE, "tensor/tensorbuffer.zep", 261);
+				zephir_array_append(&unwrapped, &_4$$4, PH_SEPARATE, "tensor/tensorbuffer.zep", 246);
 		}
 	}
 	ZEPHIR_INIT_NVAR(&buffer);
@@ -768,7 +755,7 @@ PHP_METHOD(Tensor_TensorBuffer, split)
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "Chunk length must be", " greater than 0, ", &_2$$3, " given.");
 		ZEPHIR_CALL_METHOD(NULL, &_0$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
-		zephir_throw_exception_debug(&_0$$3, "tensor/tensorbuffer.zep", 283);
+		zephir_throw_exception_debug(&_0$$3, "tensor/tensorbuffer.zep", 268);
 		ZEPHIR_MM_RESTORE();
 		return;
 	}
@@ -788,7 +775,7 @@ PHP_METHOD(Tensor_TensorBuffer, split)
 		} else {
 			_7$$4 = &buffers$$4;
 		}
-		zephir_is_iterable(_7$$4, 0, "tensor/tensorbuffer.zep", 297);
+		zephir_is_iterable(_7$$4, 0, "tensor/tensorbuffer.zep", 282);
 		if (Z_TYPE_P(_7$$4) == IS_ARRAY) {
 			ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(_7$$4), _9$$4)
 			{
@@ -798,7 +785,7 @@ PHP_METHOD(Tensor_TensorBuffer, split)
 				object_init_ex(&_10$$5, tensor_tensorbuffer_ce);
 				ZEPHIR_CALL_METHOD(NULL, &_10$$5, "__construct", &_11, 25, &buffer);
 				zephir_check_call_status();
-				zephir_array_append(&tensorBuffers$$4, &_10$$5, PH_SEPARATE, "tensor/tensorbuffer.zep", 294);
+				zephir_array_append(&tensorBuffers$$4, &_10$$5, PH_SEPARATE, "tensor/tensorbuffer.zep", 279);
 			} ZEND_HASH_FOREACH_END();
 		} else {
 			ZEPHIR_CALL_METHOD(NULL, _7$$4, "rewind", NULL, 0);
@@ -822,7 +809,7 @@ PHP_METHOD(Tensor_TensorBuffer, split)
 					object_init_ex(&_14$$6, tensor_tensorbuffer_ce);
 					ZEPHIR_CALL_METHOD(NULL, &_14$$6, "__construct", &_11, 25, &buffer);
 					zephir_check_call_status();
-					zephir_array_append(&tensorBuffers$$4, &_14$$6, PH_SEPARATE, "tensor/tensorbuffer.zep", 294);
+					zephir_array_append(&tensorBuffers$$4, &_14$$6, PH_SEPARATE, "tensor/tensorbuffer.zep", 279);
 			}
 		}
 		ZEPHIR_INIT_NVAR(&buffer);
@@ -876,7 +863,7 @@ PHP_METHOD(Tensor_TensorBuffer, repeat)
 		ZEPHIR_CONCAT_SSVS(&_3$$3, "Times must be", " greater than 0, ", &_2$$3, " given.");
 		ZEPHIR_CALL_METHOD(NULL, &_0$$3, "__construct", NULL, 2, &_3$$3);
 		zephir_check_call_status();
-		zephir_throw_exception_debug(&_0$$3, "tensor/tensorbuffer.zep", 317);
+		zephir_throw_exception_debug(&_0$$3, "tensor/tensorbuffer.zep", 302);
 		ZEPHIR_MM_RESTORE();
 		return;
 	}

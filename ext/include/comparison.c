@@ -31,16 +31,14 @@
 
 #define TENSOR_BINARY_BODY(op)                                                    \
 	zend_long i;                                                                 \
-	zend_long na = 0, nb = 0;                                                    \
-	int ok_a = 0, ok_b = 0;                                                      \
+	tensor_double_view v_a, v_b;                                                 \
 	                                                                             \
-	double * restrict va = tensor_tensorbuffer_doubles(a, &na, &ok_a);          \
-	double * restrict vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);          \
-	                                                                             \
-	if (UNEXPECTED(!ok_a || !ok_b)) {                                            \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) ||                          \
+		!tensor_view_resolve_arg(b, &v_b))) {                                    \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
+	zend_long na = v_a.len;                                                      \
 	zval c;                                                                      \
 	                                                                             \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, na, &c) == FAILURE)) { \
@@ -49,8 +47,27 @@
 	                                                                             \
 	double * restrict vc = zephir_buffer_doubles(&c);                            \
 	                                                                             \
-	for (i = 0; i < na; ++i) {                                                   \
-		vc[i] = op;                                                              \
+	if (v_a.contiguous && v_b.contiguous) {                                      \
+		const double * restrict va = v_a.base + v_a.offset;                      \
+		const double * restrict vb = v_b.base + v_b.offset;                      \
+	                                                                             \
+		for (i = 0; i < na; ++i) {                                               \
+			double x = va[i];                                                    \
+			double y = vb[i];                                                    \
+			vc[i] = op;                                                          \
+		}                                                                        \
+	} else {                                                                     \
+		tensor_view_reader ra, rb;                                               \
+		tensor_view_reader_init(&ra, &v_a);                                      \
+		tensor_view_reader_init(&rb, &v_b);                                      \
+	                                                                             \
+		for (i = 0; i < na; ++i) {                                               \
+			double x = tensor_view_reader_value(&ra);                            \
+			double y = tensor_view_reader_value(&rb);                            \
+			vc[i] = op;                                                          \
+			tensor_view_reader_advance(&ra);                                     \
+			tensor_view_reader_advance(&rb);                                     \
+		}                                                                        \
 	}                                                                            \
 	                                                                             \
 	zval_ptr_dtor(&c);
@@ -80,12 +97,12 @@
 		tensor_##name##_route(return_value, a, b);                                \
 	}
 
-TENSOR_BINARY_DISPATCH(equal, va[i] == vb[i] ? 1.0 : 0.0)
-TENSOR_BINARY_DISPATCH(not_equal, va[i] != vb[i] ? 1.0 : 0.0)
-TENSOR_BINARY_DISPATCH(greater, va[i] > vb[i] ? 1.0 : 0.0)
-TENSOR_BINARY_DISPATCH(greater_equal, va[i] >= vb[i] ? 1.0 : 0.0)
-TENSOR_BINARY_DISPATCH(less, va[i] < vb[i] ? 1.0 : 0.0)
-TENSOR_BINARY_DISPATCH(less_equal, va[i] <= vb[i] ? 1.0 : 0.0)
+TENSOR_BINARY_DISPATCH(equal, x == y ? 1.0 : 0.0)
+TENSOR_BINARY_DISPATCH(not_equal, x != y ? 1.0 : 0.0)
+TENSOR_BINARY_DISPATCH(greater, x > y ? 1.0 : 0.0)
+TENSOR_BINARY_DISPATCH(greater_equal, x >= y ? 1.0 : 0.0)
+TENSOR_BINARY_DISPATCH(less, x < y ? 1.0 : 0.0)
+TENSOR_BINARY_DISPATCH(less_equal, x <= y ? 1.0 : 0.0)
 
 /* Elementwise comparison of a buffer against a single scalar. Returns 1.0 when
  * the comparison holds and 0.0 otherwise. Takes the same route signature as the
@@ -94,15 +111,13 @@ TENSOR_BINARY_DISPATCH(less_equal, va[i] <= vb[i] ? 1.0 : 0.0)
 
 #define TENSOR_SCALAR_BODY(op)                                                    \
 	zend_long i;                                                                 \
-	zend_long na = 0;                                                            \
-	int ok_a = 0;                                                                \
+	tensor_double_view v_a;                                                      \
 	                                                                             \
-	double * restrict va = tensor_tensorbuffer_doubles(a, &na, &ok_a);          \
-	                                                                             \
-	if (UNEXPECTED(!ok_a)) {                                                     \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a))) {                         \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
+	zend_long na = v_a.len;                                                      \
 	double ab = zephir_get_doubleval(b);                                         \
 	                                                                             \
 	zval c;                                                                      \
@@ -113,8 +128,22 @@ TENSOR_BINARY_DISPATCH(less_equal, va[i] <= vb[i] ? 1.0 : 0.0)
 	                                                                             \
 	double * restrict vc = zephir_buffer_doubles(&c);                            \
 	                                                                             \
-	for (i = 0; i < na; ++i) {                                                   \
-		vc[i] = op;                                                              \
+	if (v_a.contiguous) {                                                        \
+		const double * restrict va = v_a.base + v_a.offset;                      \
+	                                                                             \
+		for (i = 0; i < na; ++i) {                                               \
+			double x = va[i];                                                    \
+			vc[i] = op;                                                          \
+		}                                                                        \
+	} else {                                                                     \
+		tensor_view_reader ra;                                                   \
+		tensor_view_reader_init(&ra, &v_a);                                      \
+	                                                                             \
+		for (i = 0; i < na; ++i) {                                               \
+			double x = tensor_view_reader_value(&ra);                            \
+			vc[i] = op;                                                          \
+			tensor_view_reader_advance(&ra);                                     \
+		}                                                                        \
 	}                                                                            \
 	                                                                             \
 	zval_ptr_dtor(&c);
@@ -144,12 +173,12 @@ TENSOR_BINARY_DISPATCH(less_equal, va[i] <= vb[i] ? 1.0 : 0.0)
 		tensor_##name##_route(return_value, a, b);                                \
 	}
 
-TENSOR_SCALAR_DISPATCH(equal_scalar, va[i] == ab ? 1.0 : 0.0)
-TENSOR_SCALAR_DISPATCH(not_equal_scalar, va[i] != ab ? 1.0 : 0.0)
-TENSOR_SCALAR_DISPATCH(greater_scalar, va[i] > ab ? 1.0 : 0.0)
-TENSOR_SCALAR_DISPATCH(greater_equal_scalar, va[i] >= ab ? 1.0 : 0.0)
-TENSOR_SCALAR_DISPATCH(less_scalar, va[i] < ab ? 1.0 : 0.0)
-TENSOR_SCALAR_DISPATCH(less_equal_scalar, va[i] <= ab ? 1.0 : 0.0)
+TENSOR_SCALAR_DISPATCH(equal_scalar, x == ab ? 1.0 : 0.0)
+TENSOR_SCALAR_DISPATCH(not_equal_scalar, x != ab ? 1.0 : 0.0)
+TENSOR_SCALAR_DISPATCH(greater_scalar, x > ab ? 1.0 : 0.0)
+TENSOR_SCALAR_DISPATCH(greater_equal_scalar, x >= ab ? 1.0 : 0.0)
+TENSOR_SCALAR_DISPATCH(less_scalar, x < ab ? 1.0 : 0.0)
+TENSOR_SCALAR_DISPATCH(less_equal_scalar, x <= ab ? 1.0 : 0.0)
 
 /* Comparison applied to every element of a matrix against a shared column
  * vector. The matrix is wrapped up in `a` (m * n doubles in row-major order)
@@ -160,27 +189,30 @@ TENSOR_SCALAR_DISPATCH(less_equal_scalar, va[i] <= ab ? 1.0 : 0.0)
  * blocked by an indirect call. */
 
 #define TENSOR_COL_DISPATCH_BODY(op)                                             \
-	zend_long n = 0, m = 0, total = 0;                                           \
-	int ok_a = 0, ok_b = 0;                                                      \
+	tensor_double_view v_a;                                                      \
+	zend_long m = 0;                                                             \
+	double * owned_b = NULL;                                                     \
+	const double * vb = NULL;                                                    \
 	                                                                             \
-	double * restrict va = tensor_tensorbuffer_doubles(a, &total, &ok_a);       \
-	double * restrict vb = tensor_tensorbuffer_doubles(b, &m, &ok_b);           \
-	                                                                             \
-	if (UNEXPECTED(!ok_a || !ok_b)) {                                            \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) ||                          \
+		!tensor_view_doubles(b, &vb, &m, &owned_b))) {                           \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
+	zend_long total = v_a.len;                                                   \
 	zend_long nHat = zephir_get_intval(n_zval);                                  \
 	                                                                             \
 	if (UNEXPECTED(nHat < 1)) {                                                  \
 		zephir_throw_exception_string(spl_ce_LengthException,                    \
 			SL("Matrix and vector dimensions must agree."));                     \
+		if (owned_b != NULL) { efree(owned_b); }                                 \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
+		if (owned_b != NULL) { efree(owned_b); }                                 \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -188,12 +220,31 @@ TENSOR_SCALAR_DISPATCH(less_equal_scalar, va[i] <= ab ? 1.0 : 0.0)
 	                                                                             \
 	zend_long i, j;                                                              \
 	                                                                             \
-	for (i = 0; i < m; ++i) {                                                    \
-		for (j = 0; j < nHat; ++j) {                                             \
-			vc[i * nHat + j] = op;                                               \
+	if (v_a.contiguous) {                                                        \
+		const double * restrict va = v_a.base + v_a.offset;                      \
+	                                                                             \
+		for (i = 0; i < m; ++i) {                                                \
+			for (j = 0; j < nHat; ++j) {                                         \
+				double x = va[i * nHat + j];                                     \
+				double y = vb[i];                                                \
+				vc[i * nHat + j] = op;                                           \
+			}                                                                    \
+		}                                                                        \
+	} else {                                                                     \
+		tensor_view_reader ra;                                                   \
+		tensor_view_reader_init(&ra, &v_a);                                      \
+	                                                                             \
+		for (i = 0; i < m; ++i) {                                                \
+			for (j = 0; j < nHat; ++j) {                                         \
+				double x = tensor_view_reader_value(&ra);                        \
+				double y = vb[i];                                                \
+				vc[i * nHat + j] = op;                                           \
+				tensor_view_reader_advance(&ra);                                 \
+			}                                                                    \
 		}                                                                        \
 	}                                                                            \
 	                                                                             \
+	if (owned_b != NULL) { efree(owned_b); }                                     \
 	zval_ptr_dtor(&c);
 
 #define TENSOR_COL_DISPATCH(name, op)                                            \
@@ -225,16 +276,16 @@ TENSOR_SCALAR_DISPATCH(less_equal_scalar, va[i] <= ab ? 1.0 : 0.0)
 		tensor_##name##_route(return_value, a, b, n_zval);                        \
 	}
 
-TENSOR_COL_DISPATCH(equal_col, va[i * nHat + j] == vb[i] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(not_equal_col, va[i * nHat + j] != vb[i] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(greater_col, va[i * nHat + j] > vb[i] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(greater_col_reverse, vb[i] > va[i * nHat + j] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(greater_equal_col, va[i * nHat + j] >= vb[i] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(greater_equal_col_reverse, vb[i] >= va[i * nHat + j] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(less_col, va[i * nHat + j] < vb[i] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(less_col_reverse, vb[i] < va[i * nHat + j] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(less_equal_col, va[i * nHat + j] <= vb[i] ? 1.0 : 0.0)
-TENSOR_COL_DISPATCH(less_equal_col_reverse, vb[i] <= va[i * nHat + j] ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(equal_col, x == y ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(not_equal_col, x != y ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(greater_col, x > y ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(greater_col_reverse, y > x ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(greater_equal_col, x >= y ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(greater_equal_col_reverse, y >= x ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(less_col, x < y ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(less_col_reverse, y < x ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(less_equal_col, x <= y ? 1.0 : 0.0)
+TENSOR_COL_DISPATCH(less_equal_col_reverse, y <= x ? 1.0 : 0.0)
 
 /* Comparison applied to every element of a matrix against a shared row vector.
  * The matrix is wrapped up in `a` (m * n doubles in row-major order) and the
@@ -245,29 +296,32 @@ TENSOR_COL_DISPATCH(less_equal_col_reverse, vb[i] <= va[i * nHat + j] ? 1.0 : 0.
  * indirect call. */
 
 #define TENSOR_ROW_DISPATCH_BODY(op)                                             \
-	zend_long nHat = 0, m = 0, total = 0, nb = 0;                                \
-	int ok_a = 0, ok_b = 0;                                                      \
+	tensor_double_view v_a;                                                      \
+	zend_long nb = 0;                                                            \
+	double * owned_b = NULL;                                                     \
+	const double * vb = NULL;                                                    \
 	                                                                             \
-	double * restrict va = tensor_tensorbuffer_doubles(a, &total, &ok_a);       \
-	double * restrict vb = tensor_tensorbuffer_doubles(b, &nb, &ok_b);          \
-	                                                                             \
-	if (UNEXPECTED(!ok_a || !ok_b)) {                                            \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) ||                          \
+		!tensor_view_doubles(b, &vb, &nb, &owned_b))) {                          \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
-	nHat = zephir_get_intval(n_zval);                                            \
+	zend_long total = v_a.len;                                                   \
+	zend_long nHat = zephir_get_intval(n_zval);                                  \
 	                                                                             \
 	if (UNEXPECTED(nHat < 1 || total < nHat)) {                                  \
 		zephir_throw_exception_string(spl_ce_LengthException,                    \
 			SL("Matrix and vector dimensions must agree."));                     \
+		if (owned_b != NULL) { efree(owned_b); }                                 \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
-	m = total / nHat;                                                            \
+	zend_long m = total / nHat;                                                  \
 	                                                                             \
 	zval c;                                                                      \
 	                                                                             \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
+		if (owned_b != NULL) { efree(owned_b); }                                 \
 		return;                                                                  \
 	}                                                                            \
 	                                                                             \
@@ -275,12 +329,31 @@ TENSOR_COL_DISPATCH(less_equal_col_reverse, vb[i] <= va[i * nHat + j] ? 1.0 : 0.
 	                                                                             \
 	zend_long i, j;                                                              \
 	                                                                             \
-	for (i = 0; i < m; ++i) {                                                    \
-		for (j = 0; j < nHat; ++j) {                                             \
-			vc[i * nHat + j] = op;                                               \
+	if (v_a.contiguous) {                                                        \
+		const double * restrict va = v_a.base + v_a.offset;                      \
+	                                                                             \
+		for (i = 0; i < m; ++i) {                                                \
+			for (j = 0; j < nHat; ++j) {                                         \
+				double x = va[i * nHat + j];                                     \
+				double y = vb[j];                                                \
+				vc[i * nHat + j] = op;                                           \
+			}                                                                    \
+		}                                                                        \
+	} else {                                                                     \
+		tensor_view_reader ra;                                                   \
+		tensor_view_reader_init(&ra, &v_a);                                      \
+	                                                                             \
+		for (i = 0; i < m; ++i) {                                                \
+			for (j = 0; j < nHat; ++j) {                                         \
+				double x = tensor_view_reader_value(&ra);                        \
+				double y = vb[j];                                                \
+				vc[i * nHat + j] = op;                                           \
+				tensor_view_reader_advance(&ra);                                 \
+			}                                                                    \
 		}                                                                        \
 	}                                                                            \
 	                                                                             \
+	if (owned_b != NULL) { efree(owned_b); }                                     \
 	zval_ptr_dtor(&c);
 
 #define TENSOR_ROW_DISPATCH(name, op)                                            \
@@ -312,16 +385,16 @@ TENSOR_COL_DISPATCH(less_equal_col_reverse, vb[i] <= va[i * nHat + j] ? 1.0 : 0.
 		tensor_##name##_route(return_value, a, b, n_zval);                        \
 	}
 
-TENSOR_ROW_DISPATCH(equal_row, va[i * nHat + j] == vb[j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(not_equal_row, va[i * nHat + j] != vb[j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(greater_row, va[i * nHat + j] > vb[j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(greater_row_reverse, vb[j] > va[i * nHat + j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(greater_equal_row, va[i * nHat + j] >= vb[j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(greater_equal_row_reverse, vb[j] >= va[i * nHat + j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(less_row, va[i * nHat + j] < vb[j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(less_row_reverse, vb[j] < va[i * nHat + j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(less_equal_row, va[i * nHat + j] <= vb[j] ? 1.0 : 0.0)
-TENSOR_ROW_DISPATCH(less_equal_row_reverse, vb[j] <= va[i * nHat + j] ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(equal_row, x == y ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(not_equal_row, x != y ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(greater_row, x > y ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(greater_row_reverse, y > x ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(greater_equal_row, x >= y ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(greater_equal_row_reverse, y >= x ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(less_row, x < y ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(less_row_reverse, y < x ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(less_equal_row, x <= y ? 1.0 : 0.0)
+TENSOR_ROW_DISPATCH(less_equal_row_reverse, y <= x ? 1.0 : 0.0)
 
 /**
  * Point every dispatched kernel in this file back at its SSE variant.

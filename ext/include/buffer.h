@@ -2,6 +2,7 @@
 #define TENSOR_BUFFER_H
 
 #include <Zend/zend.h>
+#include "include/view.h"
 
 /* The Zephir compiler emits references to `tensor_buffer_ce` for the kernel
  * `Tensor\Buffer` class even though the kernel registers and exports it as
@@ -32,12 +33,6 @@ int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer);
 void tensor_pool_activate(void);
 void tensor_pool_seal(void);
 
-/* Unwrap the double buffer hidden inside a `Tensor\TensorBuffer` object,
- * returning a raw pointer into it. Sets `*success` to 1 on success and 0 on
- * failure (throwing an InvalidArgumentException). An empty buffer yields
- * success with a NULL pointer and `*len` of 0. */
-double * tensor_tensorbuffer_doubles(zval * obj, zend_long * len, int * success);
-
 /* Build a `Tensor\TensorBuffer` decorator from a PHP array of values, casting
  * every element to a double. Passed arrays must be 1-d and positionally
  * indexed; keys are discarded. On failure `ret` is set to NULL. Used to seed
@@ -59,10 +54,10 @@ void tensor_buffer_repeat(zval * return_value, zval * obj, zval * times);
  * buffer and is treated as `offset = 0`, `shape = [len]`, `strides = [1]`.
  *
  * Views are read-only: set() and sort() reject them, and asBuffer() returns a
- * freshly materialised dense Buffer. Kernels that still require contiguous
- * storage reach the data through tensor_tensorbuffer_doubles(), which gathers a
- * non-contiguous view into a cached dense Buffer held on the view for the
- * lifetime of the object.
+ * freshly materialised dense Buffer. Kernels read a view through the stride
+ * reader in include/view.h; only the few routines that hand storage straight to
+ * BLAS/LAPACK, and that cannot be expressed with a leading dimension, fall back
+ * to a transient materialisation.
  */
 
 /* Build a `Tensor\TensorBuffer` view over `buffer` with the given element

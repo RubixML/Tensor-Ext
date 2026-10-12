@@ -50,21 +50,6 @@ class TensorBuffer
     protected strides;
 
     /**
-     * A dense copy of the view gathered for kernels that require contiguous
-     * storage, cached for the lifetime of the view.
-     *
-     * @var \Tensor\Buffer|null
-     */
-    protected denseData;
-
-    /**
-     * The in-place write epoch the cached dense copy was gathered against.
-     *
-     * @var int|null
-     */
-    protected denseEpoch;
-
-    /**
      * Build a buffer by concatenating an array of buffers into a single
      * contiguous buffer.
      *

@@ -39,16 +39,16 @@
  */
 void tensor_softmax(zval * return_value, zval * a, zval * n)
 {
-	double * va = NULL;
+	tensor_double_view v;
 	zend_long m = 0, cols = 0, i, j, i0, tile, lanes;
-	
+
 	zend_long cols_hat = zephir_get_intval(n);
 
 	if (cols_hat < 1) {
 		cols_hat = 1;
 	}
 
-	if (UNEXPECTED(!tensor_matrix_doubles_len(a, cols_hat, &va, &m, &cols))) {
+	if (UNEXPECTED(!tensor_matrix_view(a, cols_hat, &v, &m, &cols))) {
 		return;
 	}
 
@@ -64,8 +64,46 @@ void tensor_softmax(zval * return_value, zval * a, zval * n)
 		return;
 	}
 
-	const double * restrict input = va;
 	double * restrict vc = zephir_buffer_doubles(&c);
+
+	if (!v.contiguous) {
+		/* A strided matrix is read one row at a time through the view, so the
+		 * lane-block scheduling below would not help; fold each row on its
+		 * own, reusing a single scratch row. */
+		double * row = safe_emalloc((size_t) cols, sizeof(double), 0);
+
+		for (i = 0; i < m; ++i) {
+			double * restrict dst = vc + i * cols;
+
+			tensor_view_copy_row(&v, i, row);
+
+			double best = row[0];
+
+			for (j = 1; j < cols; ++j) {
+				double val = row[j];
+
+				best = val > best ? val : best;
+			}
+
+			for (j = 0; j < cols; ++j) {
+				dst[j] = exp(row[j] - best);
+			}
+
+			double total = tensor_sum_doubles(dst, cols);
+
+			for (j = 0; j < cols; ++j) {
+				dst[j] /= total;
+			}
+		}
+
+		efree(row);
+
+		zval_ptr_dtor(&c);
+
+		return;
+	}
+
+	const double * restrict input = v.base + v.offset;
 	double maxima[TENSOR_SOFTMAX_LANES];
 	double sums[TENSOR_SOFTMAX_LANES];
 
