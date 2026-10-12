@@ -137,16 +137,32 @@ class TensorBufferTest extends TestCase
     /**
      * @test
      */
-    public function sliceIsACopy() : void
+    public function sliceIsAReadOnlyView() : void
     {
         $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0]));
 
         $slice = $decorator->slice(0, 3);
 
-        $slice->set(0, 100.0);
+        $this->expectException(InvalidArgumentException::class);
 
-        $this->assertEqualsWithDelta([1.0, 2.0, 3.0], $decorator->toArray(), self::MAX_DELTA);
-        $this->assertEqualsWithDelta([100.0, 2.0, 3.0], $slice->toArray(), self::MAX_DELTA);
+        $slice->set(0, 100.0);
+    }
+
+    /**
+     * @test
+     */
+    public function viewIsReadOnlyAndMaterializes() : void
+    {
+        $decorator = new TensorBuffer(Buffer::fromArray([1.0, 2.0, 3.0, 4.0, 5.0]));
+
+        $view = $decorator->sliceStrided(0, 3, 2);
+
+        $this->assertNotSame($decorator->asBuffer(), $view->asBuffer());
+        $this->assertEqualsWithDelta([1.0, 3.0, 5.0], $view->toArray(), self::MAX_DELTA);
+
+        // Views are read-only: both set() and sort() reject them.
+        $this->expectException(InvalidArgumentException::class);
+        $view->set(0, 99.0);
     }
 
     /**

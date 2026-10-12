@@ -1,5 +1,14 @@
 # Change Log
 
+- 4.2.0
+    - `Matrix::transpose()` is now an O(1) view over the source storage
+    - `TensorBuffer::slice()`, `sliceStrided()`, and `split()` return read-only O(1) views on double buffers
+    - Added an N-dimensional stride view model to `TensorBuffer` (`offset`/`shape`/`strides`)
+    - Non-contiguous views are gathered lazily into a cached dense buffer, invalidated on writes
+    - Reductions (`sum`/`product`/`min`/`max`/`argmin`/`argmax`) consume non-contiguous views in place instead of gathering a dense copy
+    - `set()` and `sort()` reject read-only views
+    - `asBuffer()` materialises a dense copy on view decorators
+
 - 4.1.0
     - Added `softplus()` and `erf()` special functions
     - Added `sinh()` and `cosh()` trigonometric functions

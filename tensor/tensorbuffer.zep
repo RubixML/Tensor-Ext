@@ -29,6 +29,42 @@ class TensorBuffer
     protected buffer;
 
     /**
+     * The element offset of a view into the underlying buffer.
+     *
+     * @var int
+     */
+    protected offset;
+
+    /**
+     * The logical shape of a view, or null for a plain dense buffer.
+     *
+     * @var int[]|null
+     */
+    protected shape;
+
+    /**
+     * The stride of each shape dimension, or null for a plain dense buffer.
+     *
+     * @var int[]|null
+     */
+    protected strides;
+
+    /**
+     * A dense copy of the view gathered for kernels that require contiguous
+     * storage, cached for the lifetime of the view.
+     *
+     * @var \Tensor\Buffer|null
+     */
+    protected denseData;
+
+    /**
+     * The in-place write epoch the cached dense copy was gathered against.
+     *
+     * @var int|null
+     */
+    protected denseEpoch;
+
+    /**
      * Build a buffer by concatenating an array of buffers into a single
      * contiguous buffer.
      *
@@ -76,11 +112,18 @@ class TensorBuffer
      */
     public function get(const int index)
     {
-        return this->buffer[index];
+        if this->shape === null {
+            return this->buffer[index];
+        }
+
+        var value = tensor_tensorbuffer_get(this->buffer, this->offset, this->shape, this->strides, index);
+
+        return value;
     }
 
     /**
-     * Set the element at the given index.
+     * Set the element at the given index. Views are read-only and reject the
+     * write.
      *
      * @param int index
      * @param mixed value
@@ -88,17 +131,21 @@ class TensorBuffer
      */
     public function set(const int index, const var value) -> void
     {
-        let this->buffer[index] = value;
+        var status = tensor_tensorbuffer_set(this->buffer, this->offset, this->shape, this->strides, index, value);
     }
 
     /**
-     * Sort the buffer in place.
+     * Sort the buffer in place. Views are read-only and reject the sort.
      *
      * @param bool ascending
      * @return void
      */
     public function sort(const bool ascending = true) -> void
     {
+        if unlikely this->shape !== null {
+            throw new InvalidArgumentException("Cannot sort a read-only view.");
+        }
+
         var status = tensor_buffer_sort(this->buffer, ascending);
     }
 
@@ -112,14 +159,20 @@ class TensorBuffer
      */
     public function slice(const int offset, const int length) -> <TensorBuffer>
     {
-        if unlikely offset < 0 || length < 0 || offset > this->buffer->count() - length {
+        if unlikely offset < 0 || length < 0 || offset > this->count() - length {
             throw new InvalidArgumentException("Offset and length"
                 . " must be within the bounds of the buffer.");
         }
 
-        var b = tensor_buffer_slice(this->buffer, offset, length);
+        if this->type() !== TensorBuffer::TYPE_DOUBLE {
+            var b = tensor_buffer_slice(this->buffer, offset, length);
 
-        return new TensorBuffer(<Buffer> b);
+            return new TensorBuffer(<Buffer> b);
+        }
+
+        var view = tensor_buffer_slice_view(this->buffer, this->offset, this->shape, this->strides, offset, length);
+
+        return view;
     }
 
     /**
@@ -140,7 +193,7 @@ class TensorBuffer
         bool invalid = offset < 0 || length < 0 || stride < 1;
 
         if likely !invalid && length > 0 {
-            let limit = this->buffer->count() - 1 - offset;
+            let limit = this->count() - 1 - offset;
 
             let invalid = limit < 0 || (length > 1 && stride > limit);
 
@@ -180,9 +233,15 @@ class TensorBuffer
                 . " stride must be within the bounds of the buffer.");
         }
 
-        var b = tensor_buffer_slice_strided(this->buffer, offset, length, stride);
+        if this->type() !== TensorBuffer::TYPE_DOUBLE {
+            var b = tensor_buffer_slice_strided(this->buffer, offset, length, stride);
 
-        return new TensorBuffer(<Buffer> b);
+            return new TensorBuffer(<Buffer> b);
+        }
+
+        var view = tensor_buffer_slice_strided_view(this->buffer, this->offset, this->shape, this->strides, offset, length, stride);
+
+        return view;
     }
 
     /**
@@ -202,7 +261,9 @@ class TensorBuffer
             let unwrapped[] = buffer->asBuffer();
         }
 
-        var b = tensor_buffer_concat(this->buffer, unwrapped);
+        var self = this->asBuffer();
+
+        var b = tensor_buffer_concat(self, unwrapped);
 
         return new TensorBuffer(<Buffer> b);
     }
@@ -224,15 +285,21 @@ class TensorBuffer
 
         var buffer;
 
-        var buffers = tensor_buffer_split(this->buffer, chunkLength);
+        if this->type() !== TensorBuffer::TYPE_DOUBLE {
+            var buffers = tensor_buffer_split(this->buffer, chunkLength);
 
-        array tensorBuffers = [];
+            array tensorBuffers = [];
 
-        for buffer in buffers {
-            let tensorBuffers[] = new TensorBuffer(<Buffer> buffer);
+            for buffer in buffers {
+                let tensorBuffers[] = new TensorBuffer(<Buffer> buffer);
+            }
+
+            return tensorBuffers;
         }
 
-        return tensorBuffers;
+        var views = tensor_buffer_split_view(this->buffer, this->offset, this->shape, this->strides, chunkLength);
+
+        return views;
     }
 
     /**
@@ -250,7 +317,9 @@ class TensorBuffer
                 . " greater than 0, " . strval(times) . " given.");
         }
 
-        var b = tensor_buffer_repeat(this->buffer, times);
+        var self = this->asBuffer();
+
+        var b = tensor_buffer_repeat(self, times);
 
         return new TensorBuffer(<Buffer> b);
     }
@@ -262,7 +331,13 @@ class TensorBuffer
      */
     public function asBuffer() -> <Buffer>
     {
-        return this->buffer;
+        if this->shape === null {
+            return this->buffer;
+        }
+
+        var b = tensor_buffer_view_materialize(this->buffer, this->offset, this->shape, this->strides);
+
+        return b;
     }
 
     /**
@@ -272,7 +347,11 @@ class TensorBuffer
      */
     public function count() -> int
     {
-        return this->buffer->count();
+        if this->shape === null {
+            return this->buffer->count();
+        }
+
+        return tensor_tensorbuffer_count(this->buffer, this->shape);
     }
 
     /**
@@ -282,6 +361,10 @@ class TensorBuffer
      */
     public function toArray() -> array
     {
-        return this->buffer->toArray();
+        if this->shape === null {
+            return this->buffer->toArray();
+        }
+
+        return tensor_tensorbuffer_to_array(this->buffer, this->offset, this->shape, this->strides);
     }
 }

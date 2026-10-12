@@ -13,6 +13,8 @@
 #include "kernel/exception.h"
 #include "kernel/operators.h"
 #include "include/buffer.h"
+#include "include/view.h"
+#include "../tensor/exceptions/invalidargumentexception.zep.h"
 
 #ifdef ZEPHIR_BUFFER_ENABLED
 
@@ -220,7 +222,7 @@ int tensor_tensorbuffer_create(zval * ret, zend_long len, zval * buffer)
 	if (UNEXPECTED(len < 0 || (uint64_t) len > (uint64_t) (SIZE_MAX / sizeof(double)))) {
 		ZVAL_NULL(buffer);
 
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("The requested buffer size is too large to allocate."));
 
 		return FAILURE;
@@ -302,67 +304,619 @@ void tensor_buffer_from_array(zval * ret, zval * arr)
 	zval_ptr_dtor(&buffer);
 }
 
+/* -------------------------------------------------------------------------
+ * Structural views
+ *
+ * See include/view.h for the model. Everything here works on a resolved
+ * `tensor_double_view`, which is the raw storage pointer plus the strides of a
+ * TensorBuffer. A plain dense buffer resolves to a 1-D contiguous view of its
+ * whole allocation, so kernels can keep calling tensor_tensorbuffer_doubles()
+ * without knowing about strides.
+ * ------------------------------------------------------------------------- */
+
+/* Bumped by every in-place write to a Buffer. A view caches the dense copy it
+ * gathered for the kernels that need one; the epoch lets it notice that the
+ * source was rewritten behind its back and re-gather. */
+static zend_long tensor_buffer_epoch = 0;
+
+void tensor_buffer_bump_epoch(void)
+{
+	++tensor_buffer_epoch;
+}
+
+/**
+ * Copy up to `max` integers out of a PHP array, discarding keys. Returns the
+ * number of entries written; a NULL or non-array input yields 0.
+ */
+static int tensor_read_long_list(zval * arr, zend_long * out, int max)
+{
+	if (arr == NULL || Z_TYPE_P(arr) != IS_ARRAY) {
+		return 0;
+	}
+
+	int n = 0;
+	zval * el;
+
+	ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(arr), el) {
+		if (n >= max) {
+			break;
+		}
+
+		out[n++] = zval_get_long(el);
+	} ZEND_HASH_FOREACH_END();
+
+	return n;
+}
+
+/**
+ * Resolve a TensorBuffer's `buffer`/`offset`/`shape`/`strides` property values
+ * into a stride view. Returns 1 on success and 0 on failure (throwing).
+ */
+int tensor_view_resolve(zval * buffer, zval * offset, zval * shape, zval * strides, tensor_double_view * v)
+{
+	if (UNEXPECTED(!zephir_is_buffer(buffer))) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument is not wrapping a Buffer object."));
+		return 0;
+	}
+
+	if (UNEXPECTED(zephir_buffer_kind(buffer) != ZEPHIR_BUFFER_DOUBLE)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument must wrap a buffer of type double."));
+		return 0;
+	}
+
+	v->base = zephir_buffer_doubles(buffer);
+	v->offset = offset != NULL ? zephir_get_intval(offset) : 0;
+
+	int ndim = tensor_read_long_list(shape, v->shape, TENSOR_VIEW_MAX_DIMS);
+
+	if (ndim <= 0) {
+		v->ndim = 1;
+		v->shape[0] = zephir_buffer_len(buffer);
+		v->strides[0] = 1;
+	} else {
+		v->ndim = ndim;
+
+		if (tensor_read_long_list(strides, v->strides, TENSOR_VIEW_MAX_DIMS) != ndim) {
+			zend_long expected = 1;
+
+			for (int d = ndim - 1; d >= 0; --d) {
+				v->strides[d] = expected;
+				expected *= v->shape[d];
+			}
+		}
+	}
+
+	zend_long len = 1;
+
+	for (int d = 0; d < v->ndim; ++d) {
+		len *= v->shape[d];
+	}
+
+	v->len = len;
+	v->contiguous = 1;
+
+	if (len > 1) {
+		zend_long expected = 1;
+
+		for (int d = v->ndim - 1; d >= 0; --d) {
+			if (v->strides[d] != expected) {
+				v->contiguous = 0;
+				break;
+			}
+
+			expected *= v->shape[d];
+		}
+	}
+
+	return 1;
+}
+
+/**
+ * Resolve a `Tensor\TensorBuffer` object into a stride view. Returns 1 on
+ * success and 0 on failure (throwing).
+ */
+int tensor_view_resolve_object(zval * obj, tensor_double_view * v)
+{
+	if (UNEXPECTED(Z_TYPE_P(obj) != IS_OBJECT || Z_OBJCE_P(obj) != tensor_tensorbuffer_ce)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument must be a Tensor\\TensorBuffer object."));
+		return 0;
+	}
+
+	zval rv_buffer, rv_offset, rv_shape, rv_strides;
+
+	ZVAL_UNDEF(&rv_buffer);
+	ZVAL_UNDEF(&rv_offset);
+	ZVAL_UNDEF(&rv_shape);
+	ZVAL_UNDEF(&rv_strides);
+
+	zval * buffer = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "buffer", sizeof("buffer") - 1, 1, &rv_buffer);
+	zval * offset = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "offset", sizeof("offset") - 1, 1, &rv_offset);
+	zval * shape  = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "shape", sizeof("shape") - 1, 1, &rv_shape);
+	zval * strides = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "strides", sizeof("strides") - 1, 1, &rv_strides);
+
+	int ok = tensor_view_resolve(buffer, offset, shape, strides, v);
+
+	if (!Z_ISUNDEF(rv_buffer)) {
+		zval_ptr_dtor(&rv_buffer);
+	}
+
+	if (!Z_ISUNDEF(rv_offset)) {
+		zval_ptr_dtor(&rv_offset);
+	}
+
+	if (!Z_ISUNDEF(rv_shape)) {
+		zval_ptr_dtor(&rv_shape);
+	}
+
+	if (!Z_ISUNDEF(rv_strides)) {
+		zval_ptr_dtor(&rv_strides);
+	}
+
+	return ok;
+}
+
+/**
+ * Build a view object over `buffer` (see include/buffer.h).
+ */
+int tensor_buffer_make_view(zval * ret, zval * buffer, zend_long offset, int ndim, const zend_long * shape, const zend_long * strides)
+{
+	object_init_ex(ret, tensor_tensorbuffer_ce);
+
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "buffer", sizeof("buffer") - 1, buffer);
+
+	zval value;
+
+	ZVAL_LONG(&value, offset);
+
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "offset", sizeof("offset") - 1, &value);
+
+	zval shape_arr, strides_arr;
+
+	array_init_size(&shape_arr, (zend_ulong) ndim);
+	array_init_size(&strides_arr, (zend_ulong) ndim);
+
+	for (int d = 0; d < ndim; ++d) {
+		add_next_index_long(&shape_arr, shape[d]);
+		add_next_index_long(&strides_arr, strides[d]);
+	}
+
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "shape", sizeof("shape") - 1, &shape_arr);
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(ret), "strides", sizeof("strides") - 1, &strides_arr);
+
+	zval_ptr_dtor(&shape_arr);
+	zval_ptr_dtor(&strides_arr);
+
+	if (UNEXPECTED(EG(exception))) {
+		zval_ptr_dtor(ret);
+		ZVAL_UNDEF(ret);
+
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+void tensor_tensorbuffer_count(zval * ret, zval * buffer, zval * shape)
+{
+	zend_long dims[TENSOR_VIEW_MAX_DIMS];
+	int ndim = tensor_read_long_list(shape, dims, TENSOR_VIEW_MAX_DIMS);
+
+	if (ndim <= 0) {
+		ZVAL_LONG(ret, zephir_is_buffer(buffer) ? zephir_buffer_len(buffer) : 0);
+
+		return;
+	}
+
+	zend_long len = 1;
+
+	for (int d = 0; d < ndim; ++d) {
+		len *= dims[d];
+	}
+
+	ZVAL_LONG(ret, len);
+}
+
+void tensor_tensorbuffer_to_array(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides)
+{
+	tensor_double_view v;
+
+	if (UNEXPECTED(!tensor_view_resolve(buffer, offset, shape, strides, &v))) {
+		return;
+	}
+
+	array_init_size(ret, (zend_ulong) v.len);
+
+	for (zend_long i = 0; i < v.len; ++i) {
+		add_next_index_double(ret, tensor_double_view_get(&v, i));
+	}
+}
+
+void tensor_buffer_view_materialize(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides)
+{
+	tensor_double_view v;
+
+	if (UNEXPECTED(!tensor_view_resolve(buffer, offset, shape, strides, &v))) {
+		return;
+	}
+
+	if (UNEXPECTED(zephir_buffer_create(ret, v.len, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
+		return;
+	}
+
+	double * dst = zephir_buffer_doubles(ret);
+
+	for (zend_long i = 0; i < v.len; ++i) {
+		dst[i] = tensor_double_view_get(&v, i);
+	}
+}
+
+void tensor_tensorbuffer_get(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * index)
+{
+	tensor_double_view v;
+
+	if (UNEXPECTED(!tensor_view_resolve(buffer, offset, shape, strides, &v))) {
+		return;
+	}
+
+	zend_long i = zephir_get_intval(index);
+
+	if (UNEXPECTED(i < 0 || i >= v.len)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Index is out of bounds."));
+		return;
+	}
+
+	ZVAL_DOUBLE(ret, tensor_double_view_get(&v, i));
+}
+
+void tensor_tensorbuffer_set(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * index, zval * value)
+{
+	if (shape != NULL && Z_TYPE_P(shape) == IS_ARRAY) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Cannot modify a read-only view."));
+		return;
+	}
+
+	if (UNEXPECTED(!zephir_is_buffer(buffer))) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument is not wrapping a Buffer object."));
+		return;
+	}
+
+	zend_long i = zephir_get_intval(index);
+	zend_long len = zephir_buffer_len(buffer);
+
+	if (UNEXPECTED(i < 0 || i >= len)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Index is out of bounds."));
+		return;
+	}
+
+	if (zephir_buffer_kind(buffer) == ZEPHIR_BUFFER_LONG) {
+		zephir_buffer_longs(buffer)[i] = zephir_get_intval(value);
+	} else {
+		zephir_buffer_doubles(buffer)[i] = zephir_get_doubleval(value);
+	}
+
+	tensor_buffer_bump_epoch();
+
+	ZVAL_NULL(ret);
+}
+
+/* The flat base index of element `i` of a resolved view, i.e. the decode of
+ * `tensor_double_view_get` without the final read. */
+static zend_always_inline zend_long tensor_view_offset(const tensor_double_view * v, zend_long i)
+{
+	zend_long rem = i;
+	zend_long off = v->offset;
+
+	for (int d = v->ndim - 1; d >= 0; --d) {
+		zend_long dim = v->shape[d];
+
+		if (dim > 0) {
+			off += (rem % dim) * v->strides[d];
+			rem /= dim;
+		}
+	}
+
+	return off;
+}
+
+/**
+ * Build a 1-D view selecting flat indices `first + k * step` (k in [0, count))
+ * of the resolved base view.
+ *
+ * When the selection is expressible as a single strided run over the base -- a
+ * 1-D base, a contiguous range that stays within one row, or a step that
+ * advances whole rows -- the result is a composed view sharing storage. When
+ * the run cannot be folded into one stride (an arbitrary diagonal of a 2-D
+ * view, say) the selected elements are gathered into a fresh dense Buffer and
+ * the view is built over that, so the cost is bounded by `count` rather than
+ * by the whole base.
+ *
+ * Returns 1 on success (writing `ret`) and 0 on failure (throwing).
+ */
+static int tensor_slice_view_1d(zval * ret, zval * buffer, const tensor_double_view * base,
+	zend_long first, zend_long step, zend_long count)
+{
+	int expressible = 1;
+	zend_long out_offset;
+	zend_long out_stride;
+
+	if (count == 0) {
+		zend_long zero_shape[1] = { 0 };
+		zend_long zero_strides[1] = { 1 };
+
+		return tensor_buffer_make_view(ret, buffer, base->offset, 1, zero_shape, zero_strides) == SUCCESS;
+	}
+
+	if (base->ndim == 1) {
+		out_offset = base->offset + first * base->strides[0];
+		out_stride = step * base->strides[0];
+	} else {
+		zend_long c = tensor_view_row_length(base);
+
+		if (step % c == 0) {
+			/* The step advances whole rows, so the trailing coordinates stay
+			 * fixed while the first dimension moves. */
+			out_offset = tensor_view_offset(base, first);
+			out_stride = (step / c) * base->strides[0];
+		} else if (step == 1 && (base->contiguous || (first / c) == ((first + count - 1) / c))) {
+			out_offset = tensor_view_offset(base, first);
+			out_stride = base->strides[base->ndim - 1];
+		} else {
+			expressible = 0;
+			out_offset = 0;
+			out_stride = 1;
+		}
+	}
+
+	if (expressible) {
+		zend_long one_shape[1] = { count };
+		zend_long one_strides[1] = { out_stride };
+
+		return tensor_buffer_make_view(ret, buffer, out_offset, 1, one_shape, one_strides) == SUCCESS;
+	}
+
+	zval dense;
+
+	if (UNEXPECTED(zephir_buffer_create(&dense, count, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
+		return 0;
+	}
+
+	double * dst = zephir_buffer_doubles(&dense);
+
+	for (zend_long k = 0; k < count; ++k) {
+		dst[k] = tensor_double_view_get(base, first + k * step);
+	}
+
+	zend_long one_shape[1] = { count };
+	zend_long one_strides[1] = { 1 };
+
+	int ok = tensor_buffer_make_view(ret, &dense, 0, 1, one_shape, one_strides) == SUCCESS;
+
+	zval_ptr_dtor(&dense);
+
+	return ok;
+}
+
+void tensor_buffer_slice_view(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * slice_offset, zval * slice_length)
+{
+	tensor_double_view base;
+
+	if (UNEXPECTED(!tensor_view_resolve(buffer, offset, shape, strides, &base))) {
+		return;
+	}
+
+	zend_long o = zephir_get_intval(slice_offset);
+	zend_long len = zephir_get_intval(slice_length);
+
+	tensor_slice_view_1d(ret, buffer, &base, o, 1, len);
+}
+
+void tensor_buffer_slice_strided_view(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * slice_offset, zval * slice_length, zval * slice_stride)
+{
+	tensor_double_view base;
+
+	if (UNEXPECTED(!tensor_view_resolve(buffer, offset, shape, strides, &base))) {
+		return;
+	}
+
+	zend_long o = zephir_get_intval(slice_offset);
+	zend_long len = zephir_get_intval(slice_length);
+	zend_long step = zephir_get_intval(slice_stride);
+
+	tensor_slice_view_1d(ret, buffer, &base, o, step, len);
+}
+
+void tensor_buffer_split_view(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * chunk_length)
+{
+	tensor_double_view base;
+
+	if (UNEXPECTED(!tensor_view_resolve(buffer, offset, shape, strides, &base))) {
+		return;
+	}
+
+	zend_long chunk = zephir_get_intval(chunk_length);
+	zend_long len = base.len;
+	zend_long chunks;
+
+	if (UNEXPECTED(len == 0)) {
+		chunks = 0;
+	} else if (UNEXPECTED(chunk > len)) {
+		chunks = 1;
+	} else {
+		chunks = (len + chunk - 1) / chunk;
+	}
+
+	array_init_size(ret, (zend_ulong) chunks);
+
+	for (zend_long i = 0; i < chunks; ++i) {
+		zend_long start = i * chunk;
+		zend_long chunk_len = len - start < chunk ? len - start : chunk;
+		zval view;
+
+		ZVAL_UNDEF(&view);
+
+		if (UNEXPECTED(!tensor_slice_view_1d(&view, buffer, &base, start, 1, chunk_len))) {
+			return;
+		}
+
+		add_next_index_zval(ret, &view);
+	}
+}
+
+void tensor_buffer_transpose_view(zval * ret, zval * a, zend_long m, zend_long n)
+{
+	tensor_double_view v;
+
+	if (UNEXPECTED(!tensor_view_resolve_object(a, &v))) {
+		return;
+	}
+
+	zend_long row_stride, col_stride;
+
+	if (v.ndim <= 1) {
+		row_stride = n * v.strides[0];
+		col_stride = v.strides[0];
+	} else if (v.ndim == 2) {
+		row_stride = v.strides[0];
+		col_stride = v.strides[1];
+	} else {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Transposing a view of more than two dimensions is not supported."));
+		return;
+	}
+
+	zval rv, * buffer_prop;
+
+	ZVAL_UNDEF(&rv);
+
+	buffer_prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(a), "buffer", sizeof("buffer") - 1, 1, &rv);
+
+	if (UNEXPECTED(buffer_prop == NULL || !zephir_is_buffer(buffer_prop))) {
+		if (!Z_ISUNDEF(rv)) {
+			zval_ptr_dtor(&rv);
+		}
+
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument is not wrapping a Buffer object."));
+		return;
+	}
+
+	zend_long shape[2] = { n, m };
+	zend_long strides[2] = { col_stride, row_stride };
+
+	tensor_buffer_make_view(ret, buffer_prop, v.offset, 2, shape, strides);
+
+	if (!Z_ISUNDEF(rv)) {
+		zval_ptr_dtor(&rv);
+	}
+}
+
 /**
  * Unwrap the double buffer hidden inside a `Tensor\TensorBuffer` object
  * (see include/buffer.h).
+ *
+ * A dense buffer (or a dense view) returns a pointer straight into the source.
+ * A non-contiguous view is gathered into a dense Buffer that is cached on the
+ * view and reused until the source is written through set()/sort().
  */
 double * tensor_tensorbuffer_doubles(zval * obj, zend_long * len, int * success)
 {
-	zval rv;
+	zend_long dummy = 0;
 
-	ZVAL_UNDEF(&rv);
+	if (len == NULL) {
+		len = &dummy;
+	}
 
 	if (success != NULL) {
 		*success = 0;
 	}
 
-	if (len != NULL) {
-		*len = 0;
-	}
+	*len = 0;
 
-	if (UNEXPECTED(Z_TYPE_P(obj) != IS_OBJECT || Z_OBJCE_P(obj) != tensor_tensorbuffer_ce)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Tensor\\TensorBuffer object."));
+	tensor_double_view v;
+
+	if (UNEXPECTED(!tensor_view_resolve_object(obj, &v))) {
 		return NULL;
 	}
 
-	zval *prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "buffer", sizeof("buffer") - 1, 1, &rv);
+	*len = v.len;
 
-	if (prop != NULL && prop != &rv) {
-		ZVAL_COPY(&rv, prop);
+	if (v.contiguous) {
+		if (success != NULL) {
+			*success = 1;
+		}
+
+		return v.base + v.offset;
 	}
 
-	if (UNEXPECTED(!zephir_is_buffer(&rv))) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument is not wrapping a Buffer object."));
-		goto cleanup;
+	zval rv_epoch, rv_data;
+
+	ZVAL_UNDEF(&rv_epoch);
+	ZVAL_UNDEF(&rv_data);
+
+	zval * epoch_prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseEpoch", sizeof("denseEpoch") - 1, 1, &rv_epoch);
+	zval * data_prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseData", sizeof("denseData") - 1, 1, &rv_data);
+
+	if (epoch_prop != NULL && Z_TYPE_P(epoch_prop) == IS_LONG
+		&& Z_LVAL_P(epoch_prop) == tensor_buffer_epoch
+		&& data_prop != NULL && zephir_is_buffer(data_prop)
+		&& zephir_buffer_kind(data_prop) == ZEPHIR_BUFFER_DOUBLE
+		&& zephir_buffer_len(data_prop) == v.len) {
+		if (!Z_ISUNDEF(rv_epoch)) {
+			zval_ptr_dtor(&rv_epoch);
+		}
+
+		if (!Z_ISUNDEF(rv_data)) {
+			zval_ptr_dtor(&rv_data);
+		}
+
+		if (success != NULL) {
+			*success = 1;
+		}
+
+		return zephir_buffer_doubles(data_prop);
 	}
 
-	if (UNEXPECTED(zephir_buffer_kind(&rv) != ZEPHIR_BUFFER_DOUBLE)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must wrap a buffer of type double."));
-		goto cleanup;
+	if (!Z_ISUNDEF(rv_epoch)) {
+		zval_ptr_dtor(&rv_epoch);
 	}
 
-	zend_long n = zephir_buffer_len(&rv);
-	double * ptr = zephir_buffer_doubles(&rv);
-
-	zval_ptr_dtor(&rv);
-
-	if (len != NULL) {
-		*len = n;
+	if (!Z_ISUNDEF(rv_data)) {
+		zval_ptr_dtor(&rv_data);
 	}
+
+	zval gathered;
+
+	if (UNEXPECTED(zephir_buffer_create(&gathered, v.len, ZEPHIR_BUFFER_DOUBLE) == FAILURE)) {
+		return NULL;
+	}
+
+	double * dst = zephir_buffer_doubles(&gathered);
+
+	for (zend_long i = 0; i < v.len; ++i) {
+		dst[i] = tensor_double_view_get(&v, i);
+	}
+
+	zval epoch_value;
+
+	ZVAL_LONG(&epoch_value, tensor_buffer_epoch);
+
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseData", sizeof("denseData") - 1, &gathered);
+	zend_update_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "denseEpoch", sizeof("denseEpoch") - 1, &epoch_value);
+
+	zval_ptr_dtor(&gathered);
 
 	if (success != NULL) {
 		*success = 1;
 	}
 
-	return ptr;
-
-cleanup:
-	zval_ptr_dtor(&rv);
-
-	return NULL;
+	return dst;
 }
 
 static int tensor_double_cmp(const void * a, const void * b)
@@ -416,6 +970,8 @@ void tensor_buffer_sort(zval * return_value, zval * obj, zval * ascending)
 			ascending_order ? tensor_double_cmp : tensor_double_cmp_desc);
 	}
 
+	tensor_buffer_bump_epoch();
+
 	RETURN_NULL();
 }
 
@@ -434,7 +990,7 @@ void tensor_buffer_slice(zval * return_value, zval * obj, zval * offset, zval * 
 	zend_long lengthHat = zephir_get_intval(length);
 
 	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Argument must be a Buffer object."));
 		return;
 	}
@@ -473,7 +1029,7 @@ void tensor_buffer_slice_strided(zval * return_value, zval * obj, zval * offset,
 	zend_long strideHat = zephir_get_intval(stride);
 
 	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Argument must be a Buffer object."));
 		return;
 	}
@@ -529,7 +1085,7 @@ void tensor_buffer_concat(zval * return_value, zval * obj, zval * others)
 	zend_long len = zephir_buffer_len(obj);
 
 	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Argument must be a Buffer object."));
 		return;
 	}
@@ -541,7 +1097,7 @@ void tensor_buffer_concat(zval * return_value, zval * obj, zval * others)
 
 	ZEND_HASH_FOREACH_VAL(ht, other) {
 		if (UNEXPECTED(!zephir_is_buffer(other) || zephir_buffer_kind(other) != kind)) {
-			zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+			zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 				SL("All buffers must be the same type as the given buffer."));
 			return;
 		}
@@ -597,7 +1153,7 @@ void tensor_buffer_split(zval * return_value, zval * obj, zval * chunk_length)
 	zend_long chunkHat = zephir_get_intval(chunk_length);
 
 	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Argument must be a Buffer object."));
 		return;
 	}
@@ -657,7 +1213,7 @@ void tensor_buffer_repeat(zval * return_value, zval * obj, zval * times)
 	zend_long timesHat = zephir_get_intval(times);
 
 	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Argument must be a Buffer object."));
 		return;
 	}
@@ -665,7 +1221,7 @@ void tensor_buffer_repeat(zval * return_value, zval * obj, zval * times)
 	/* Reject before len * timesHat wraps; the product is then guaranteed to
 	 * fit, so every i * len destination offset stays in bounds. */
 	if (UNEXPECTED(len > 0 && timesHat > ZEND_LONG_MAX / len)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Repeat count must not overflow the buffer length."));
 		return;
 	}

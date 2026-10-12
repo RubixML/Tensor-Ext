@@ -51,4 +51,50 @@ void tensor_buffer_concat(zval * return_value, zval * obj, zval * others);
 void tensor_buffer_split(zval * return_value, zval * obj, zval * chunk_length);
 void tensor_buffer_repeat(zval * return_value, zval * obj, zval * times);
 
+/* Structural views
+ *
+ * A view is a `Tensor\TensorBuffer` that keeps the flat `Buffer` of its source
+ * and adds an `offset`, an integer `shape`, and a matching integer `strides`
+ * array. A buffer created without those three properties is a plain dense 1-D
+ * buffer and is treated as `offset = 0`, `shape = [len]`, `strides = [1]`.
+ *
+ * Views are read-only: set() and sort() reject them, and asBuffer() returns a
+ * freshly materialised dense Buffer. Kernels that still require contiguous
+ * storage reach the data through tensor_tensorbuffer_doubles(), which gathers a
+ * non-contiguous view into a cached dense Buffer held on the view for the
+ * lifetime of the object.
+ */
+
+/* Build a `Tensor\TensorBuffer` view over `buffer` with the given element
+ * `offset`, `ndim` (at most 4) and parallel shape/strides lists. Returns FAILURE
+ * (throwing) when the properties cannot be written. */
+int tensor_buffer_make_view(zval * ret, zval * buffer, zend_long offset, int ndim, const zend_long * shape, const zend_long * strides);
+
+/* Write the logical element count of a TensorBuffer, taken from its `shape`
+ * property, to `ret`. A NULL/non-array shape falls back to the length of the
+ * wrapped Buffer. */
+void tensor_tensorbuffer_count(zval * ret, zval * buffer, zval * shape);
+
+/* Write the view as a PHP array of doubles to `ret`. */
+void tensor_tensorbuffer_to_array(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides);
+
+/* Write a dense `Tensor\Buffer` holding the view's elements in row-major order
+ * to `ret`. */
+void tensor_buffer_view_materialize(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides);
+
+/* Write the view's element at `index` to `ret`, throwing when out of bounds. */
+void tensor_tensorbuffer_get(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * index);
+
+/* Set the element at `index`, throwing when the buffer is a read-only view.
+ * Bumps the in-place write epoch so cached gathered views are refreshed. */
+void tensor_tensorbuffer_set(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * index, zval * value);
+
+/* 1-D view producers; they compose with an existing 1-D view. */
+void tensor_buffer_slice_view(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * slice_offset, zval * slice_length);
+void tensor_buffer_slice_strided_view(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * slice_offset, zval * slice_length, zval * slice_stride);
+void tensor_buffer_split_view(zval * ret, zval * buffer, zval * offset, zval * shape, zval * strides, zval * chunk_length);
+
+/* Build a 2-D transpose view of `a`, interpreted as an `m` x `n` matrix. */
+void tensor_buffer_transpose_view(zval * ret, zval * a, zend_long m, zend_long n);
+
 #endif

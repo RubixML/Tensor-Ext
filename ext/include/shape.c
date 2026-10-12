@@ -83,40 +83,10 @@ int tensor_matrix_doubles(zval * obj, zval * n_zval, double ** ptr, zend_long * 
  */
 void tensor_matrix_transpose(zval * return_value, zval * a, zval * m, zval * n)
 {
-	zend_long total = 0;
-	int ok = 0;
-
-	double * va = tensor_tensorbuffer_doubles(a, &total, &ok);
-
-	if (UNEXPECTED(!ok)) {
-		return;
-	}
-
 	zend_long ma = zephir_get_intval(m);
 	zend_long na = zephir_get_intval(n);
 
-	zval c;
-
-	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) {
-		return;
-	}
-
-	double * vc = zephir_buffer_doubles(&c);
-
-	if (total > 0) {
-		zend_long i, j;
-
-		for (i = 0; i < ma; ++i) {
-			const double * src = va + i * na;
-			double * dst = vc + i;
-
-			for (j = 0; j < na; ++j) {
-				dst[j * ma] = src[j];
-			}
-		}
-	}
-
-	zval_ptr_dtor(&c);
+	tensor_buffer_transpose_view(return_value, a, ma, na);
 }
 
 /**

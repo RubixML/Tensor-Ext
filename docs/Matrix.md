@@ -179,7 +179,7 @@ Reduce the matrix down to a scalar.
 
 ### `transpose() : Matrix`
 
-Transpose the matrix, i.e. rows become columns and columns become rows.
+Transpose the matrix, i.e. rows become columns and columns become rows. The result is an O(1) view over the same storage (shape `[n, m]`, stride `[1, n]`), so no elements are copied; consumers that need contiguous data, such as `matmul()` or `toArray()`, gather the view lazily, while the row-wise reductions (`sum()`, `product()`, `min()`, `max()`, `argmin()`, `argmax()`) iterate the view through its strides in place. The transposed matrix is read-only.
 
 ## Linear Algebra
 

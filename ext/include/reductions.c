@@ -18,45 +18,14 @@
 #ifdef ZEPHIR_BUFFER_ENABLED
 
 /**
- * Resolve the underlying raw buffer for the reduction operations, accepting
- * either a `TensorBuffer` decorator (returns a reference to its wrapped
- * buffer) or a raw `Buffer` object as-is (returns a reference to it). The
- * caller owns the reference written to `buf` and must release it with
- * `zval_ptr_dtor()`.
+ * The tensor_reduce_* operations reduce a buffer viewed as `groups` contiguous
+ * chunks of `length` elements, mirroring TensorBuffer::split(). A single group
+ * covers the whole-buffer (Vector / ColumnVector) case.
  *
- * @return 1 on success, 0 on failure (throwing).
+ * Views are consumed in place: a non-contiguous TensorBuffer view (e.g. a
+ * transposed Matrix) is iterated through its strides instead of materializing
+ * a dense copy, so each element is read exactly once.
  */
-static int tensor_resolve_underlying_buffer(zval * obj, zval * buf)
-{
-	if (Z_TYPE_P(obj) == IS_OBJECT && Z_OBJCE_P(obj) == tensor_tensorbuffer_ce) {
-		zval rv;
-		zval *prop;
-
-		ZVAL_UNDEF(&rv);
-
-		prop = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "buffer", sizeof("buffer") - 1, 1, &rv);
-
-		if (prop != NULL && prop != &rv) {
-			ZVAL_COPY(buf, prop);
-		} else {
-			ZVAL_UNDEF(buf);
-		}
-
-		zval_ptr_dtor(&rv);
-	} else {
-		ZVAL_COPY(buf, obj);
-	}
-
-	if (UNEXPECTED(!zephir_is_buffer(buf))) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer or TensorBuffer object."));
-		zval_ptr_dtor(buf);
-		ZVAL_UNDEF(buf);
-		return 0;
-	}
-
-	return 1;
-}
 
 /* The tensor_reduce_* operations reduce a flat buffer viewed as `groups`
  * contiguous chunks of `length` elements, mirroring TensorBuffer::split(). A
@@ -73,6 +42,284 @@ typedef enum {
 	TENSOR_REDUCE_ARGMAX
 } tensor_reduce_mode;
 
+#define TENSOR_REDUCE_MAX_DIMS 4
+
+typedef struct _tensor_reduce_view {
+	double * base;
+	zend_long offset;
+	zend_long len;
+	int ndim;
+	zend_long shape[TENSOR_REDUCE_MAX_DIMS];
+	zend_long strides[TENSOR_REDUCE_MAX_DIMS];
+	int contiguous;
+} tensor_reduce_view;
+
+static double tensor_group_reduce(const void * data, const zend_long len, const int mode, zend_long * index);
+
+static zend_always_inline double tensor_reduce_get(const tensor_reduce_view * v, zend_long i)
+{
+	if (v->contiguous) {
+		return v->base[v->offset + i];
+	}
+
+	zend_long rem = i;
+	zend_long off = v->offset;
+
+	for (int d = v->ndim - 1; d >= 0; --d) {
+		zend_long dim = v->shape[d];
+
+		if (dim > 0) {
+			off += (rem % dim) * v->strides[d];
+			rem /= dim;
+		}
+	}
+
+	return v->base[off];
+}
+
+/* Decode a PHP array of integers into `out`; returns the element count, or 0
+ * when the value is not an array. */
+static int tensor_reduce_read_long_list(zval * arr, zend_long * out, int max)
+{
+	HashTable * ht;
+	zval * el;
+	int n = 0;
+
+	if (arr == NULL || Z_TYPE_P(arr) != IS_ARRAY || (ht = Z_ARRVAL_P(arr)) == NULL) {
+		return 0;
+	}
+
+	ZEND_HASH_FOREACH_VAL(ht, el) {
+		if (n >= max) {
+			break;
+		}
+
+		out[n++] = zval_get_long(el);
+	} ZEND_HASH_FOREACH_END();
+
+	return n;
+}
+
+/* Resolve a TensorBuffer's `buffer`/`offset`/`shape`/`strides` property values
+ * into a stride view. Returns 1 on success and 0 on failure (throwing). */
+static int tensor_reduce_view_resolve(zval * buffer, zval * offset, zval * shape, zval * strides, tensor_reduce_view * v)
+{
+	if (UNEXPECTED(!zephir_is_buffer(buffer))) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument is not wrapping a Buffer object."));
+		return 0;
+	}
+
+	if (UNEXPECTED(zephir_buffer_kind(buffer) != ZEPHIR_BUFFER_DOUBLE)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument must wrap a buffer of type double."));
+		return 0;
+	}
+
+	v->base = zephir_buffer_doubles(buffer);
+	v->offset = offset != NULL ? zephir_get_intval(offset) : 0;
+
+	int ndim = tensor_reduce_read_long_list(shape, v->shape, TENSOR_REDUCE_MAX_DIMS);
+
+	if (ndim <= 0) {
+		v->ndim = 1;
+		v->shape[0] = zephir_buffer_len(buffer);
+		v->strides[0] = 1;
+	} else {
+		v->ndim = ndim;
+
+		if (tensor_reduce_read_long_list(strides, v->strides, TENSOR_REDUCE_MAX_DIMS) != ndim) {
+			zend_long expected = 1;
+
+			for (int d = ndim - 1; d >= 0; --d) {
+				v->strides[d] = expected;
+				expected *= v->shape[d];
+			}
+		}
+	}
+
+	zend_long len = 1;
+
+	for (int d = 0; d < v->ndim; ++d) {
+		len *= v->shape[d];
+	}
+
+	v->len = len;
+	v->contiguous = 1;
+
+	if (len > 1) {
+		zend_long expected = 1;
+
+		for (int d = v->ndim - 1; d >= 0; --d) {
+			if (v->strides[d] != expected) {
+				v->contiguous = 0;
+				break;
+			}
+
+			expected *= v->shape[d];
+		}
+	}
+
+	return 1;
+}
+
+/* Resolve `obj` to a stride view. Accepts either a TensorBuffer decorator
+ * (view or dense) or a raw Buffer object. Returns 1 on success, 0 on failure
+ * (throwing). */
+static int tensor_reduce_resolve(zval * obj, tensor_reduce_view * v)
+{
+	if (Z_TYPE_P(obj) == IS_OBJECT && Z_OBJCE_P(obj) == tensor_tensorbuffer_ce) {
+		zval rv_buffer, rv_offset, rv_shape, rv_strides;
+		zval * buffer, * offset, * shape, * strides;
+		int ok;
+
+		ZVAL_UNDEF(&rv_buffer);
+		ZVAL_UNDEF(&rv_offset);
+		ZVAL_UNDEF(&rv_shape);
+		ZVAL_UNDEF(&rv_strides);
+
+		buffer = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "buffer", sizeof("buffer") - 1, 1, &rv_buffer);
+		offset = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "offset", sizeof("offset") - 1, 1, &rv_offset);
+		shape = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "shape", sizeof("shape") - 1, 1, &rv_shape);
+		strides = zend_read_property(tensor_tensorbuffer_ce, Z_OBJ_P(obj), "strides", sizeof("strides") - 1, 1, &rv_strides);
+
+		ok = tensor_reduce_view_resolve(buffer, offset, shape, strides, v);
+
+		zval_ptr_dtor(&rv_buffer);
+		zval_ptr_dtor(&rv_offset);
+		zval_ptr_dtor(&rv_shape);
+		zval_ptr_dtor(&rv_strides);
+
+		return ok;
+	}
+
+	if (UNEXPECTED(!zephir_is_buffer(obj))) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument must be a Buffer or TensorBuffer object."));
+		return 0;
+	}
+
+	if (UNEXPECTED(zephir_buffer_kind(obj) != ZEPHIR_BUFFER_DOUBLE)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Argument must wrap a buffer of type double."));
+		return 0;
+	}
+
+	v->base = zephir_buffer_doubles(obj);
+	v->offset = 0;
+	v->len = zephir_buffer_len(obj);
+	v->ndim = 1;
+	v->shape[0] = v->len;
+	v->strides[0] = 1;
+	v->contiguous = 1;
+
+	return 1;
+}
+
+/* Contiguous reduction of `len` elements spaced `stride` doubles apart. */
+static double tensor_group_reduce_strided(const double * data, zend_long stride, zend_long len, const int mode, zend_long * index)
+{
+	zend_long i;
+	zend_long best_index = 0;
+
+	if (mode == TENSOR_REDUCE_SUM) {
+		double sum = 0.0;
+
+		for (i = 0; i < len; ++i) {
+			sum += data[i * stride];
+		}
+
+		return sum;
+	}
+
+	if (mode == TENSOR_REDUCE_PRODUCT) {
+		double prod = 1.0;
+
+		for (i = 0; i < len; ++i) {
+			prod *= data[i * stride];
+		}
+
+		return prod;
+	}
+
+	int find_min = mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_ARGMIN;
+	double best = data[0];
+
+	for (i = 1; i < len; ++i) {
+		if (find_min ? data[i * stride] < best : data[i * stride] > best) {
+			best = data[i * stride];
+			best_index = i;
+		}
+	}
+
+	if (index != NULL) {
+		*index = best_index;
+	}
+
+	return best;
+}
+
+/* Reduce the `length` elements of the logical flat view starting at `start`.
+ * Non-contiguous layouts iterate through the view's strides directly (a 1-D
+ * view at its element stride, a 2-D view row by row); anything else decodes
+ * each element from the descriptor. */
+static double tensor_group_reduce_view(const tensor_reduce_view * v, zend_long start, zend_long length, const int mode, zend_long * index)
+{
+	zend_long i;
+	zend_long best_index = 0;
+
+	if (v->contiguous) {
+		return tensor_group_reduce((const void *) (v->base + v->offset + start), length, mode, index);
+	}
+
+	if (v->ndim == 1 && start == 0 && v->shape[0] == length) {
+		return tensor_group_reduce_strided(v->base + v->offset, v->strides[0], length, mode, index);
+	}
+
+	if (v->ndim == 2 && v->shape[1] == length) {
+		zend_long row = start / length;
+
+		return tensor_group_reduce_strided(v->base + v->offset + row * v->strides[0], v->strides[1], length, mode, index);
+	}
+
+	if (mode == TENSOR_REDUCE_SUM) {
+		double sum = 0.0;
+
+		for (i = 0; i < length; ++i) {
+			sum += tensor_reduce_get(v, start + i);
+		}
+
+		return sum;
+	}
+
+	if (mode == TENSOR_REDUCE_PRODUCT) {
+		double prod = 1.0;
+
+		for (i = 0; i < length; ++i) {
+			prod *= tensor_reduce_get(v, start + i);
+		}
+
+		return prod;
+	}
+
+	int find_min = mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_ARGMIN;
+	double best = tensor_reduce_get(v, start);
+
+	for (i = 1; i < length; ++i) {
+		double val = tensor_reduce_get(v, start + i);
+
+		if (find_min ? val < best : val > best) {
+			best = val;
+			best_index = i;
+		}
+	}
+
+	if (index != NULL) {
+		*index = best_index;
+	}
+
+	return best;
+}
 /* Sum a contiguous run of `len` doubles. Elements are accumulated into eight
  * independent partial sums so the floating point dependency chain no longer
  * serializes the iterations, and the partials are merged in a small tree on the
@@ -174,39 +421,16 @@ static double tensor_group_reduce(const void * data, const zend_long len, const 
 	return best;
 }
 
-/* Shared implementation backing all tensor_reduce_* operations. Unwraps the
- * underlying buffer and validates it against a `groups` x `length` logical
- * shape before writing one reduced value per group into a new TensorBuffer.
- *
- * Only a double buffer is accepted, matching every other numeric operation in
- * the extension, which all reach their data through tensor_tensorbuffer_doubles()
- * and reject a non-double buffer. The check has to happen here rather than
- * letting the group reducer fall through to its double path: zend_long and
- * double are both eight bytes, so an integer buffer would be silently
- * reinterpreted as IEEE-754 data instead of faulting. */
+/* Shared implementation backing all tensor_reduce_* operations. Resolves the
+ * underlying buffer (dense or view) and validates it against a `groups` x
+ * `length` logical shape before writing one reduced value per group into a new
+ * TensorBuffer (one for the whole buffer with groups = 1). */
 static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_zval, zval * length_zval, int mode)
 {
-	zval buffer;
-	uint8_t kind;
+	tensor_reduce_view v;
 	zend_long groups = 0, length = 0, i;
 
-	if (!tensor_resolve_underlying_buffer(obj, &buffer)) {
-		return;
-	}
-
-	kind = zephir_buffer_kind(&buffer);
-
-	if (UNEXPECTED(kind == 0)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must be a Buffer object."));
-		zval_ptr_dtor(&buffer);
-		return;
-	}
-
-	if (UNEXPECTED(kind != ZEPHIR_BUFFER_DOUBLE)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
-			SL("Argument must wrap a buffer of type double."));
-		zval_ptr_dtor(&buffer);
+	if (UNEXPECTED(!tensor_reduce_resolve(obj, &v))) {
 		return;
 	}
 
@@ -214,47 +438,44 @@ static void tensor_reduce_apply(zval * return_value, zval * obj, zval * groups_z
 	length = zephir_get_intval(length_zval);
 
 	if (UNEXPECTED(groups < 1)) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Number of groups must be greater than 0."));
-		zval_ptr_dtor(&buffer);
 		return;
 	}
 
-	/* Extrema need at least one element in every group. The dimensions are not
-	 * rechecked here: the Zephir callers pass either Vector's n, which is set
-	 * from a->count(), or Matrix's m and n, which __construct has already
-	 * matched against that same count. */
+	/* Extrema need at least one element in every group. */
 	if (UNEXPECTED(length == 0 && (mode == TENSOR_REDUCE_MIN || mode == TENSOR_REDUCE_MAX
 		|| mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX))) {
-		zephir_throw_exception_string(spl_ce_InvalidArgumentException,
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
 			SL("Cannot compute the reduction of an empty group."));
-		zval_ptr_dtor(&buffer);
+		return;
+	}
+
+	if (UNEXPECTED(length < 0 || groups * length != v.len)) {
+		zephir_throw_exception_string(tensor_exceptions_invalidargumentexception_ce,
+			SL("Number of groups and length must match the size of the buffer."));
 		return;
 	}
 
 	zval c;
 
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, groups, &c) == FAILURE)) {
-		zval_ptr_dtor(&buffer);
 		return;
 	}
 
 	double * vc = zephir_buffer_doubles(&c);
-	const double * ptr = zephir_buffer_doubles(&buffer);
 
 	for (i = 0; i < groups; ++i) {
 		zend_long index = 0;
 
-		double value = tensor_group_reduce(ptr + i * length, length, mode, &index);
+		double value = tensor_group_reduce_view(&v, i * length, length, mode, &index);
 
 		vc[i] = (mode == TENSOR_REDUCE_ARGMIN || mode == TENSOR_REDUCE_ARGMAX)
 			? (double) index : value;
 	}
 
-	zval_ptr_dtor(&buffer);
 	zval_ptr_dtor(&c);
 }
-
 
 static int tensor_matrix_double_cmp(const void * a, const void * b)
 {

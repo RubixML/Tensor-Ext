@@ -856,6 +856,56 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * Reductions over a non-contiguous (transposed) buffer view must be
+     * computed in place rather than by gathering a dense copy, and must
+     * return the per-row reductions of the transposed matrix.
+     *
+     * @test
+     */
+    public function reductionsOnTransposedView() : void
+    {
+        $a = Matrix::fromArray([
+            [22.0, -17.0, 12.0],
+            [4.0, 11.0, -2.0],
+            [20.0, -6.0, -9.0],
+        ]);
+
+        $t = $a->transpose();
+
+        $this->assertEqualsWithDelta(
+            ColumnVector::fromArray([46.0, -12.0, 1.0])->asArray(),
+            $t->sum()->asArray(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEqualsWithDelta(
+            ColumnVector::fromArray([1760.0, 1122.0, 216.0])->asArray(),
+            $t->product()->asArray(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEquals(
+            ColumnVector::fromArray([4.0, -17.0, -9.0])->asArray(),
+            $t->min()->asArray()
+        );
+
+        $this->assertEquals(
+            ColumnVector::fromArray([22.0, 11.0, 12.0])->asArray(),
+            $t->max()->asArray()
+        );
+
+        $this->assertEquals(
+            ColumnVector::fromArray([1, 0, 2])->asArray(),
+            $t->argmin()->asArray()
+        );
+
+        $this->assertEquals(
+            ColumnVector::fromArray([0, 1, 0])->asArray(),
+            $t->argmax()->asArray()
+        );
+    }
+
+    /**
      * Regression test: passing an array callable [instance, 'method'] to
      * Matrix::map() must not segfault. The previous Zephir dynamic
      * user-callback dispatch inside TensorBuffer::map() was triggered only
