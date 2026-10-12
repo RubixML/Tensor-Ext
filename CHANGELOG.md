@@ -10,6 +10,8 @@
     - Reductions (`sum`/`product`/`min`/`max`/`argmin`/`argmax`) consume non-contiguous views in place instead of gathering a dense copy
     - `set()` and `sort()` reject read-only views
     - `asBuffer()` materialises a dense copy on view decorators
+    - Column and row broadcast kernels read a non-contiguous vector operand through its view instead of gathering a dense copy
+    - Fixed `softmax()` (and other row-wise kernels) reading only the first element of a non-contiguous 1-D operand such as a `columnAsVector()` view
 
 - 4.1.0
     - Added `softplus()` and `erf()` special functions

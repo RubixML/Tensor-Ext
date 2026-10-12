@@ -1478,14 +1478,7 @@ void tensor_rank(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (v.ndim <= 1) {
-        v.ndim = 2;
-        v.shape[0] = (zend_long) ma;
-        v.shape[1] = (zend_long) na;
-        v.strides[0] = (zend_long) na;
-        v.strides[1] = 1;
-        v.contiguous = 1;
-    }
+    tensor_view_expand_matrix(&v, (zend_long) ma, (zend_long) na);
 
     unsigned int rank = 0;
     double * row = emalloc((na ? na : 1) * sizeof(double));
@@ -1630,14 +1623,7 @@ void tensor_covariance(zval * return_value, zval * a, zval * m, zval * n)
         return;
     }
 
-    if (va_view.ndim <= 1) {
-        va_view.ndim = 2;
-        va_view.shape[0] = ma;
-        va_view.shape[1] = na;
-        va_view.strides[0] = na;
-        va_view.strides[1] = 1;
-        va_view.contiguous = 1;
-    }
+    tensor_view_expand_matrix(&va_view, ma, na);
 
     /* Centre the rows into a scratch block. This is a plain block rather than a
      * TensorBuffer because it never escapes this call, and materialising the

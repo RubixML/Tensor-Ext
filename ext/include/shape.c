@@ -42,6 +42,8 @@ int tensor_matrix_view(zval * obj, zend_long n_hat, tensor_double_view * v, zend
 	*n = n_hat;
 	*m = v->len / n_hat;
 
+	tensor_view_expand_matrix(v, *m, *n);
+
 	return 1;
 }
 

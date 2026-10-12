@@ -968,6 +968,87 @@ class MatrixTest extends TestCase
     }
 
     /**
+     * Row-wise kernels must read a non-contiguous (strided) 1-D operand
+     * through its view. A column vector taken from a matrix is such a view;
+     * softmax previously folded only the first element because the row length
+     * of a 1-D view is one.
+     *
+     * @test
+     */
+    public function rowWiseOperationsOnStridedVectorView() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 8.0, -3.0],
+            [4.0, -2.0, 6.0],
+            [7.0, 5.0, 9.0],
+        ]);
+
+        $strided = $a->columnAsVector(0);
+        $dense = ColumnVector::fromArray($strided->asArray());
+
+        $this->assertEqualsWithDelta(
+            $dense->softmax()->asArray(),
+            $strided->softmax()->asArray(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEqualsWithDelta(
+            $dense->median(),
+            $strided->median(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEqualsWithDelta(
+            $dense->quantile(0.25),
+            $strided->quantile(0.25),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
+     * Column and row broadcasts must read a non-contiguous vector operand
+     * through its view rather than gathering a dense copy, and must agree with
+     * the same operation applied to the materialised operand.
+     *
+     * @test
+     */
+    public function broadcastsOnStridedVectorView() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+            [7.0, 8.0, 9.0],
+        ]);
+
+        $stridedCol = $a->columnAsVector(0);
+        $denseCol = ColumnVector::fromArray($stridedCol->asArray());
+
+        $operators = [
+            'multiply', 'divide', 'add', 'subtract', 'pow', 'mod', 'equal',
+            'notEqual', 'greater', 'greaterEqual', 'less', 'lessEqual',
+        ];
+
+        foreach ($operators as $op) {
+            $this->assertEqualsWithDelta(
+                $a->{$op . 'ColumnVector'}($denseCol)->asArray(),
+                $a->{$op . 'ColumnVector'}($stridedCol)->asArray(),
+                self::MAX_DELTA
+            );
+        }
+
+        $stridedRow = Vector::fromBuffer($a->columnAsVector(0)->buffer());
+        $denseRow = Vector::fromArray($stridedRow->asArray());
+
+        foreach ($operators as $op) {
+            $this->assertEqualsWithDelta(
+                $a->{$op . 'Vector'}($denseRow)->asArray(),
+                $a->{$op . 'Vector'}($stridedRow)->asArray(),
+                self::MAX_DELTA
+            );
+        }
+    }
+
+    /**
      * Regression test: passing an array callable [instance, 'method'] to
      * Matrix::map() must not segfault. The previous Zephir dynamic
      * user-callback dispatch inside TensorBuffer::map() was triggered only

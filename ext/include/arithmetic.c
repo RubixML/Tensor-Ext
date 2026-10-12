@@ -202,66 +202,63 @@ TENSOR_SCALAR(mod_scalar, fmod(x, ab))
  * the optimizer can vectorize the elementwise mapping instead of being blocked
  * by an indirect call. */
 
-#define TENSOR_COL_APPLY(name, expr)                                             \
-void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      \
-{                                                                                \
-	tensor_double_view v_a, v_b;                                                 \
-	zend_long m = 0;                                                             \
-	double * owned_b = NULL;                                                     \
-	const double * vb = NULL;                                                    \
-	                                                                             \
-	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) ||                          \
-		!tensor_view_doubles(b, &vb, &m, &owned_b))) {                           \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zend_long total = v_a.len;                                                   \
-	zend_long nHat = zephir_get_intval(n_zval);                                  \
-	                                                                             \
-	if (UNEXPECTED(nHat < 1)) {                                                  \
-		zephir_throw_exception_string(spl_ce_LengthException,                    \
-			SL("Matrix and vector dimensions must agree."));                     \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zval c;                                                                      \
-	                                                                             \
+#define TENSOR_COL_APPLY(name, expr) \
+void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval) \
+{ \
+	tensor_double_view v_a, v_b; \
+ \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) || \
+		!tensor_view_resolve_arg(b, &v_b))) { \
+		return; \
+	} \
+ \
+	zend_long m = v_b.len; \
+	zend_long total = v_a.len; \
+	zend_long nHat = zephir_get_intval(n_zval); \
+ \
+	if (UNEXPECTED(nHat < 1)) { \
+		zephir_throw_exception_string(spl_ce_LengthException, \
+			SL("Matrix and vector dimensions must agree.")); \
+		return; \
+	} \
+ \
+	zval c; \
+ \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	double * vc = zephir_buffer_doubles(&c);                                     \
-	                                                                             \
-	zend_long i, j;                                                              \
-	                                                                             \
-	if (v_a.contiguous) {                                                        \
-		const double * va = v_a.base + v_a.offset;                               \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = va[i * nHat + j];                                     \
-				double y = vb[i];                                                \
-				vc[i * nHat + j] = expr;                                         \
-			}                                                                    \
-		}                                                                        \
-	} else {                                                                     \
-		tensor_view_reader ra;                                                   \
-		tensor_view_reader_init(&ra, &v_a);                                      \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = tensor_view_reader_value(&ra);                        \
-				double y = vb[i];                                                \
-				vc[i * nHat + j] = expr;                                         \
-				tensor_view_reader_advance(&ra);                                 \
-			}                                                                    \
-		}                                                                        \
-	}                                                                            \
-	                                                                             \
-	if (owned_b != NULL) { efree(owned_b); }                                     \
-	zval_ptr_dtor(&c);                                                           \
+		return; \
+	} \
+ \
+	double * vc = zephir_buffer_doubles(&c); \
+ \
+	zend_long i, j; \
+ \
+	if (v_a.contiguous) { \
+		const double * va = v_a.base + v_a.offset; \
+ \
+		for (i = 0; i < m; ++i) { \
+			double y = tensor_double_view_get(&v_b, i); \
+ \
+			for (j = 0; j < nHat; ++j) { \
+				double x = va[i * nHat + j]; \
+				vc[i * nHat + j] = expr; \
+			} \
+		} \
+	} else { \
+		tensor_view_reader ra; \
+		tensor_view_reader_init(&ra, &v_a); \
+ \
+		for (i = 0; i < m; ++i) { \
+			double y = tensor_double_view_get(&v_b, i); \
+ \
+			for (j = 0; j < nHat; ++j) { \
+				double x = tensor_view_reader_value(&ra); \
+				vc[i * nHat + j] = expr; \
+				tensor_view_reader_advance(&ra); \
+			} \
+		} \
+	} \
+ \
+	zval_ptr_dtor(&c); \
 }
 
 TENSOR_COL_APPLY(pow_col, pow(x, y))
@@ -278,68 +275,74 @@ TENSOR_COL_APPLY(mod_col_reverse, fmod(y, x))
  * dedicated pair of loops so that the optimizer can vectorize the elementwise
  * mapping instead of being blocked by an indirect call. */
 
-#define TENSOR_ROW_APPLY(name, expr)                                             \
-void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval)      \
-{                                                                                \
-	tensor_double_view v_a;                                                      \
-	zend_long nb = 0;                                                            \
-	double * owned_b = NULL;                                                     \
-	const double * vb = NULL;                                                    \
-	                                                                             \
-	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) ||                          \
-		!tensor_view_doubles(b, &vb, &nb, &owned_b))) {                          \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zend_long total = v_a.len;                                                   \
-	zend_long nHat = zephir_get_intval(n_zval);                                  \
-	                                                                             \
-	if (UNEXPECTED(nHat < 1 || total < nHat)) {                                  \
-		zephir_throw_exception_string(spl_ce_LengthException,                    \
-			SL("Matrix and vector dimensions must agree."));                     \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zend_long m = total / nHat;                                                  \
-	                                                                             \
-	zval c;                                                                      \
-	                                                                             \
+#define TENSOR_ROW_APPLY(name, expr) \
+void tensor_##name(zval * return_value, zval * a, zval * b, zval * n_zval) \
+{ \
+	tensor_double_view v_a, v_b; \
+ \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) || \
+		!tensor_view_resolve_arg(b, &v_b))) { \
+		return; \
+	} \
+ \
+	zend_long total = v_a.len; \
+	zend_long nHat = zephir_get_intval(n_zval); \
+ \
+	if (UNEXPECTED(nHat < 1 || total < nHat)) { \
+		zephir_throw_exception_string(spl_ce_LengthException, \
+			SL("Matrix and vector dimensions must agree.")); \
+		return; \
+	} \
+ \
+	zend_long m = total / nHat; \
+ \
+	zval c; \
+ \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	double * vc = zephir_buffer_doubles(&c);                                     \
-	                                                                             \
-	zend_long i, j;                                                              \
-	                                                                             \
-	if (v_a.contiguous) {                                                        \
-		const double * va = v_a.base + v_a.offset;                               \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = va[i * nHat + j];                                     \
-				double y = vb[j];                                                \
-				vc[i * nHat + j] = expr;                                         \
-			}                                                                    \
-		}                                                                        \
-	} else {                                                                     \
-		tensor_view_reader ra;                                                   \
-		tensor_view_reader_init(&ra, &v_a);                                      \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = tensor_view_reader_value(&ra);                        \
-				double y = vb[j];                                                \
-				vc[i * nHat + j] = expr;                                         \
-				tensor_view_reader_advance(&ra);                                 \
-			}                                                                    \
-		}                                                                        \
-	}                                                                            \
-	                                                                             \
-	if (owned_b != NULL) { efree(owned_b); }                                     \
-	zval_ptr_dtor(&c);                                                           \
+		return; \
+	} \
+ \
+	double * vc = zephir_buffer_doubles(&c); \
+ \
+	zend_long i, j; \
+ \
+	if (v_a.contiguous) { \
+		const double * va = v_a.base + v_a.offset; \
+ \
+		if (v_b.contiguous) { \
+			const double * vb = v_b.base + v_b.offset; \
+ \
+			for (i = 0; i < m; ++i) { \
+				for (j = 0; j < nHat; ++j) { \
+					double x = va[i * nHat + j]; \
+					double y = vb[j]; \
+					vc[i * nHat + j] = expr; \
+				} \
+			} \
+		} else { \
+			for (i = 0; i < m; ++i) { \
+				for (j = 0; j < nHat; ++j) { \
+					double x = va[i * nHat + j]; \
+					double y = tensor_double_view_get(&v_b, j); \
+					vc[i * nHat + j] = expr; \
+				} \
+			} \
+		} \
+	} else { \
+		tensor_view_reader ra; \
+		tensor_view_reader_init(&ra, &v_a); \
+ \
+		for (i = 0; i < m; ++i) { \
+			for (j = 0; j < nHat; ++j) { \
+				double x = tensor_view_reader_value(&ra); \
+				double y = tensor_double_view_get(&v_b, j); \
+				vc[i * nHat + j] = expr; \
+				tensor_view_reader_advance(&ra); \
+			} \
+		} \
+	} \
+ \
+	zval_ptr_dtor(&c); \
 }
 
 /* As above, the libm operations only -- see TENSOR_COL_APPLY. */
@@ -350,63 +353,60 @@ TENSOR_ROW_APPLY(mod_row_reverse, fmod(y, x))
 
 #undef TENSOR_ROW_APPLY
 
-#define TENSOR_COL_DISPATCH_BODY(op)                                             \
-	tensor_double_view v_a;                                                      \
-	zend_long m = 0;                                                             \
-	double * owned_b = NULL;                                                     \
-	const double * vb = NULL;                                                    \
-	                                                                             \
-	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) ||                          \
-		!tensor_view_doubles(b, &vb, &m, &owned_b))) {                           \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zend_long total = v_a.len;                                                   \
-	zend_long nHat = zephir_get_intval(n_zval);                                  \
-	                                                                             \
-	if (UNEXPECTED(nHat < 1)) {                                                  \
-		zephir_throw_exception_string(spl_ce_LengthException,                    \
-			SL("Matrix and vector dimensions must agree."));                     \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zval c;                                                                      \
-	                                                                             \
+#define TENSOR_COL_DISPATCH_BODY(op) \
+	tensor_double_view v_a, v_b; \
+ \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) || \
+		!tensor_view_resolve_arg(b, &v_b))) { \
+		return; \
+	} \
+ \
+	zend_long m = v_b.len; \
+	zend_long total = v_a.len; \
+	zend_long nHat = zephir_get_intval(n_zval); \
+ \
+	if (UNEXPECTED(nHat < 1)) { \
+		zephir_throw_exception_string(spl_ce_LengthException, \
+			SL("Matrix and vector dimensions must agree.")); \
+		return; \
+	} \
+ \
+	zval c; \
+ \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	double * restrict vc = zephir_buffer_doubles(&c);                           \
-	                                                                             \
-	zend_long i, j;                                                              \
-	                                                                             \
-	if (v_a.contiguous) {                                                        \
-		const double * restrict va = v_a.base + v_a.offset;                      \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = va[i * nHat + j];                                     \
-				double y = vb[i];                                                \
-				vc[i * nHat + j] = op;                                           \
-			}                                                                    \
-		}                                                                        \
-	} else {                                                                     \
-		tensor_view_reader ra;                                                   \
-		tensor_view_reader_init(&ra, &v_a);                                      \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = tensor_view_reader_value(&ra);                        \
-				double y = vb[i];                                                \
-				vc[i * nHat + j] = op;                                           \
-				tensor_view_reader_advance(&ra);                                 \
-			}                                                                    \
-		}                                                                        \
-	}                                                                            \
-	                                                                             \
-	if (owned_b != NULL) { efree(owned_b); }                                     \
+		return; \
+	} \
+ \
+	double * restrict vc = zephir_buffer_doubles(&c); \
+ \
+	zend_long i, j; \
+ \
+	if (v_a.contiguous) { \
+		const double * restrict va = v_a.base + v_a.offset; \
+ \
+		for (i = 0; i < m; ++i) { \
+			double y = tensor_double_view_get(&v_b, i); \
+ \
+			for (j = 0; j < nHat; ++j) { \
+				double x = va[i * nHat + j]; \
+				vc[i * nHat + j] = op; \
+			} \
+		} \
+	} else { \
+		tensor_view_reader ra; \
+		tensor_view_reader_init(&ra, &v_a); \
+ \
+		for (i = 0; i < m; ++i) { \
+			double y = tensor_double_view_get(&v_b, i); \
+ \
+			for (j = 0; j < nHat; ++j) { \
+				double x = tensor_view_reader_value(&ra); \
+				vc[i * nHat + j] = op; \
+				tensor_view_reader_advance(&ra); \
+			} \
+		} \
+	} \
+ \
 	zval_ptr_dtor(&c);
 
 #define TENSOR_COL_DISPATCH(name, op)                                            \
@@ -448,65 +448,71 @@ TENSOR_COL_DISPATCH(subtract_col_reverse, y - x)
 #undef TENSOR_COL_DISPATCH
 #undef TENSOR_COL_DISPATCH_BODY
 
-#define TENSOR_ROW_DISPATCH_BODY(op)                                             \
-	tensor_double_view v_a;                                                      \
-	zend_long nb = 0;                                                            \
-	double * owned_b = NULL;                                                     \
-	const double * vb = NULL;                                                    \
-	                                                                             \
-	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) ||                          \
-		!tensor_view_doubles(b, &vb, &nb, &owned_b))) {                          \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zend_long total = v_a.len;                                                   \
-	zend_long nHat = zephir_get_intval(n_zval);                                  \
-	                                                                             \
-	if (UNEXPECTED(nHat < 1 || total < nHat)) {                                  \
-		zephir_throw_exception_string(spl_ce_LengthException,                    \
-			SL("Matrix and vector dimensions must agree."));                     \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	zend_long m = total / nHat;                                                  \
-	                                                                             \
-	zval c;                                                                      \
-	                                                                             \
+#define TENSOR_ROW_DISPATCH_BODY(op) \
+	tensor_double_view v_a, v_b; \
+ \
+	if (UNEXPECTED(!tensor_view_resolve_arg(a, &v_a) || \
+		!tensor_view_resolve_arg(b, &v_b))) { \
+		return; \
+	} \
+ \
+	zend_long total = v_a.len; \
+	zend_long nHat = zephir_get_intval(n_zval); \
+ \
+	if (UNEXPECTED(nHat < 1 || total < nHat)) { \
+		zephir_throw_exception_string(spl_ce_LengthException, \
+			SL("Matrix and vector dimensions must agree.")); \
+		return; \
+	} \
+ \
+	zend_long m = total / nHat; \
+ \
+	zval c; \
+ \
 	if (UNEXPECTED(tensor_tensorbuffer_create(return_value, total, &c) == FAILURE)) { \
-		if (owned_b != NULL) { efree(owned_b); }                                 \
-		return;                                                                  \
-	}                                                                            \
-	                                                                             \
-	double * restrict vc = zephir_buffer_doubles(&c);                           \
-	                                                                             \
-	zend_long i, j;                                                              \
-	                                                                             \
-	if (v_a.contiguous) {                                                        \
-		const double * restrict va = v_a.base + v_a.offset;                      \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = va[i * nHat + j];                                     \
-				double y = vb[j];                                                \
-				vc[i * nHat + j] = op;                                           \
-			}                                                                    \
-		}                                                                        \
-	} else {                                                                     \
-		tensor_view_reader ra;                                                   \
-		tensor_view_reader_init(&ra, &v_a);                                      \
-	                                                                             \
-		for (i = 0; i < m; ++i) {                                                \
-			for (j = 0; j < nHat; ++j) {                                         \
-				double x = tensor_view_reader_value(&ra);                        \
-				double y = vb[j];                                                \
-				vc[i * nHat + j] = op;                                           \
-				tensor_view_reader_advance(&ra);                                 \
-			}                                                                    \
-		}                                                                        \
-	}                                                                            \
-	                                                                             \
-	if (owned_b != NULL) { efree(owned_b); }                                     \
+		return; \
+	} \
+ \
+	double * restrict vc = zephir_buffer_doubles(&c); \
+ \
+	zend_long i, j; \
+ \
+	if (v_a.contiguous) { \
+		const double * restrict va = v_a.base + v_a.offset; \
+ \
+		if (v_b.contiguous) { \
+			const double * vb = v_b.base + v_b.offset; \
+ \
+			for (i = 0; i < m; ++i) { \
+				for (j = 0; j < nHat; ++j) { \
+					double x = va[i * nHat + j]; \
+					double y = vb[j]; \
+					vc[i * nHat + j] = op; \
+				} \
+			} \
+		} else { \
+			for (i = 0; i < m; ++i) { \
+				for (j = 0; j < nHat; ++j) { \
+					double x = va[i * nHat + j]; \
+					double y = tensor_double_view_get(&v_b, j); \
+					vc[i * nHat + j] = op; \
+				} \
+			} \
+		} \
+	} else { \
+		tensor_view_reader ra; \
+		tensor_view_reader_init(&ra, &v_a); \
+ \
+		for (i = 0; i < m; ++i) { \
+			for (j = 0; j < nHat; ++j) { \
+				double x = tensor_view_reader_value(&ra); \
+				double y = tensor_double_view_get(&v_b, j); \
+				vc[i * nHat + j] = op; \
+				tensor_view_reader_advance(&ra); \
+			} \
+		} \
+	} \
+ \
 	zval_ptr_dtor(&c);
 
 #define TENSOR_ROW_DISPATCH(name, op)                                            \

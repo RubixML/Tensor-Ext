@@ -2463,6 +2463,36 @@ class VectorTest extends TestCase
     }
 
     /**
+     * A Vector wrapping a non-contiguous (strided) buffer must fold the whole
+     * sequence, matching the same values held in a dense buffer.
+     *
+     * @test
+     */
+    public function softmaxOnStridedBuffer() : void
+    {
+        $a = Matrix::fromArray([
+            [1.0, 8.0, -3.0],
+            [4.0, -2.0, 6.0],
+            [7.0, 5.0, 9.0],
+        ]);
+
+        $strided = Vector::fromBuffer($a->columnAsVector(0)->buffer());
+        $dense = Vector::fromArray($strided->asArray());
+
+        $this->assertEqualsWithDelta(
+            $dense->softmax()->asArray(),
+            $strided->softmax()->asArray(),
+            self::MAX_DELTA
+        );
+
+        $this->assertEqualsWithDelta(
+            $dense->median(),
+            $strided->median(),
+            self::MAX_DELTA
+        );
+    }
+
+    /**
      * The defining property, over sizes that straddle the kernel's block
      * boundary.
      *

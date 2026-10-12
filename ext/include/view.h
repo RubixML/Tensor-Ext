@@ -58,6 +58,28 @@ static zend_always_inline zend_long tensor_view_row_length(const tensor_double_v
 	return c;
 }
 
+/* Give a flat 1-D view a logical `m` x `n` row-major shape so that row-wise
+ * kernels can reach its rows. A plain dense matrix resolves to a 1-D view of
+ * its whole allocation, and a Vector or ColumnVector resolves to a 1-D view
+ * whose element stride need not be 1; both are interpreted as `m` rows of `n`
+ * consecutive (in the logical sense) elements. A view that already has two or
+ * more dimensions is left untouched. */
+static zend_always_inline void tensor_view_expand_matrix(tensor_double_view * v, zend_long m, zend_long n)
+{
+	if (v->ndim > 1) {
+		return;
+	}
+
+	zend_long s = v->ndim == 1 ? v->strides[0] : 1;
+
+	v->shape[0] = m;
+	v->shape[1] = n;
+	v->strides[0] = n * s;
+	v->strides[1] = s;
+	v->ndim = 2;
+	v->contiguous = (s == 1);
+}
+
 /* Resolve a `Tensor\TensorBuffer` into a stride view, reading its
  * `buffer`/`offset`/`shape`/`strides` properties. Returns 1 on success and 0
  * on failure (throwing). Implemented in buffer.c. */
